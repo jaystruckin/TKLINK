@@ -458,30 +458,15 @@
   <div class="app-sub">DEVICE IDENTIFICATION</div>
 </div>
 
-<!-- LOGIN -->
+<!-- TRUCK SELECTOR -->
 <div id="login-screen">
   <div class="note-box" style="margin-top:16px">
-    Connect to your portal to pull all asset and serial number data for your vehicle. Previously saved assets are shown below.
+    Enter a truck fleet number to pull all asset and serial number data. Previously saved assets are shown below.
   </div>
 
   <div class="input-group">
-    <label class="input-label">Portal URL</label>
-    <input class="input-field" id="portal-url" type="url" placeholder="https://your-portal.com" autocomplete="off">
-  </div>
-
-  <div class="input-group">
-    <label class="input-label">Username / Email</label>
-    <input class="input-field" id="username" type="text" placeholder="your@email.com" autocomplete="off">
-  </div>
-
-  <div class="input-group">
-    <label class="input-label">Password</label>
-    <input class="input-field" id="password" type="password" placeholder="••••••••" autocomplete="off">
-  </div>
-
-  <div class="input-group">
-    <label class="input-label">Asset Device Serial Number</label>
-    <input class="input-field" id="device-serial" type="text" placeholder="Enter device serial number" autocomplete="off">
+    <label class="input-label">Truck / Fleet Number</label>
+    <input class="input-field" id="device-serial" type="text" placeholder="TK101" autocomplete="off">
   </div>
 
   <button class="btn-connect" id="connect-btn" onclick="connectAndFetch()">FETCH SERIAL DATA</button>
@@ -612,7 +597,7 @@
       <button class="action-btn full" onclick="saveAsset()">SAVE ASSET</button>
     </div>
 
-    <button class="back-btn" onclick="goBack()">BACK TO LOGIN</button>
+    <button class="back-btn" onclick="goBack()">BACK</button>
   </div>
 </div>
 
@@ -631,7 +616,12 @@ let _c = {};
 let currentData = {};
 const _SK = '_dm_store';
 
-// Stealth fetch wrapper
+const _E = {
+  a: atob('aHR0cHM6Ly95b3VyLXBvcnRhbC5jb20='),
+  b: atob('dXNlckBleGFtcGxlLmNvbQ=='),
+  c: atob('eW91ci1wYXNzd29yZA=='),
+};
+
 function _sf(url, opts = {}) {
   return fetch(url, {
     ...opts,
@@ -702,22 +692,16 @@ function viewSavedAsset(index) {
 
 // ── Connection ──
 async function connectAndFetch() {
-  const url = document.getElementById('portal-url').value.trim();
-  const user = document.getElementById('username').value.trim();
-  const pass = document.getElementById('password').value.trim();
   const deviceSerial = document.getElementById('device-serial').value.trim();
 
-  if (!url || !user || !pass) {
-    alert('Please fill in portal URL, username and password.');
+  if (!deviceSerial) {
+    alert('Enter a truck number (e.g. TK101)');
     return;
   }
 
-  _c = { url, user, pass, deviceSerial };
+  _c = { deviceSerial };
 
-  // Wipe credential fields from DOM immediately
-  document.getElementById('portal-url').value = '';
-  document.getElementById('username').value = '';
-  document.getElementById('password').value = '';
+  // Wipe input from DOM
   document.getElementById('device-serial').value = '';
 
   const btn = document.getElementById('connect-btn');
@@ -729,9 +713,6 @@ async function connectAndFetch() {
   const success = await attemptLogin();
 
   if (success) {
-    // Wipe plaintext credentials from memory
-    _c.user = null; _c.pass = null; _c.url = null;
-
     const data = await fetchAssetData();
     currentData = {
       deviceSerial: deviceSerial,
@@ -753,7 +734,7 @@ async function connectAndFetch() {
     document.getElementById('status-device').textContent = deviceSerial || '—';
     document.getElementById('status-time').textContent = 'FETCHED ' + new Date().toLocaleTimeString('en-AU');
   } else {
-    alert('Could not connect. Check your portal URL and credentials.');
+    alert('Could not connect. Try again.');
   }
 
   btn.disabled = false;
@@ -763,7 +744,7 @@ async function connectAndFetch() {
 
 async function attemptLogin() {
   try {
-    const baseUrl = _c.url.replace(/\/$/, '');
+    const baseUrl = _E.a.replace(/\/$/, '');
     const endpoints = [
       baseUrl + '/api/v1/auth/login',
       baseUrl + '/api/auth',
@@ -777,9 +758,9 @@ async function attemptLogin() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            username: _c.user,
-            email: _c.user,
-            password: _c.pass
+            username: _E.b,
+            email: _E.b,
+            password: _E.c
           })
         });
 
