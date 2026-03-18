@@ -477,22 +477,6 @@
     margin-bottom: 10px;
   }
 
-  /* SHARE */
-  .share-btn {
-    width: 100%;
-    background: rgba(0,230,118,0.1);
-    border: 1px solid rgba(0,230,118,0.3);
-    border-radius: 4px;
-    padding: 14px;
-    color: var(--green);
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-align: center;
-    cursor: pointer;
-    margin-top: 20px;
-  }
 
   .no-faults {
     text-align: center;
@@ -532,13 +516,13 @@
 <!-- LOGIN -->
 <div id="login-screen">
   <div class="truck-icon">🚛</div>
-  <div class="login-logo">Kenworth T909</div>
+  <div class="login-logo">T909</div>
   <div class="login-title">LIVE TELEM</div>
   <div class="login-sub">READ ONLY • SECURE</div>
 
   <div class="input-group">
-    <label class="input-label">MacTrack Portal URL</label>
-    <input class="input-field" id="portal-url" type="url" placeholder="https://fleet.mactrack.com.au" autocomplete="off" autocorrect="off" spellcheck="false">
+    <label class="input-label">Fleet Portal URL</label>
+    <input class="input-field" id="portal-url" type="url" placeholder="https://your-fleet-portal.com" autocomplete="off" autocorrect="off" spellcheck="false">
   </div>
 
   <div class="input-group">
@@ -558,8 +542,8 @@
 
   <p class="portal-note">Read-only access. No changes made. Data refreshes every 5 seconds. Credentials stored locally on this device only.</p>
 
-  <button class="btn-connect" id="connect-btn" onclick="connectToMactrack()">CONNECT</button>
-  <div class="connecting-msg" id="connecting-msg"><span class="spinner"></span>CONNECTING TO MACTRACK...</div>
+  <button class="btn-connect" id="connect-btn" onclick="connectToPortal()">CONNECT</button>
+  <div class="connecting-msg" id="connecting-msg"><span class="spinner"></span>CONNECTING...</div>
 </div>
 
 <!-- MAIN APP -->
@@ -667,7 +651,6 @@
         </div>
       </div>
 
-      <button class="share-btn" onclick="shareReport()">📤 SEND REPORT TO MECHANIC</button>
     </div>
 
     <!-- DRIVETRAIN TAB -->
@@ -732,7 +715,6 @@
       <div class="data-row"><span class="data-key">Engine Brake</span><span class="data-val" id="ecu-brake">—</span></div>
       <div class="data-row"><span class="data-key">PTO Enabled</span><span class="data-val" id="ecu-pto">—</span></div>
 
-      <button class="share-btn" onclick="shareECU()">📤 SEND ECU REPORT TO MECHANIC</button>
     </div>
 
     <!-- GPS TAB -->
@@ -773,7 +755,7 @@ function switchTab(name) {
   });
 }
 
-async function connectToMactrack() {
+async function connectToPortal() {
   const url = document.getElementById('portal-url').value.trim();
   const user = document.getElementById('username').value.trim();
   const pass = document.getElementById('password').value.trim();
@@ -785,6 +767,11 @@ async function connectToMactrack() {
   }
 
   credentials = { url, user, pass, vid };
+
+  // Clear credential fields immediately so they are not visible in DOM
+  document.getElementById('portal-url').value = '';
+  document.getElementById('username').value = '';
+  document.getElementById('password').value = '';
 
   const btn = document.getElementById('connect-btn');
   const msg = document.getElementById('connecting-msg');
@@ -798,24 +785,24 @@ async function connectToMactrack() {
   if (success) {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('main-app').style.display = 'block';
+    document.getElementById('vehicle-id').value = '';
     document.getElementById('header-id').textContent = vid || '—';
     startLiveUpdates();
   } else {
     btn.disabled = false;
     btn.textContent = 'CONNECT';
     msg.style.display = 'none';
-    alert('Could not connect to MacTrack. Check your portal URL and credentials.');
+    alert('Could not connect. Check your portal URL and credentials.');
   }
 }
 
 async function attemptLogin() {
-  // Try to reach the MacTrack portal
-  // MacTrack uses a REST API behind their portal
+  // Try to reach the fleet portal
   // We attempt to authenticate and pull vehicle data
   try {
     const baseUrl = credentials.url.replace(/\/$/, '');
 
-    // Common MacTrack API endpoints
+    // Common API endpoints
     const endpoints = [
       baseUrl + '/api/v1/auth/login',
       baseUrl + '/api/auth',
@@ -846,8 +833,8 @@ async function attemptLogin() {
       } catch(e) { continue; }
     }
 
-    // If direct API fails, note that CORS may block browser requests
-    // Store credentials for display purposes and show demo mode
+    // If direct API fails, CORS may block browser requests
+    // Store credentials for display purposes
     credentials.baseUrl = baseUrl;
     credentials.demoMode = true;
     return true;
@@ -886,27 +873,7 @@ async function fetchTelematicsData() {
 
 function showConnectionNote() {
   // Show the app is ready and waiting for data
-  // MacTrack's portal runs on a backend that requires
-  // their specific API credentials and endpoints
-  // which vary per installation
-
   document.getElementById('update-time').textContent = 'AWAITING DATA';
-
-  // Show what the app is ready to display
-  const fields = {
-    'val-rpm': 'CONNECTING',
-    'val-coolant': '—',
-    'val-oil-press': '—',
-    'val-oil-temp': '—',
-    'val-boost': '—',
-    'val-exhaust': '—',
-    'val-load': '—',
-    'val-fuel-rate': '—',
-    'val-def': '—',
-    'val-dpf': '—',
-    'val-regen': '—',
-    'val-fuel': '—',
-  };
 
   // Display a note in fault tab explaining connection status
   const faultList = document.getElementById('fault-list');
@@ -914,10 +881,9 @@ function showConnectionNote() {
     <div class="note-box" style="margin-top:0">
       <strong style="color:var(--accent2)">CONNECTION STATUS</strong><br><br>
       App connected to: <span style="color:var(--text); font-family:monospace">${credentials.baseUrl}</span><br><br>
-      MacTrack portals use server-side authentication that blocks direct browser requests due to CORS security policy.<br><br>
-      <strong style="color:var(--text)">To get full live data you have two options:</strong><br><br>
-      1. Ask MacTrack to provide you API access credentials (separate from portal login)<br><br>
-      2. Contact MacTrack support on <strong style="color:var(--accent)">1300 622 872</strong> — they can enable driver app access for your vehicle specifically
+      The portal uses server-side authentication that may block direct browser requests due to CORS security policy.<br><br>
+      <strong style="color:var(--text)">To get full live data:</strong><br><br>
+      Request API access credentials from your fleet portal administrator (separate from portal login).
     </div>
   `;
 }
@@ -1086,52 +1052,6 @@ function startLiveUpdates() {
   updateInterval = setInterval(fetchTelematicsData, 5000);
 }
 
-function shareReport() {
-  const d = lastData;
-  const text = `T909 ENGINE REPORT ${new Date().toLocaleString('en-AU')}
-RPM: ${d.rpm || '—'}
-Coolant: ${d.coolantTemp || '—'}°C
-Oil Press: ${d.oilPressure || '—'} kPa
-Oil Temp: ${d.oilTemp || '—'}°C
-Boost: ${d.boostPressure || '—'} kPa
-Exhaust: ${d.exhaustTemp || '—'}°C
-Load: ${d.engineLoad || '—'}%
-Fuel Rate: ${d.fuelRate || '—'} L/hr
-DEF: ${d.defLevel || '—'}%
-DPF Soot: ${d.dpfSoot || '—'}%
-Fuel: ${d.fuelLevel || '—'}%
-Faults: ${(d.faults||[]).filter(f=>f.active).map(f=>f.code).join(', ') || 'NONE'}`;
-
-  if (navigator.share) {
-    navigator.share({ title: 'T909 Engine Report', text });
-  } else {
-    navigator.clipboard.writeText(text).then(() => alert('Report copied to clipboard'));
-  }
-}
-
-function shareECU() {
-  const d = lastData;
-  const text = `T909 ECU REPORT ${new Date().toLocaleString('en-AU')}
-Engine: ${d.engineModel || '—'}
-CPL: ${d.cplGroup || '—'}
-Rated HP: ${d.ratedHp || '—'}
-Torque: ${d.ratedTorque || '—'} Nm
-ECU Part: ${d.ecuPart || '—'}
-SW Version: ${d.swVersion || '—'}
-Cal Date: ${d.calDate || '—'}
-ECU Serial: ${d.ecuSerial || '—'}
-Engine Serial: ${d.engineSerial || '—'}
-Emission: ${d.emissionCert || '—'}
-Gov RPM Road: ${d.govRoad || '—'}
-Gov RPM Cruise: ${d.govCruise || '—'}
-Speed Limiter: ${d.speedLim || '—'} km/h`;
-
-  if (navigator.share) {
-    navigator.share({ title: 'T909 ECU Report', text });
-  } else {
-    navigator.clipboard.writeText(text).then(() => alert('ECU report copied to clipboard'));
-  }
-}
 </script>
 </body>
 </html>

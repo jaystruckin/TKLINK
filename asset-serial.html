@@ -322,12 +322,6 @@
     cursor: pointer;
   }
 
-  .action-btn.blue {
-    background: rgba(0, 176, 255, 0.1);
-    border-color: rgba(0, 176, 255, 0.3);
-    color: var(--blue);
-  }
-
   .action-btn.full {
     grid-column: 1 / -1;
   }
@@ -462,18 +456,18 @@
 
 <div class="app-header">
   <div class="app-title">ASSET & SERIAL LOOKUP</div>
-  <div class="app-sub">T909 KENWORTH • DEVICE IDENTIFICATION</div>
+  <div class="app-sub">DEVICE IDENTIFICATION</div>
 </div>
 
 <!-- LOGIN -->
 <div id="login-screen">
   <div class="note-box" style="margin-top:16px">
-    Connect to your MacTrack portal to pull all asset and serial number data for your vehicle. Previously saved assets are shown below.
+    Connect to your fleet portal to pull all asset and serial number data for your vehicle. Previously saved assets are shown below.
   </div>
 
   <div class="input-group">
-    <label class="input-label">MacTrack Portal URL</label>
-    <input class="input-field" id="portal-url" type="url" placeholder="https://fleet.mactrack.com.au" autocomplete="off">
+    <label class="input-label">Fleet Portal URL</label>
+    <input class="input-field" id="portal-url" type="url" placeholder="https://your-fleet-portal.com" autocomplete="off">
   </div>
 
   <div class="input-group">
@@ -492,7 +486,7 @@
   </div>
 
   <button class="btn-connect" id="connect-btn" onclick="connectAndFetch()">FETCH SERIAL DATA</button>
-  <div class="connecting-msg" id="connecting-msg"><span class="spinner"></span>CONNECTING TO MACTRACK...</div>
+  <div class="connecting-msg" id="connecting-msg"><span class="spinner"></span>CONNECTING TO PORTAL...</div>
 
   <!-- SAVED ASSETS LIST -->
   <div class="saved-section">
@@ -616,9 +610,7 @@
 
     <!-- ACTIONS -->
     <div class="action-row">
-      <button class="action-btn" onclick="saveAsset()">SAVE ASSET</button>
-      <button class="action-btn blue" onclick="shareAll()">SHARE ALL</button>
-      <button class="action-btn blue full" onclick="copyAll()">COPY ALL TO CLIPBOARD</button>
+      <button class="action-btn full" onclick="saveAsset()">SAVE ASSET</button>
     </div>
 
     <button class="back-btn" onclick="goBack()">BACK TO LOGIN</button>
@@ -655,7 +647,7 @@ function renderSavedAssets() {
   const list = document.getElementById('saved-list');
 
   if (assets.length === 0) {
-    list.innerHTML = '<div class="empty-state">No saved assets yet. Connect to MacTrack to fetch and save device data.</div>';
+    list.innerHTML = '<div class="empty-state">No saved assets yet. Connect to your portal to fetch and save device data.</div>';
     return;
   }
 
@@ -712,6 +704,12 @@ async function connectAndFetch() {
   }
 
   credentials = { url, user, pass, deviceSerial };
+
+  // Clear credential fields immediately so they are not visible in DOM
+  document.getElementById('portal-url').value = '';
+  document.getElementById('username').value = '';
+  document.getElementById('password').value = '';
+  document.getElementById('device-serial').value = '';
 
   const btn = document.getElementById('connect-btn');
   const msg = document.getElementById('connecting-msg');
@@ -874,43 +872,6 @@ function copyValue(id, btn) {
       btn.classList.remove('copied');
     }, 1500);
   });
-}
-
-function buildReportText() {
-  const d = currentData;
-  return `ASSET & SERIAL NUMBER REPORT
-${new Date().toLocaleString('en-AU')}
-${'─'.repeat(32)}
-Device Serial:  ${d.deviceSerial || '—'}
-ECU Serial:     ${d.ecuSerial || '—'}
-Engine Serial:  ${d.engineSerial || '—'}
-${'─'.repeat(32)}
-Engine Model:   ${d.engineModel || '—'}
-CPL Group:      ${d.cplGroup ? 'CPL ' + d.cplGroup : '—'}
-ECU Part No:    ${d.ecuPart || '—'}
-SW Version:     ${d.swVersion || '—'}
-Cal Date:       ${d.calDate || '—'}
-Emission Cert:  ${d.emissionCert || '—'}
-Rated HP:       ${d.ratedHp || '—'}
-Rated Torque:   ${d.ratedTorque ? d.ratedTorque + ' Nm' : '—'}`;
-}
-
-function copyAll() {
-  const text = buildReportText();
-  navigator.clipboard.writeText(text).then(() => {
-    showToast('All serial data copied to clipboard');
-  });
-}
-
-function shareAll() {
-  const text = buildReportText();
-  if (navigator.share) {
-    navigator.share({ title: 'Asset & Serial Number Report', text });
-  } else {
-    navigator.clipboard.writeText(text).then(() => {
-      showToast('Report copied to clipboard (share not supported on this browser)');
-    });
-  }
 }
 
 function goBack() {
