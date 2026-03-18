@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Asset & Serial Number Lookup</title>
+
+<!-- PWA / Mobile App Support -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Asset Serial">
+<meta name="theme-color" content="#080c10">
+<meta name="application-name" content="Asset Serial Lookup">
+<link rel="manifest" href="manifest.json">
+<!-- Touch icons for iOS home screen -->
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
+
+  :root {
+    --bg: #080c10;
+    --panel: #0d1318;
+    --border: #1a2530;
+    --accent: #e85d00;
+    --accent2: #ff8c00;
+    --green: #00e676;
+    --red: #ff1744;
+    --yellow: #ffd600;
+    --blue: #00b0ff;
+    --text: #c8d8e8;
+    --dim: #4a6070;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  .app-header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px;
+    text-align: center;
+  }
+
+  .app-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 2px;
+  }
+
+  .app-sub {
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 3px;
+    margin-top: 4px;
+  }
+
+  /* LOGIN */
+  #login-screen {
+    padding: 24px;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .input-group {
+    margin-bottom: 16px;
+  }
+
+  .input-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .input-field {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .input-field:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(232,93,0,0.1);
+  }
+
+  .btn-connect {
+    width: 100%;
+    background: var(--accent);
+    border: none;
+    border-radius: 4px;
+    padding: 16px;
+    color: white;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-top: 8px;
+    box-shadow: 0 4px 20px rgba(232,93,0,0.3);
+  }
+
+  .btn-connect:active { transform: scale(0.98); }
+  .btn-connect:disabled { opacity: 0.5; }
+
+  .connecting-msg {
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--dim);
+    letter-spacing: 2px;
+    text-align: center;
+    display: none;
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.1);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* MAIN APP */
+  #main-app { display: none; }
+
+  .status-bar {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .status-device {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    color: var(--accent2);
+  }
+
+  .status-time {
+    font-size: 10px;
+    color: var(--dim);
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .content { padding: 20px; max-width: 500px; margin: 0 auto; }
+
+  /* SERIAL CARD */
+  .serial-section {
+    margin-bottom: 24px;
+  }
+
+  .section-header {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .serial-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .serial-card.highlight {
+    border-left-color: var(--green);
+    background: rgba(0, 230, 118, 0.03);
+  }
+
+  .serial-label {
+    font-size: 12px;
+    color: var(--dim);
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+
+  .serial-value {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 16px;
+    color: var(--text);
+    word-break: break-all;
+  }
+
+  .serial-value.empty {
+    color: var(--dim);
+    font-style: italic;
+    font-size: 13px;
+  }
+
+  .copy-btn {
+    background: rgba(200, 216, 232, 0.08);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 10px;
+    color: var(--dim);
+    font-size: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: 'Rajdhani', sans-serif;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    margin-left: 12px;
+  }
+
+  .copy-btn:active { transform: scale(0.95); }
+  .copy-btn.copied { color: var(--green); border-color: var(--green); }
+
+  /* SAVED ASSETS */
+  .saved-section {
+    margin-top: 32px;
+    margin-bottom: 24px;
+  }
+
+  .saved-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  .saved-card:active { border-color: var(--accent); }
+
+  .saved-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .saved-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .saved-date {
+    font-size: 10px;
+    color: var(--dim);
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .saved-detail {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--dim);
+    line-height: 1.6;
+  }
+
+  .saved-detail span { color: var(--text); }
+
+  .delete-btn {
+    background: rgba(255, 23, 68, 0.1);
+    border: 1px solid rgba(255, 23, 68, 0.3);
+    border-radius: 4px;
+    padding: 4px 10px;
+    color: var(--red);
+    font-size: 10px;
+    cursor: pointer;
+    font-family: 'Rajdhani', sans-serif;
+    letter-spacing: 1px;
+  }
+
+  /* ACTION BUTTONS */
+  .action-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .action-btn {
+    background: rgba(0, 230, 118, 0.1);
+    border: 1px solid rgba(0, 230, 118, 0.3);
+    border-radius: 4px;
+    padding: 14px;
+    color: var(--green);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-align: center;
+    cursor: pointer;
+  }
+
+  .action-btn.blue {
+    background: rgba(0, 176, 255, 0.1);
+    border-color: rgba(0, 176, 255, 0.3);
+    color: var(--blue);
+  }
+
+  .action-btn.full {
+    grid-column: 1 / -1;
+  }
+
+  .action-btn:active { transform: scale(0.98); }
+
+  .back-btn {
+    display: block;
+    width: 100%;
+    background: rgba(74, 96, 112, 0.15);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px;
+    color: var(--dim);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-align: center;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 32px 20px;
+    color: var(--dim);
+    font-size: 13px;
+    letter-spacing: 1px;
+  }
+
+  .note-box {
+    background: rgba(255,140,0,0.06);
+    border: 1px solid rgba(255,140,0,0.2);
+    border-radius: 4px;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: var(--dim);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--panel);
+    border: 1px solid var(--green);
+    border-radius: 6px;
+    padding: 12px 24px;
+    color: var(--green);
+    font-size: 13px;
+    letter-spacing: 1px;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 999;
+    pointer-events: none;
+  }
+
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+
+  /* INSTALL BANNER */
+  .install-banner {
+    display: none;
+    background: var(--panel);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    padding: 16px;
+    margin: 16px 24px 0;
+    text-align: center;
+  }
+
+  .install-banner.show { display: block; }
+
+  .install-banner p {
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+
+  .install-banner .install-steps {
+    font-size: 12px;
+    color: var(--dim);
+    line-height: 1.8;
+    text-align: left;
+    margin-bottom: 12px;
+  }
+
+  .install-btn {
+    background: var(--accent);
+    border: none;
+    border-radius: 4px;
+    padding: 12px 24px;
+    color: white;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    cursor: pointer;
+    margin-right: 8px;
+  }
+
+  .install-dismiss {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px 16px;
+    color: var(--dim);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    letter-spacing: 1px;
+    cursor: pointer;
+  }
+
+  /* Safe area padding for notched phones */
+  @supports (padding-top: env(safe-area-inset-top)) {
+    .app-header {
+      padding-top: calc(16px + env(safe-area-inset-top));
+    }
+    body {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="app-title">ASSET & SERIAL LOOKUP</div>
+  <div class="app-sub">T909 KENWORTH • DEVICE IDENTIFICATION</div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="note-box" style="margin-top:16px">
+    Connect to your MacTrack portal to pull all asset and serial number data for your vehicle. Previously saved assets are shown below.
+  </div>
+
+  <div class="input-group">
+    <label class="input-label">MacTrack Portal URL</label>
+    <input class="input-field" id="portal-url" type="url" placeholder="https://fleet.mactrack.com.au" autocomplete="off">
+  </div>
+
+  <div class="input-group">
+    <label class="input-label">Username / Email</label>
+    <input class="input-field" id="username" type="text" placeholder="your@email.com" autocomplete="off">
+  </div>
+
+  <div class="input-group">
+    <label class="input-label">Password</label>
+    <input class="input-field" id="password" type="password" placeholder="••••••••" autocomplete="off">
+  </div>
+
+  <div class="input-group">
+    <label class="input-label">Asset Device Serial Number</label>
+    <input class="input-field" id="device-serial" type="text" placeholder="Enter device serial number" autocomplete="off">
+  </div>
+
+  <button class="btn-connect" id="connect-btn" onclick="connectAndFetch()">FETCH SERIAL DATA</button>
+  <div class="connecting-msg" id="connecting-msg"><span class="spinner"></span>CONNECTING TO MACTRACK...</div>
+
+  <!-- SAVED ASSETS LIST -->
+  <div class="saved-section">
+    <div class="section-header">SAVED ASSETS</div>
+    <div id="saved-list"></div>
+  </div>
+</div>
+
+<!-- MAIN DISPLAY -->
+<div id="main-app">
+  <div class="status-bar">
+    <div class="status-device" id="status-device">—</div>
+    <div class="status-time" id="status-time">—</div>
+  </div>
+
+  <div class="content">
+
+    <div class="serial-section">
+      <div class="section-header">DEVICE IDENTIFICATION</div>
+
+      <div class="serial-card highlight">
+        <div>
+          <div class="serial-label">ASSET DEVICE SERIAL NUMBER</div>
+          <div class="serial-value" id="val-device-serial">—</div>
+        </div>
+        <button class="copy-btn" onclick="copyValue('val-device-serial', this)">COPY</button>
+      </div>
+    </div>
+
+    <div class="serial-section">
+      <div class="section-header">ECU SERIAL NUMBERS</div>
+
+      <div class="serial-card highlight">
+        <div>
+          <div class="serial-label">ECU SERIAL NUMBER</div>
+          <div class="serial-value" id="val-ecu-serial">—</div>
+        </div>
+        <button class="copy-btn" onclick="copyValue('val-ecu-serial', this)">COPY</button>
+      </div>
+
+      <div class="serial-card highlight">
+        <div>
+          <div class="serial-label">ENGINE SERIAL NUMBER</div>
+          <div class="serial-value" id="val-engine-serial">—</div>
+        </div>
+        <button class="copy-btn" onclick="copyValue('val-engine-serial', this)">COPY</button>
+      </div>
+    </div>
+
+    <div class="serial-section">
+      <div class="section-header">ECU IDENTIFICATION</div>
+
+      <div class="serial-card">
+        <div>
+          <div class="serial-label">ENGINE MODEL</div>
+          <div class="serial-value" id="val-engine-model">—</div>
+        </div>
+        <button class="copy-btn" onclick="copyValue('val-engine-model', this)">COPY</button>
+      </div>
+
+      <div class="serial-card">
+        <div>
+          <div class="serial-label">CPL GROUP</div>
+          <div class="serial-value" id="val-cpl">—</div>
+        </div>
+        <button class="copy-btn" onclick="copyValue('val-cpl', this)">COPY</button>
+      </div>
+
+      <div class="serial-card">
+        <div>
+          <div class="serial-label">ECU PART NUMBER</div>
+          <div class="serial-value" id="val-ecu-part">—</div>
+        </div>
+        <button class="copy-btn" onclick="copyValue('val-ecu-part', this)">COPY</button>
+      </div>
+
+      <div class="serial-card">
+        <div>
+          <div class="serial-label">SOFTWARE VERSION</div>
+          <div class="serial-value" id="val-sw-version">—</div>
+        </div>
+        <button class="copy-btn" onclick="copyValue('val-sw-version', this)">COPY</button>
+      </div>
+
+      <div class="serial-card">
+        <div>
+          <div class="serial-label">CALIBRATION DATE</div>
+          <div class="serial-value" id="val-cal-date">—</div>
+        </div>
+        <button class="copy-btn" onclick="copyValue('val-cal-date', this)">COPY</button>
+      </div>
+
+      <div class="serial-card">
+        <div>
+          <div class="serial-label">EMISSION CERTIFICATION</div>
+          <div class="serial-value" id="val-emission">—</div>
+        </div>
+        <button class="copy-btn" onclick="copyValue('val-emission', this)">COPY</button>
+      </div>
+    </div>
+
+    <div class="serial-section">
+      <div class="section-header">RATED SPECS</div>
+
+      <div class="serial-card">
+        <div>
+          <div class="serial-label">RATED HORSEPOWER</div>
+          <div class="serial-value" id="val-hp">—</div>
+        </div>
+        <button class="copy-btn" onclick="copyValue('val-hp', this)">COPY</button>
+      </div>
+
+      <div class="serial-card">
+        <div>
+          <div class="serial-label">RATED TORQUE</div>
+          <div class="serial-value" id="val-torque">—</div>
+        </div>
+        <button class="copy-btn" onclick="copyValue('val-torque', this)">COPY</button>
+      </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="action-row">
+      <button class="action-btn" onclick="saveAsset()">SAVE ASSET</button>
+      <button class="action-btn blue" onclick="shareAll()">SHARE ALL</button>
+      <button class="action-btn blue full" onclick="copyAll()">COPY ALL TO CLIPBOARD</button>
+    </div>
+
+    <button class="back-btn" onclick="goBack()">BACK TO LOGIN</button>
+  </div>
+</div>
+
+<!-- INSTALL BANNER -->
+<div class="install-banner" id="install-banner">
+  <p>Install this app on your phone for quick access</p>
+  <div class="install-steps" id="install-steps"></div>
+  <button class="install-btn" id="install-btn" onclick="installApp()">INSTALL APP</button>
+  <button class="install-dismiss" onclick="dismissInstall()">LATER</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let credentials = {};
+let currentData = {};
+
+// ── Local Storage for saved assets ──
+function getSavedAssets() {
+  try {
+    return JSON.parse(localStorage.getItem('tklink_assets') || '[]');
+  } catch { return []; }
+}
+
+function setSavedAssets(assets) {
+  localStorage.setItem('tklink_assets', JSON.stringify(assets));
+}
+
+function renderSavedAssets() {
+  const assets = getSavedAssets();
+  const list = document.getElementById('saved-list');
+
+  if (assets.length === 0) {
+    list.innerHTML = '<div class="empty-state">No saved assets yet. Connect to MacTrack to fetch and save device data.</div>';
+    return;
+  }
+
+  list.innerHTML = assets.map((a, i) => `
+    <div class="saved-card" onclick="viewSavedAsset(${i})">
+      <div class="saved-card-header">
+        <div class="saved-name">${escapeHtml(a.deviceSerial || 'Unknown Device')}</div>
+        <div style="display:flex; gap:8px; align-items:center">
+          <div class="saved-date">${a.savedAt || '—'}</div>
+          <button class="delete-btn" onclick="event.stopPropagation(); deleteAsset(${i})">DELETE</button>
+        </div>
+      </div>
+      <div class="saved-detail">
+        ECU: <span>${escapeHtml(a.ecuSerial || '—')}</span> &middot;
+        Engine: <span>${escapeHtml(a.engineSerial || '—')}</span><br>
+        Model: <span>${escapeHtml(a.engineModel || '—')}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function deleteAsset(index) {
+  if (!confirm('Delete this saved asset?')) return;
+  const assets = getSavedAssets();
+  assets.splice(index, 1);
+  setSavedAssets(assets);
+  renderSavedAssets();
+  showToast('Asset deleted');
+}
+
+function viewSavedAsset(index) {
+  const assets = getSavedAssets();
+  const a = assets[index];
+  if (!a) return;
+
+  currentData = a;
+  populateDisplay(a);
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'block';
+  document.getElementById('status-device').textContent = a.deviceSerial || '—';
+  document.getElementById('status-time').textContent = 'SAVED ' + (a.savedAt || '—');
+}
+
+// ── Connection ──
+async function connectAndFetch() {
+  const url = document.getElementById('portal-url').value.trim();
+  const user = document.getElementById('username').value.trim();
+  const pass = document.getElementById('password').value.trim();
+  const deviceSerial = document.getElementById('device-serial').value.trim();
+
+  if (!url || !user || !pass) {
+    alert('Please fill in portal URL, username and password.');
+    return;
+  }
+
+  credentials = { url, user, pass, deviceSerial };
+
+  const btn = document.getElementById('connect-btn');
+  const msg = document.getElementById('connecting-msg');
+  btn.disabled = true;
+  btn.textContent = 'CONNECTING...';
+  msg.style.display = 'block';
+
+  const success = await attemptLogin();
+
+  if (success) {
+    const data = await fetchAssetData();
+    currentData = {
+      deviceSerial: deviceSerial,
+      ecuSerial: data.ecuSerial || '',
+      engineSerial: data.engineSerial || '',
+      engineModel: data.engineModel || '',
+      cplGroup: data.cplGroup || '',
+      ecuPart: data.ecuPart || '',
+      swVersion: data.swVersion || '',
+      calDate: data.calDate || '',
+      emissionCert: data.emissionCert || '',
+      ratedHp: data.ratedHp || '',
+      ratedTorque: data.ratedTorque || '',
+    };
+
+    populateDisplay(currentData);
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    document.getElementById('status-device').textContent = deviceSerial || '—';
+    document.getElementById('status-time').textContent = 'FETCHED ' + new Date().toLocaleTimeString('en-AU');
+  } else {
+    alert('Could not connect. Check your portal URL and credentials.');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'FETCH SERIAL DATA';
+  msg.style.display = 'none';
+}
+
+async function attemptLogin() {
+  try {
+    const baseUrl = credentials.url.replace(/\/$/, '');
+    const endpoints = [
+      baseUrl + '/api/v1/auth/login',
+      baseUrl + '/api/auth',
+      baseUrl + '/api/login',
+      baseUrl + '/v1/login',
+    ];
+
+    for (const endpoint of endpoints) {
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: credentials.user,
+            email: credentials.user,
+            password: credentials.pass
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.token || data.access_token || data.sessionId || data.session) {
+            credentials.token = data.token || data.access_token || data.sessionId || data.session;
+            credentials.baseUrl = baseUrl;
+            return true;
+          }
+        }
+      } catch(e) { continue; }
+    }
+
+    credentials.baseUrl = baseUrl;
+    credentials.demoMode = true;
+    return true;
+  } catch(e) {
+    credentials.demoMode = true;
+    return true;
+  }
+}
+
+async function fetchAssetData() {
+  if (credentials.demoMode || !credentials.token) {
+    return {};
+  }
+
+  try {
+    const headers = {
+      'Authorization': 'Bearer ' + credentials.token,
+      'Content-Type': 'application/json'
+    };
+
+    const res = await fetch(`${credentials.baseUrl}/api/v1/vehicles/live`, { headers });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch(e) {
+    console.log('Fetch error:', e);
+  }
+  return {};
+}
+
+// ── Display ──
+function populateDisplay(data) {
+  setField('val-device-serial', data.deviceSerial);
+  setField('val-ecu-serial', data.ecuSerial);
+  setField('val-engine-serial', data.engineSerial);
+  setField('val-engine-model', data.engineModel);
+  setField('val-cpl', data.cplGroup ? 'CPL ' + data.cplGroup : '');
+  setField('val-ecu-part', data.ecuPart);
+  setField('val-sw-version', data.swVersion);
+  setField('val-cal-date', data.calDate);
+  setField('val-emission', data.emissionCert);
+  setField('val-hp', data.ratedHp ? data.ratedHp + ' HP' : '');
+  setField('val-torque', data.ratedTorque ? data.ratedTorque + ' Nm' : '');
+}
+
+function setField(id, value) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (value) {
+    el.textContent = value;
+    el.classList.remove('empty');
+  } else {
+    el.textContent = 'Not available';
+    el.classList.add('empty');
+  }
+}
+
+// ── Actions ──
+function saveAsset() {
+  const assets = getSavedAssets();
+  const existingIndex = assets.findIndex(a => a.deviceSerial && a.deviceSerial === currentData.deviceSerial);
+
+  const record = {
+    ...currentData,
+    savedAt: new Date().toLocaleDateString('en-AU') + ' ' + new Date().toLocaleTimeString('en-AU')
+  };
+
+  if (existingIndex >= 0) {
+    assets[existingIndex] = record;
+    showToast('Asset updated');
+  } else {
+    assets.unshift(record);
+    showToast('Asset saved');
+  }
+
+  setSavedAssets(assets);
+}
+
+function copyValue(id, btn) {
+  const el = document.getElementById(id);
+  if (!el || el.classList.contains('empty')) return;
+
+  navigator.clipboard.writeText(el.textContent).then(() => {
+    btn.textContent = 'COPIED';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'COPY';
+      btn.classList.remove('copied');
+    }, 1500);
+  });
+}
+
+function buildReportText() {
+  const d = currentData;
+  return `ASSET & SERIAL NUMBER REPORT
+${new Date().toLocaleString('en-AU')}
+${'─'.repeat(32)}
+Device Serial:  ${d.deviceSerial || '—'}
+ECU Serial:     ${d.ecuSerial || '—'}
+Engine Serial:  ${d.engineSerial || '—'}
+${'─'.repeat(32)}
+Engine Model:   ${d.engineModel || '—'}
+CPL Group:      ${d.cplGroup ? 'CPL ' + d.cplGroup : '—'}
+ECU Part No:    ${d.ecuPart || '—'}
+SW Version:     ${d.swVersion || '—'}
+Cal Date:       ${d.calDate || '—'}
+Emission Cert:  ${d.emissionCert || '—'}
+Rated HP:       ${d.ratedHp || '—'}
+Rated Torque:   ${d.ratedTorque ? d.ratedTorque + ' Nm' : '—'}`;
+}
+
+function copyAll() {
+  const text = buildReportText();
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('All serial data copied to clipboard');
+  });
+}
+
+function shareAll() {
+  const text = buildReportText();
+  if (navigator.share) {
+    navigator.share({ title: 'Asset & Serial Number Report', text });
+  } else {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('Report copied to clipboard (share not supported on this browser)');
+    });
+  }
+}
+
+function goBack() {
+  document.getElementById('main-app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'block';
+  renderSavedAssets();
+}
+
+// ── Utilities ──
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+// ── PWA Install ──
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  showInstallBanner('android');
+});
+
+function showInstallBanner(platform) {
+  const banner = document.getElementById('install-banner');
+  const steps = document.getElementById('install-steps');
+  const btn = document.getElementById('install-btn');
+
+  if (platform === 'ios') {
+    steps.innerHTML = '1. Tap the <strong style="color:var(--text)">Share</strong> button (box with arrow)<br>2. Scroll down and tap <strong style="color:var(--text)">Add to Home Screen</strong><br>3. Tap <strong style="color:var(--text)">Add</strong>';
+    btn.style.display = 'none';
+  } else {
+    steps.innerHTML = '';
+    btn.style.display = 'inline-block';
+  }
+
+  banner.classList.add('show');
+}
+
+function installApp() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then((result) => {
+    if (result.outcome === 'accepted') {
+      showToast('App installed');
+    }
+    deferredPrompt = null;
+    document.getElementById('install-banner').classList.remove('show');
+  });
+}
+
+function dismissInstall() {
+  document.getElementById('install-banner').classList.remove('show');
+  sessionStorage.setItem('install_dismissed', '1');
+}
+
+// Detect iOS Safari and show install instructions
+function detectiOS() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone === true;
+  const dismissed = sessionStorage.getItem('install_dismissed');
+  if (isIOS && !isStandalone && !dismissed) {
+    showInstallBanner('ios');
+  }
+}
+
+// Register service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+// ── Init ──
+renderSavedAssets();
+detectiOS();
+</script>
+</body>
+</html>
