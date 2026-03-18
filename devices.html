@@ -732,7 +732,7 @@ async function connectAndFetch() {
     document.getElementById('entry-screen').style.display = 'none';
     document.getElementById('main-app').style.display = 'block';
     document.getElementById('status-device').textContent = deviceSerial || '—';
-    document.getElementById('status-time').textContent = 'FETCHED ' + new Date().toLocaleTimeString('en-AU');
+    document.getElementById('status-time').textContent = 'FETCHED ' + new Date().toLocaleTimeString();
   } else {
     alert('Could not connect. Try again.');
   }
@@ -745,36 +745,28 @@ async function connectAndFetch() {
 async function _al() {
   try {
     const baseUrl = _E.a.replace(/\/$/, '');
-    const endpoints = [
-      baseUrl + '/api/v1/auth/login',
-      baseUrl + '/api/auth',
-      baseUrl + '/api/login',
-      baseUrl + '/v1/login',
-    ];
 
-    for (const endpoint of endpoints) {
-      try {
-        const res = await _sf(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: _E.b,
-            email: _E.b,
-            password: _E.c
-          })
-        });
+    try {
+      const res = await _sf(baseUrl + '/api/v1/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: _E.b,
+          password: _E.c
+        })
+      });
 
-        if (res.ok) {
-          const data = await res.json();
-          if (data.token || data.access_token || data.sessionId || data.session) {
-            _c.token = data.token || data.access_token || data.sessionId || data.session;
-            _c.baseUrl = baseUrl;
-            _E.b = null; _E.c = null;
-            return true;
-          }
+      if (res.ok) {
+        const data = await res.json();
+        const tk = data.token || data.access_token || data.sessionId || data.session;
+        if (tk) {
+          _c.token = tk;
+          _c.baseUrl = baseUrl;
+          _E.b = null; _E.c = null;
+          return true;
         }
-      } catch(e) { continue; }
-    }
+      }
+    } catch(e) { /* silent */ }
 
     _c.baseUrl = baseUrl;
     _c.demoMode = true;
@@ -840,7 +832,7 @@ function saveAsset() {
 
   const record = {
     ...currentData,
-    savedAt: new Date().toLocaleDateString('en-AU') + ' ' + new Date().toLocaleTimeString('en-AU')
+    savedAt: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString()
   };
 
   if (existingIndex >= 0) {
