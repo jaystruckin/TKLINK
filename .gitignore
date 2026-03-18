@@ -1,0 +1,28 @@
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Credentials — never commit these
+credentials.json
+config.local.js
+.env
+.env.local
+
+# Logs
+*.log
+logs/
+
+# Node (if used in future)
+node_modules/
+npm-debug.log
+
+# Build output (if used in future)
+dist/
+build/
