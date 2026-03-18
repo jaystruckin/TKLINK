@@ -552,8 +552,8 @@
   </div>
 
   <div class="input-group">
-    <label class="input-label">Vehicle ID / Asset Name</label>
-    <input class="input-field" id="vehicle-id" type="text" placeholder="T909 or truck number" autocomplete="off">
+    <label class="input-label">Asset Device Serial Number</label>
+    <input class="input-field" id="vehicle-id" type="text" placeholder="Enter device serial number" autocomplete="off">
   </div>
 
   <p class="portal-note">Read-only access. No changes made. Data refreshes every 5 seconds. Credentials stored locally on this device only.</p>
@@ -798,7 +798,7 @@ async function connectToMactrack() {
   if (success) {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('main-app').style.display = 'block';
-    document.getElementById('header-id').textContent = vid || 'T909';
+    document.getElementById('header-id').textContent = vid || '—';
     startLiveUpdates();
   } else {
     btn.disabled = false;
