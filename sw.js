@@ -1,11 +1,10 @@
-const CACHE_NAME = 'asset-serial-v1';
+const CACHE_NAME = '_dm_sw_v1';
 const ASSETS = [
   './asset-serial.html',
   './manifest.json',
   'https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap'
 ];
 
-// Install: cache core assets
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
@@ -13,7 +12,6 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Activate: clean old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -23,7 +21,6 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch: network first, fallback to cache
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(event.request)

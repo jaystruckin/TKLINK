@@ -1,7 +1,7 @@
 {
-  "name": "Asset & Serial Number Lookup",
-  "short_name": "Asset Serial",
-  "description": "Asset and serial number lookup tool for fleet telematics devices",
+  "name": "Device Manager",
+  "short_name": "DeviceMgr",
+  "description": "Device management utility",
   "start_url": "./asset-serial.html",
   "display": "standalone",
   "orientation": "portrait",

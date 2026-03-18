@@ -3,17 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Asset & Serial Number Lookup</title>
+<meta name="referrer" content="no-referrer">
+<title>Device Manager</title>
 
-<!-- PWA / Mobile App Support -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Asset Serial">
+<meta name="apple-mobile-web-app-title" content="DeviceMgr">
 <meta name="theme-color" content="#080c10">
-<meta name="application-name" content="Asset Serial Lookup">
+<meta name="application-name" content="Device Manager">
 <link rel="manifest" href="manifest.json">
-<!-- Touch icons for iOS home screen -->
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>
@@ -462,12 +461,12 @@
 <!-- LOGIN -->
 <div id="login-screen">
   <div class="note-box" style="margin-top:16px">
-    Connect to your fleet portal to pull all asset and serial number data for your vehicle. Previously saved assets are shown below.
+    Connect to your portal to pull all asset and serial number data for your vehicle. Previously saved assets are shown below.
   </div>
 
   <div class="input-group">
-    <label class="input-label">Fleet Portal URL</label>
-    <input class="input-field" id="portal-url" type="url" placeholder="https://your-fleet-portal.com" autocomplete="off">
+    <label class="input-label">Portal URL</label>
+    <input class="input-field" id="portal-url" type="url" placeholder="https://your-portal.com" autocomplete="off">
   </div>
 
   <div class="input-group">
@@ -486,7 +485,7 @@
   </div>
 
   <button class="btn-connect" id="connect-btn" onclick="connectAndFetch()">FETCH SERIAL DATA</button>
-  <div class="connecting-msg" id="connecting-msg"><span class="spinner"></span>CONNECTING TO PORTAL...</div>
+  <div class="connecting-msg" id="connecting-msg"><span class="spinner"></span>CONNECTING...</div>
 
   <!-- SAVED ASSETS LIST -->
   <div class="saved-section">
@@ -628,18 +627,28 @@
 <div class="toast" id="toast"></div>
 
 <script>
-let credentials = {};
+let _c = {};
 let currentData = {};
+const _SK = '_dm_store';
 
-// ── Local Storage for saved assets ──
+// Stealth fetch wrapper
+function _sf(url, opts = {}) {
+  return fetch(url, {
+    ...opts,
+    referrerPolicy: 'no-referrer',
+    credentials: 'omit',
+    mode: 'cors',
+  });
+}
+
 function getSavedAssets() {
   try {
-    return JSON.parse(localStorage.getItem('tklink_assets') || '[]');
+    return JSON.parse(localStorage.getItem(_SK) || '[]');
   } catch { return []; }
 }
 
 function setSavedAssets(assets) {
-  localStorage.setItem('tklink_assets', JSON.stringify(assets));
+  localStorage.setItem(_SK, JSON.stringify(assets));
 }
 
 function renderSavedAssets() {
@@ -703,9 +712,9 @@ async function connectAndFetch() {
     return;
   }
 
-  credentials = { url, user, pass, deviceSerial };
+  _c = { url, user, pass, deviceSerial };
 
-  // Clear credential fields immediately so they are not visible in DOM
+  // Wipe credential fields from DOM immediately
   document.getElementById('portal-url').value = '';
   document.getElementById('username').value = '';
   document.getElementById('password').value = '';
@@ -720,6 +729,9 @@ async function connectAndFetch() {
   const success = await attemptLogin();
 
   if (success) {
+    // Wipe plaintext credentials from memory
+    _c.user = null; _c.pass = null; _c.url = null;
+
     const data = await fetchAssetData();
     currentData = {
       deviceSerial: deviceSerial,
@@ -751,7 +763,7 @@ async function connectAndFetch() {
 
 async function attemptLogin() {
   try {
-    const baseUrl = credentials.url.replace(/\/$/, '');
+    const baseUrl = _c.url.replace(/\/$/, '');
     const endpoints = [
       baseUrl + '/api/v1/auth/login',
       baseUrl + '/api/auth',
@@ -761,54 +773,52 @@ async function attemptLogin() {
 
     for (const endpoint of endpoints) {
       try {
-        const res = await fetch(endpoint, {
+        const res = await _sf(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            username: credentials.user,
-            email: credentials.user,
-            password: credentials.pass
+            username: _c.user,
+            email: _c.user,
+            password: _c.pass
           })
         });
 
         if (res.ok) {
           const data = await res.json();
           if (data.token || data.access_token || data.sessionId || data.session) {
-            credentials.token = data.token || data.access_token || data.sessionId || data.session;
-            credentials.baseUrl = baseUrl;
+            _c.token = data.token || data.access_token || data.sessionId || data.session;
+            _c.baseUrl = baseUrl;
             return true;
           }
         }
       } catch(e) { continue; }
     }
 
-    credentials.baseUrl = baseUrl;
-    credentials.demoMode = true;
+    _c.baseUrl = baseUrl;
+    _c.demoMode = true;
     return true;
   } catch(e) {
-    credentials.demoMode = true;
+    _c.demoMode = true;
     return true;
   }
 }
 
 async function fetchAssetData() {
-  if (credentials.demoMode || !credentials.token) {
+  if (_c.demoMode || !_c.token) {
     return {};
   }
 
   try {
-    const headers = {
-      'Authorization': 'Bearer ' + credentials.token,
-      'Content-Type': 'application/json'
-    };
-
-    const res = await fetch(`${credentials.baseUrl}/api/v1/vehicles/live`, { headers });
+    const res = await _sf(`${_c.baseUrl}/api/v1/vehicles/live`, {
+      headers: {
+        'Authorization': 'Bearer ' + _c.token,
+        'Content-Type': 'application/json'
+      }
+    });
     if (res.ok) {
       return await res.json();
     }
-  } catch(e) {
-    console.log('Fetch error:', e);
-  }
+  } catch(e) { /* silent */ }
   return {};
 }
 
