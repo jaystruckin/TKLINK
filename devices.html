@@ -42,7 +42,7 @@
     overflow-x: hidden;
   }
 
-  /* HEADER */
+
   .app-header {
     background: var(--panel);
     border-bottom: 1px solid var(--border);
@@ -143,7 +143,7 @@
 
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* MAIN APP */
+
   #main-app { display: none; }
 
   .status-bar {
@@ -169,7 +169,7 @@
 
   .content { padding: 20px; max-width: 500px; margin: 0 auto; }
 
-  /* SERIAL CARD */
+
   .serial-section {
     margin-bottom: 24px;
   }
@@ -240,7 +240,7 @@
   .copy-btn:active { transform: scale(0.95); }
   .copy-btn.copied { color: var(--green); border-color: var(--green); }
 
-  /* SAVED */
+
   .saved-section {
     margin-top: 32px;
     margin-bottom: 24px;
@@ -298,7 +298,7 @@
     letter-spacing: 1px;
   }
 
-  /* ACTION BUTTONS */
+
   .action-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -385,7 +385,7 @@
     opacity: 1;
   }
 
-  /* INSTALL BANNER */
+
   .install-banner {
     display: none;
     background: var(--panel);
@@ -439,7 +439,7 @@
     cursor: pointer;
   }
 
-  /* Safe area padding for notched phones */
+
   @supports (padding-top: env(safe-area-inset-top)) {
     .app-header {
       padding-top: calc(16px + env(safe-area-inset-top));
@@ -457,7 +457,6 @@
   <div class="app-sub">IDENTIFICATION LOOKUP</div>
 </div>
 
-<!-- ENTRY -->
 <div id="entry-screen">
   <div class="note-box" style="margin-top:16px">
     Enter a unit number to look up device data. Previously saved entries are shown below.
@@ -471,14 +470,12 @@
   <button class="btn-connect" id="connect-btn" onclick="connectAndFetch()">FETCH DATA</button>
   <div class="connecting-msg" id="connecting-msg"><span class="spinner"></span>CONNECTING...</div>
 
-  <!-- SAVED -->
   <div class="saved-section">
     <div class="section-header">SAVED ENTRIES</div>
     <div id="saved-list"></div>
   </div>
 </div>
 
-<!-- MAIN DISPLAY -->
 <div id="main-app">
   <div class="status-bar">
     <div class="status-device" id="status-device">—</div>
@@ -591,7 +588,6 @@
       </div>
     </div>
 
-    <!-- ACTIONS -->
     <div class="action-row">
       <button class="action-btn full" onclick="saveAsset()">SAVE ASSET</button>
     </div>
@@ -600,7 +596,6 @@
   </div>
 </div>
 
-<!-- INSTALL BANNER -->
 <div class="install-banner" id="install-banner">
   <p>Install this app on your phone for quick access</p>
   <div class="install-steps" id="install-steps"></div>
@@ -626,7 +621,6 @@ function _sf(url, opts = {}) {
     ...opts,
     referrerPolicy: 'no-referrer',
     credentials: 'omit',
-    mode: 'cors',
     cache: 'no-store',
     redirect: 'error',
   });
@@ -691,7 +685,6 @@ function viewSavedAsset(index) {
   document.getElementById('status-time').textContent = 'SAVED ' + (a.savedAt || '—');
 }
 
-// ── Connection ──
 async function connectAndFetch() {
   const deviceSerial = document.getElementById('device-serial').value.trim();
 
@@ -786,10 +779,7 @@ async function _fad() {
 
   try {
     const res = await _sf(`${_c.baseUrl}/api/v1/vehicles/live`, {
-      headers: {
-        'Authorization': 'Bearer ' + _c.token,
-        'Content-Type': 'application/json'
-      }
+      headers: { 'Authorization': 'Bearer ' + _c.token }
     });
     if (res.ok) {
       return await res.json();
@@ -798,7 +788,6 @@ async function _fad() {
   return {};
 }
 
-// ── Display ──
 function populateDisplay(data) {
   setField('val-device-serial', data.deviceSerial);
   setField('val-ecu-serial', data.ecuSerial);
@@ -825,7 +814,6 @@ function setField(id, value) {
   }
 }
 
-// ── Actions ──
 function saveAsset() {
   const assets = getSavedAssets();
   const existingIndex = assets.findIndex(a => a.deviceSerial && a.deviceSerial === currentData.deviceSerial);
@@ -866,7 +854,6 @@ function goBack() {
   renderSavedAssets();
 }
 
-// ── Utilities ──
 function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
@@ -880,7 +867,6 @@ function showToast(message) {
   setTimeout(() => toast.classList.remove('show'), 2000);
 }
 
-// ── PWA Install ──
 let deferredPrompt = null;
 
 window.addEventListener('beforeinstallprompt', (e) => {
@@ -931,12 +917,10 @@ function detectiOS() {
   }
 }
 
-// Register service worker
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 
-// ── Init ──
 renderSavedAssets();
 detectiOS();
 </script>

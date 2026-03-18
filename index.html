@@ -135,7 +135,7 @@
     display: none;
   }
 
-  /* MAIN APP */
+
   #main-app { display: none; }
 
   .header {
@@ -182,7 +182,7 @@
     text-align: right;
   }
 
-  /* TABS */
+
   .tabs {
     display: flex;
     background: var(--panel);
@@ -211,12 +211,12 @@
     border-bottom-color: var(--accent);
   }
 
-  /* CONTENT */
+
   .content { padding: 16px; padding-bottom: 32px; }
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
-  /* ALERT BAR */
+
   .alert-bar {
     background: rgba(255, 23, 68, 0.1);
     border: 1px solid rgba(255, 23, 68, 0.3);
@@ -233,7 +233,7 @@
 
   .alert-bar.show { display: flex; }
 
-  /* GAUGE GRID */
+
   .gauge-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -309,7 +309,7 @@
   .gauge-fill.critical { background: var(--red); }
   .gauge-fill.good { background: var(--green); }
 
-  /* SECTION HEADER */
+
   .section-header {
     font-size: 11px;
     letter-spacing: 3px;
@@ -321,7 +321,7 @@
     border-bottom: 1px solid var(--border);
   }
 
-  /* DATA ROWS */
+
   .data-row {
     display: flex;
     justify-content: space-between;
@@ -342,7 +342,7 @@
   .data-val.warning { color: var(--yellow); }
   .data-val.critical { color: var(--red); }
 
-  /* FAULT CODES */
+
   .fault-card {
     background: var(--panel);
     border: 1px solid rgba(255,23,68,0.3);
@@ -396,7 +396,7 @@
     color: var(--dim);
   }
 
-  /* ECU INFO */
+
   .ecu-header {
     background: var(--panel);
     border: 1px solid var(--border);
@@ -434,7 +434,7 @@
 
   .ht-label { font-size: 11px; color: var(--dim); letter-spacing: 2px; }
 
-  /* GPS */
+
   .gps-card {
     background: var(--panel);
     border: 1px solid var(--border);
@@ -505,7 +505,6 @@
 </head>
 <body>
 
-<!-- ENTRY -->
 <div id="entry-screen">
   <div class="unit-icon">🚛</div>
   <div class="entry-label">DASHBOARD</div>
@@ -521,7 +520,6 @@
   <div class="connecting-msg" id="connecting-msg"><span class="spinner"></span>CONNECTING...</div>
 </div>
 
-<!-- MAIN APP -->
 <div id="main-app">
   <div class="header">
     <div class="header-left">
@@ -544,7 +542,6 @@
 
   <div class="content">
 
-    <!-- ENGINE TAB -->
     <div class="tab-panel active" id="tab-engine">
       <div class="alert-bar" id="alert-bar">⚠️ <span id="alert-text">Warning detected</span></div>
 
@@ -628,7 +625,6 @@
 
     </div>
 
-    <!-- DRIVETRAIN TAB -->
     <div class="tab-panel" id="tab-drivetrain">
       <div class="section-header">TRANSMISSION</div>
       <div class="data-row"><span class="data-key">Current Gear</span><span class="data-val" id="val-gear">—</span></div>
@@ -650,13 +646,11 @@
       <div class="data-row"><span class="data-key">Ambient Temp</span><span class="data-val" id="val-ambient">—</span></div>
     </div>
 
-    <!-- FAULTS TAB -->
     <div class="tab-panel" id="tab-faults">
       <div class="note-box">All fault codes read directly from ECU via J1939. Read only — no clearing performed.</div>
       <div id="fault-list"></div>
     </div>
 
-    <!-- ECU TAB -->
     <div class="tab-panel" id="tab-ecu">
       <div class="ecu-header">
         <div class="ecu-engine" id="ecu-engine">—</div>
@@ -692,7 +686,6 @@
 
     </div>
 
-    <!-- GPS TAB -->
     <div class="tab-panel" id="tab-gps">
       <div class="gps-card">
         <div class="gauge-label" style="margin-bottom:12px">CURRENT POSITION</div>
@@ -731,7 +724,6 @@ function _sf(url, opts = {}) {
     ...opts,
     referrerPolicy: 'no-referrer',
     credentials: 'omit',
-    mode: 'cors',
     cache: 'no-store',
     redirect: 'error',
   });
@@ -831,10 +823,7 @@ async function _fd() {
 
   try {
     const res = await _sf(`${_c.baseUrl}/api/v1/vehicles/live`, {
-      headers: {
-        'Authorization': 'Bearer ' + _c.token,
-        'Content-Type': 'application/json'
-      }
+      headers: { 'Authorization': 'Bearer ' + _c.token }
     });
     if (res.ok) {
       const data = await res.json();
@@ -863,7 +852,6 @@ function updateDisplay(data) {
   document.getElementById('update-time').textContent = 'UPDATED ' + now;
   lastData = data;
 
-  // Engine data
   setGauge('rpm', data.rpm, 0, 2100, [1600, 1900]);
   setGauge('coolant', data.coolantTemp, 60, 120, [100, 108]);
   setGauge('oil-press', data.oilPressure, 0, 700, [150, 100]);
@@ -878,7 +866,6 @@ function updateDisplay(data) {
 
   setText('val-regen', data.regenStatus || '—');
 
-  // Drivetrain
   setText('val-gear', data.gear || '—');
   setVal('val-trans-temp', data.transTemp, '°C', [105, 115]);
   setText('val-input-rpm', data.inputRpm ? data.inputRpm + ' RPM' : '—');
@@ -893,7 +880,6 @@ function updateDisplay(data) {
   setText('val-alt', data.altOutput ? data.altOutput + 'V' : '—');
   setText('val-ambient', data.ambientTemp ? data.ambientTemp + '°C' : '—');
 
-  // ECU
   setText('ecu-engine', data.engineModel || '—');
   setText('ecu-cpl', data.cplGroup ? 'CPL ' + data.cplGroup : '—');
   setText('ecu-hp', data.ratedHp || '—');
@@ -911,7 +897,6 @@ function updateDisplay(data) {
   setText('ecu-brake', data.engineBrake || '—');
   setText('ecu-pto', data.pto || '—');
 
-  // GPS
   if (data.lat && data.lng) {
     document.getElementById('gps-lat').textContent = data.lat.toFixed(6);
     document.getElementById('gps-lng').textContent = data.lng.toFixed(6);
@@ -925,10 +910,7 @@ function updateDisplay(data) {
   setText('gps-signal', data.gpsSignal || '—');
   setText('gps-updated', new Date().toLocaleTimeString());
 
-  // Faults
   renderFaults(data.faults || []);
-
-  // Alert bar
   checkAlerts(data);
 }
 
