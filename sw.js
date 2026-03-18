@@ -1,8 +1,7 @@
 const CACHE_NAME = '_dm_sw_v1';
 const ASSETS = [
-  './asset-serial.html',
-  './manifest.json',
-  'https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap'
+  './devices.html',
+  './manifest.json'
 ];
 
 self.addEventListener('install', (event) => {

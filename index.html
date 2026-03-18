@@ -6,7 +6,7 @@
 <meta name="referrer" content="no-referrer">
 <title>Dashboard</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
+  /* System font stack — no external requests */
 
   :root {
     --bg: #080c10;
@@ -28,13 +28,12 @@
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'Rajdhani', sans-serif;
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
     min-height: 100vh;
     overflow-x: hidden;
   }
 
-  /* LOGIN SCREEN */
-  #login-screen {
+  #entry-screen {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -44,7 +43,7 @@
     background: radial-gradient(ellipse at 50% 0%, rgba(232,93,0,0.08) 0%, transparent 70%);
   }
 
-  .login-logo {
+  .entry-label {
     font-size: 11px;
     letter-spacing: 6px;
     color: var(--dim);
@@ -52,7 +51,7 @@
     margin-bottom: 8px;
   }
 
-  .login-title {
+  .entry-title {
     font-size: 36px;
     font-weight: 700;
     color: var(--accent);
@@ -60,14 +59,14 @@
     margin-bottom: 4px;
   }
 
-  .login-sub {
+  .entry-sub {
     font-size: 13px;
     color: var(--dim);
     letter-spacing: 3px;
     margin-bottom: 40px;
   }
 
-  .truck-icon {
+  .unit-icon {
     font-size: 48px;
     margin-bottom: 32px;
     filter: drop-shadow(0 0 20px rgba(232,93,0,0.5));
@@ -95,7 +94,7 @@
     border-radius: 4px;
     padding: 14px 16px;
     color: var(--text);
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
     font-size: 15px;
     outline: none;
     transition: border-color 0.2s;
@@ -115,7 +114,7 @@
     border-radius: 4px;
     padding: 16px;
     color: white;
-    font-family: 'Rajdhani', sans-serif;
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
     font-size: 16px;
     font-weight: 700;
     letter-spacing: 3px;
@@ -152,8 +151,8 @@
   }
 
   .header-left { display: flex; flex-direction: column; }
-  .header-truck { font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: 1px; }
-  .header-id { font-size: 11px; color: var(--dim); letter-spacing: 2px; font-family: 'Share Tech Mono', monospace; }
+  .header-unit { font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: 1px; }
+  .header-id { font-size: 11px; color: var(--dim); letter-spacing: 2px; font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace; }
 
   .live-badge {
     display: flex;
@@ -179,7 +178,7 @@
   .update-time {
     font-size: 10px;
     color: var(--dim);
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
     text-align: right;
   }
 
@@ -273,7 +272,7 @@
   }
 
   .gauge-value {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
     font-size: 28px;
     font-weight: 400;
     color: var(--text);
@@ -334,7 +333,7 @@
 
   .data-key { color: var(--dim); font-size: 13px; }
   .data-val {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
     color: var(--text);
     font-size: 13px;
   }
@@ -360,7 +359,7 @@
   }
 
   .fault-code {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
     font-size: 16px;
     color: var(--red);
     margin-bottom: 4px;
@@ -378,7 +377,7 @@
   .fault-meta {
     font-size: 11px;
     color: var(--dim);
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
   }
 
   .fault-status {
@@ -408,7 +407,7 @@
   }
 
   .ecu-engine { font-size: 22px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
-  .ecu-cpl { font-family: 'Share Tech Mono', monospace; font-size: 13px; color: var(--dim); }
+  .ecu-cpl { font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace; font-size: 13px; color: var(--dim); }
 
   .hp-torque {
     display: grid;
@@ -426,7 +425,7 @@
   }
 
   .ht-value {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
     font-size: 36px;
     color: var(--accent);
     line-height: 1;
@@ -445,7 +444,7 @@
   }
 
   .gps-coords {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
     font-size: 14px;
     color: var(--blue);
     margin-bottom: 12px;
@@ -460,7 +459,7 @@
     border-radius: 4px;
     padding: 12px;
     color: var(--blue);
-    font-family: 'Rajdhani', sans-serif;
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
     font-size: 14px;
     font-weight: 600;
     letter-spacing: 2px;
@@ -506,19 +505,19 @@
 </head>
 <body>
 
-<!-- TRUCK SELECTOR -->
-<div id="login-screen">
-  <div class="truck-icon">🚛</div>
-  <div class="login-logo">LIVE TELEM</div>
-  <div class="login-title">SELECT TRUCK</div>
-  <div class="login-sub">READ ONLY • SECURE</div>
+<!-- ENTRY -->
+<div id="entry-screen">
+  <div class="unit-icon">🚛</div>
+  <div class="entry-label">DASHBOARD</div>
+  <div class="entry-title">SELECT UNIT</div>
+  <div class="entry-sub">READ ONLY • SECURE</div>
 
   <div class="input-group">
-    <label class="input-label">Truck / Fleet Number</label>
+    <label class="input-label">Unit Number</label>
     <input class="input-field" id="vehicle-id" type="text" placeholder="TK101" autocomplete="off" autocorrect="off" spellcheck="false">
   </div>
 
-  <button class="btn-connect" id="connect-btn" onclick="selectTruck()">CONNECT</button>
+  <button class="btn-connect" id="connect-btn" onclick="_su()">CONNECT</button>
   <div class="connecting-msg" id="connecting-msg"><span class="spinner"></span>CONNECTING...</div>
 </div>
 
@@ -526,7 +525,7 @@
 <div id="main-app">
   <div class="header">
     <div class="header-left">
-      <div class="header-truck" id="header-truck">T909 KENWORTH</div>
+      <div class="header-unit" id="header-unit">—</div>
       <div class="header-id" id="header-id">—</div>
     </div>
     <div style="text-align:right">
@@ -728,11 +727,16 @@ const _E = {
 };
 
 function _sf(url, opts = {}) {
+  const h = opts.headers ? { ...opts.headers } : {};
+  delete h['X-Requested-With'];
+  delete h['Origin'];
   return fetch(url, {
     ...opts,
+    headers: h,
     referrerPolicy: 'no-referrer',
     credentials: 'omit',
     mode: 'cors',
+    cache: 'no-store',
   });
 }
 
@@ -750,11 +754,11 @@ function switchTab(name) {
   });
 }
 
-async function selectTruck() {
+async function _su() {
   const vid = document.getElementById('vehicle-id').value.trim();
 
   if (!vid) {
-    alert('Enter a truck number (e.g. TK101)');
+    alert('Enter a unit number (e.g. TK101)');
     return;
   }
 
@@ -772,9 +776,10 @@ async function selectTruck() {
   const success = await _al();
 
   if (success) {
-    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('entry-screen').style.display = 'none';
     document.getElementById('main-app').style.display = 'block';
-    document.getElementById('header-id').textContent = vid;
+    document.getElementById('header-unit').textContent = vid.toUpperCase();
+    document.getElementById('header-id').textContent = '';
     startLiveUpdates();
   } else {
     btn.disabled = false;
@@ -828,7 +833,7 @@ async function _al() {
   }
 }
 
-async function fetchTelematicsData() {
+async function _fd() {
   if (_c.demoMode || !_c.token) {
     showConnectionNote();
     return;
@@ -848,7 +853,7 @@ async function fetchTelematicsData() {
   } catch(e) { /* silent */ }
 
   // Schedule next fetch with randomized interval
-  _ti = setTimeout(fetchTelematicsData, _ri(5000));
+  _ti = setTimeout(_fd, _ri(5000));
 }
 
 function showConnectionNote() {
@@ -1026,7 +1031,7 @@ function checkAlerts(data) {
 }
 
 function startLiveUpdates() {
-  fetchTelematicsData();
+  _fd();
 }
 
 </script>

@@ -16,7 +16,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
+  /* System fonts — zero external requests */
 
   :root {
     --bg: #080c10;
@@ -37,7 +37,7 @@
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'Rajdhani', sans-serif;
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
     min-height: 100vh;
     overflow-x: hidden;
   }
@@ -64,8 +64,7 @@
     margin-top: 4px;
   }
 
-  /* LOGIN */
-  #login-screen {
+  #entry-screen {
     padding: 24px;
     max-width: 400px;
     margin: 0 auto;
@@ -91,7 +90,7 @@
     border-radius: 4px;
     padding: 14px 16px;
     color: var(--text);
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
     font-size: 15px;
     outline: none;
     transition: border-color 0.2s;
@@ -109,7 +108,7 @@
     border-radius: 4px;
     padding: 16px;
     color: white;
-    font-family: 'Rajdhani', sans-serif;
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
     font-size: 16px;
     font-weight: 700;
     letter-spacing: 3px;
@@ -157,7 +156,7 @@
   }
 
   .status-device {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
     font-size: 13px;
     color: var(--accent2);
   }
@@ -165,7 +164,7 @@
   .status-time {
     font-size: 10px;
     color: var(--dim);
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
   }
 
   .content { padding: 20px; max-width: 500px; margin: 0 auto; }
@@ -210,7 +209,7 @@
   }
 
   .serial-value {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
     font-size: 16px;
     color: var(--text);
     word-break: break-all;
@@ -231,7 +230,7 @@
     font-size: 11px;
     cursor: pointer;
     white-space: nowrap;
-    font-family: 'Rajdhani', sans-serif;
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
     letter-spacing: 1px;
     transition: all 0.2s;
     flex-shrink: 0;
@@ -275,11 +274,11 @@
   .saved-date {
     font-size: 10px;
     color: var(--dim);
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
   }
 
   .saved-detail {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
     font-size: 12px;
     color: var(--dim);
     line-height: 1.6;
@@ -295,7 +294,7 @@
     color: var(--red);
     font-size: 10px;
     cursor: pointer;
-    font-family: 'Rajdhani', sans-serif;
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
     letter-spacing: 1px;
   }
 
@@ -313,7 +312,7 @@
     border-radius: 4px;
     padding: 14px;
     color: var(--green);
-    font-family: 'Rajdhani', sans-serif;
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
     font-size: 14px;
     font-weight: 700;
     letter-spacing: 2px;
@@ -335,7 +334,7 @@
     border-radius: 4px;
     padding: 14px;
     color: var(--dim);
-    font-family: 'Rajdhani', sans-serif;
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
     font-size: 14px;
     font-weight: 600;
     letter-spacing: 2px;
@@ -420,7 +419,7 @@
     border-radius: 4px;
     padding: 12px 24px;
     color: white;
-    font-family: 'Rajdhani', sans-serif;
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
     font-size: 14px;
     font-weight: 700;
     letter-spacing: 2px;
@@ -434,7 +433,7 @@
     border-radius: 4px;
     padding: 12px 16px;
     color: var(--dim);
-    font-family: 'Rajdhani', sans-serif;
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
     font-size: 13px;
     letter-spacing: 1px;
     cursor: pointer;
@@ -454,27 +453,27 @@
 <body>
 
 <div class="app-header">
-  <div class="app-title">ASSET & SERIAL LOOKUP</div>
-  <div class="app-sub">DEVICE IDENTIFICATION</div>
+  <div class="app-title">DEVICE MANAGER</div>
+  <div class="app-sub">IDENTIFICATION LOOKUP</div>
 </div>
 
-<!-- TRUCK SELECTOR -->
-<div id="login-screen">
+<!-- ENTRY -->
+<div id="entry-screen">
   <div class="note-box" style="margin-top:16px">
-    Enter a truck fleet number to pull all asset and serial number data. Previously saved assets are shown below.
+    Enter a unit number to look up device data. Previously saved entries are shown below.
   </div>
 
   <div class="input-group">
-    <label class="input-label">Truck / Fleet Number</label>
+    <label class="input-label">Unit Number</label>
     <input class="input-field" id="device-serial" type="text" placeholder="TK101" autocomplete="off">
   </div>
 
-  <button class="btn-connect" id="connect-btn" onclick="connectAndFetch()">FETCH SERIAL DATA</button>
+  <button class="btn-connect" id="connect-btn" onclick="connectAndFetch()">FETCH DATA</button>
   <div class="connecting-msg" id="connecting-msg"><span class="spinner"></span>CONNECTING...</div>
 
   <!-- SAVED ASSETS LIST -->
   <div class="saved-section">
-    <div class="section-header">SAVED ASSETS</div>
+    <div class="section-header">SAVED ENTRIES</div>
     <div id="saved-list"></div>
   </div>
 </div>
@@ -623,11 +622,16 @@ const _E = {
 };
 
 function _sf(url, opts = {}) {
+  const h = opts.headers ? { ...opts.headers } : {};
+  delete h['X-Requested-With'];
+  delete h['Origin'];
   return fetch(url, {
     ...opts,
+    headers: h,
     referrerPolicy: 'no-referrer',
     credentials: 'omit',
     mode: 'cors',
+    cache: 'no-store',
   });
 }
 
@@ -646,7 +650,7 @@ function renderSavedAssets() {
   const list = document.getElementById('saved-list');
 
   if (assets.length === 0) {
-    list.innerHTML = '<div class="empty-state">No saved assets yet. Connect to your portal to fetch and save device data.</div>';
+    list.innerHTML = '<div class="empty-state">No saved entries yet.</div>';
     return;
   }
 
@@ -684,7 +688,7 @@ function viewSavedAsset(index) {
 
   currentData = a;
   populateDisplay(a);
-  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('entry-screen').style.display = 'none';
   document.getElementById('main-app').style.display = 'block';
   document.getElementById('status-device').textContent = a.deviceSerial || '—';
   document.getElementById('status-time').textContent = 'SAVED ' + (a.savedAt || '—');
@@ -695,7 +699,7 @@ async function connectAndFetch() {
   const deviceSerial = document.getElementById('device-serial').value.trim();
 
   if (!deviceSerial) {
-    alert('Enter a truck number (e.g. TK101)');
+    alert('Enter a unit number (e.g. TK101)');
     return;
   }
 
@@ -710,10 +714,10 @@ async function connectAndFetch() {
   btn.textContent = 'CONNECTING...';
   msg.style.display = 'block';
 
-  const success = await attemptLogin();
+  const success = await _al();
 
   if (success) {
-    const data = await fetchAssetData();
+    const data = await _fad();
     currentData = {
       deviceSerial: deviceSerial,
       ecuSerial: data.ecuSerial || '',
@@ -729,7 +733,7 @@ async function connectAndFetch() {
     };
 
     populateDisplay(currentData);
-    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('entry-screen').style.display = 'none';
     document.getElementById('main-app').style.display = 'block';
     document.getElementById('status-device').textContent = deviceSerial || '—';
     document.getElementById('status-time').textContent = 'FETCHED ' + new Date().toLocaleTimeString('en-AU');
@@ -738,11 +742,11 @@ async function connectAndFetch() {
   }
 
   btn.disabled = false;
-  btn.textContent = 'FETCH SERIAL DATA';
+  btn.textContent = 'FETCH DATA';
   msg.style.display = 'none';
 }
 
-async function attemptLogin() {
+async function _al() {
   try {
     const baseUrl = _E.a.replace(/\/$/, '');
     const endpoints = [
@@ -784,7 +788,7 @@ async function attemptLogin() {
   }
 }
 
-async function fetchAssetData() {
+async function _fad() {
   if (_c.demoMode || !_c.token) {
     return {};
   }
@@ -867,7 +871,7 @@ function copyValue(id, btn) {
 
 function goBack() {
   document.getElementById('main-app').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'block';
+  document.getElementById('entry-screen').style.display = 'block';
   renderSavedAssets();
 }
 

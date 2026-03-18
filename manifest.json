@@ -2,7 +2,7 @@
   "name": "Device Manager",
   "short_name": "DeviceMgr",
   "description": "Device management utility",
-  "start_url": "./asset-serial.html",
+  "start_url": "./devices.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#080c10",
