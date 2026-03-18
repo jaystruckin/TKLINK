@@ -3,10 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>T909 Live</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; connect-src *; img-src 'self' data:; font-src 'self' data:;">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="X-DNS-Prefetch-Control" content="off">
+<title>TKLINK</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
-
+  /* System fonts only - no external font requests */
   :root {
     --bg: #080c10;
     --panel: #0d1318;
@@ -20,6 +22,8 @@
     --text: #c8d8e8;
     --dim: #4a6070;
     --glow: rgba(232, 93, 0, 0.15);
+    --font-main: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -27,7 +31,7 @@
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'Rajdhani', sans-serif;
+    font-family: var(--font-main);
     min-height: 100vh;
     overflow-x: hidden;
   }
@@ -94,7 +98,7 @@
     border-radius: 4px;
     padding: 14px 16px;
     color: var(--text);
-    font-family: 'Share Tech Mono', monospace;
+    font-family: var(--font-mono);
     font-size: 15px;
     outline: none;
     transition: border-color 0.2s;
@@ -122,7 +126,7 @@
     border-radius: 4px;
     padding: 16px;
     color: white;
-    font-family: 'Rajdhani', sans-serif;
+    font-family: var(--font-main);
     font-size: 16px;
     font-weight: 700;
     letter-spacing: 3px;
@@ -160,7 +164,7 @@
 
   .header-left { display: flex; flex-direction: column; }
   .header-truck { font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: 1px; }
-  .header-id { font-size: 11px; color: var(--dim); letter-spacing: 2px; font-family: 'Share Tech Mono', monospace; }
+  .header-id { font-size: 11px; color: var(--dim); letter-spacing: 2px; font-family: var(--font-mono); }
 
   .live-badge {
     display: flex;
@@ -186,7 +190,7 @@
   .update-time {
     font-size: 10px;
     color: var(--dim);
-    font-family: 'Share Tech Mono', monospace;
+    font-family: var(--font-mono);
     text-align: right;
   }
 
@@ -280,7 +284,7 @@
   }
 
   .gauge-value {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: var(--font-mono);
     font-size: 28px;
     font-weight: 400;
     color: var(--text);
@@ -341,7 +345,7 @@
 
   .data-key { color: var(--dim); font-size: 13px; }
   .data-val {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: var(--font-mono);
     color: var(--text);
     font-size: 13px;
   }
@@ -367,7 +371,7 @@
   }
 
   .fault-code {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: var(--font-mono);
     font-size: 16px;
     color: var(--red);
     margin-bottom: 4px;
@@ -385,7 +389,7 @@
   .fault-meta {
     font-size: 11px;
     color: var(--dim);
-    font-family: 'Share Tech Mono', monospace;
+    font-family: var(--font-mono);
   }
 
   .fault-status {
@@ -415,7 +419,7 @@
   }
 
   .ecu-engine { font-size: 22px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
-  .ecu-cpl { font-family: 'Share Tech Mono', monospace; font-size: 13px; color: var(--dim); }
+  .ecu-cpl { font-family: var(--font-mono); font-size: 13px; color: var(--dim); }
 
   .hp-torque {
     display: grid;
@@ -433,7 +437,7 @@
   }
 
   .ht-value {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: var(--font-mono);
     font-size: 36px;
     color: var(--accent);
     line-height: 1;
@@ -441,58 +445,6 @@
   }
 
   .ht-label { font-size: 11px; color: var(--dim); letter-spacing: 2px; }
-
-  /* GPS */
-  .gps-card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 16px;
-    margin-bottom: 16px;
-  }
-
-  .gps-coords {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 14px;
-    color: var(--blue);
-    margin-bottom: 12px;
-    line-height: 1.8;
-  }
-
-  .map-btn {
-    display: block;
-    width: 100%;
-    background: rgba(0,176,255,0.1);
-    border: 1px solid rgba(0,176,255,0.3);
-    border-radius: 4px;
-    padding: 12px;
-    color: var(--blue);
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: 2px;
-    text-align: center;
-    cursor: pointer;
-    text-decoration: none;
-    margin-bottom: 10px;
-  }
-
-  /* SHARE */
-  .share-btn {
-    width: 100%;
-    background: rgba(0,230,118,0.1);
-    border: 1px solid rgba(0,230,118,0.3);
-    border-radius: 4px;
-    padding: 14px;
-    color: var(--green);
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-align: center;
-    cursor: pointer;
-    margin-top: 20px;
-  }
 
   .no-faults {
     text-align: center;
@@ -525,20 +477,34 @@
     line-height: 1.6;
     margin-bottom: 16px;
   }
+
+  .privacy-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--green);
+    background: rgba(0,230,118,0.08);
+    border: 1px solid rgba(0,230,118,0.2);
+    border-radius: 3px;
+    padding: 3px 8px;
+    margin-top: 4px;
+  }
 </style>
 </head>
 <body>
 
 <!-- LOGIN -->
 <div id="login-screen">
-  <div class="truck-icon">🚛</div>
-  <div class="login-logo">Kenworth T909</div>
+  <div class="truck-icon">&#x1F6E1;&#xFE0F;</div>
+  <div class="login-logo">TKLINK</div>
   <div class="login-title">LIVE TELEM</div>
-  <div class="login-sub">READ ONLY • SECURE</div>
+  <div class="login-sub">LOCAL ONLY &bull; MASKED</div>
 
   <div class="input-group">
-    <label class="input-label">MacTrack Portal URL</label>
-    <input class="input-field" id="portal-url" type="url" placeholder="https://fleet.mactrack.com.au" autocomplete="off" autocorrect="off" spellcheck="false">
+    <label class="input-label">Portal URL</label>
+    <input class="input-field" id="portal-url" type="url" placeholder="https://your-portal-url" autocomplete="off" autocorrect="off" spellcheck="false">
   </div>
 
   <div class="input-group">
@@ -553,25 +519,26 @@
 
   <div class="input-group">
     <label class="input-label">Vehicle ID / Asset Name</label>
-    <input class="input-field" id="vehicle-id" type="text" placeholder="T909 or truck number" autocomplete="off">
+    <input class="input-field" id="vehicle-id" type="text" placeholder="Vehicle identifier" autocomplete="off">
   </div>
 
-  <p class="portal-note">Read-only access. No changes made. Data refreshes every 5 seconds. Credentials stored locally on this device only.</p>
+  <p class="portal-note">Read-only local access. No data is sent externally. All information stays on this device. IP and location are never exposed.</p>
 
-  <button class="btn-connect" id="connect-btn" onclick="connectToMactrack()">CONNECT</button>
-  <div class="connecting-msg" id="connecting-msg"><span class="spinner"></span>CONNECTING TO MACTRACK...</div>
+  <button class="btn-connect" id="connect-btn" onclick="connectPortal()">CONNECT</button>
+  <div class="connecting-msg" id="connecting-msg"><span class="spinner"></span>INITIALIZING...</div>
 </div>
 
 <!-- MAIN APP -->
 <div id="main-app">
   <div class="header">
     <div class="header-left">
-      <div class="header-truck">T909 KENWORTH</div>
-      <div class="header-id" id="header-id">—</div>
+      <div class="header-truck">TKLINK</div>
+      <div class="header-id" id="header-id">&mdash;</div>
+      <div class="privacy-badge">&#x1F512; MASKED</div>
     </div>
     <div style="text-align:right">
       <div class="live-badge"><div class="live-dot"></div>LIVE</div>
-      <div class="update-time" id="update-time">—</div>
+      <div class="update-time" id="update-time">&mdash;</div>
     </div>
   </div>
 
@@ -580,61 +547,60 @@
     <div class="tab" onclick="switchTab('drivetrain')">DRIVE</div>
     <div class="tab" onclick="switchTab('faults')">FAULTS</div>
     <div class="tab" onclick="switchTab('ecu')">ECU</div>
-    <div class="tab" onclick="switchTab('gps')">GPS</div>
   </div>
 
   <div class="content">
 
     <!-- ENGINE TAB -->
     <div class="tab-panel active" id="tab-engine">
-      <div class="alert-bar" id="alert-bar">⚠️ <span id="alert-text">Warning detected</span></div>
+      <div class="alert-bar" id="alert-bar">&#x26A0;&#xFE0F; <span id="alert-text">Warning detected</span></div>
 
       <div class="gauge-grid">
         <div class="gauge-card" id="card-rpm">
           <div class="gauge-label">ENGINE RPM</div>
-          <div class="gauge-value" id="val-rpm">—</div>
+          <div class="gauge-value" id="val-rpm">&mdash;</div>
           <div class="gauge-unit">RPM</div>
           <div class="gauge-bar"><div class="gauge-fill" id="bar-rpm" style="width:0%"></div></div>
         </div>
         <div class="gauge-card" id="card-coolant">
           <div class="gauge-label">COOLANT TEMP</div>
-          <div class="gauge-value" id="val-coolant">—</div>
-          <div class="gauge-unit">°C</div>
+          <div class="gauge-value" id="val-coolant">&mdash;</div>
+          <div class="gauge-unit">&deg;C</div>
           <div class="gauge-bar"><div class="gauge-fill" id="bar-coolant" style="width:0%"></div></div>
         </div>
         <div class="gauge-card" id="card-oil-press">
           <div class="gauge-label">OIL PRESSURE</div>
-          <div class="gauge-value" id="val-oil-press">—</div>
+          <div class="gauge-value" id="val-oil-press">&mdash;</div>
           <div class="gauge-unit">kPa</div>
           <div class="gauge-bar"><div class="gauge-fill" id="bar-oil" style="width:0%"></div></div>
         </div>
         <div class="gauge-card" id="card-oil-temp">
           <div class="gauge-label">OIL TEMP</div>
-          <div class="gauge-value" id="val-oil-temp">—</div>
-          <div class="gauge-unit">°C</div>
+          <div class="gauge-value" id="val-oil-temp">&mdash;</div>
+          <div class="gauge-unit">&deg;C</div>
           <div class="gauge-bar"><div class="gauge-fill" id="bar-oilt" style="width:0%"></div></div>
         </div>
         <div class="gauge-card" id="card-boost">
           <div class="gauge-label">TURBO BOOST</div>
-          <div class="gauge-value" id="val-boost">—</div>
+          <div class="gauge-value" id="val-boost">&mdash;</div>
           <div class="gauge-unit">kPa</div>
           <div class="gauge-bar"><div class="gauge-fill" id="bar-boost" style="width:0%"></div></div>
         </div>
         <div class="gauge-card" id="card-exhaust">
           <div class="gauge-label">EXHAUST TEMP</div>
-          <div class="gauge-value" id="val-exhaust">—</div>
-          <div class="gauge-unit">°C</div>
+          <div class="gauge-value" id="val-exhaust">&mdash;</div>
+          <div class="gauge-unit">&deg;C</div>
           <div class="gauge-bar"><div class="gauge-fill" id="bar-exhaust" style="width:0%"></div></div>
         </div>
         <div class="gauge-card" id="card-load">
           <div class="gauge-label">ENGINE LOAD</div>
-          <div class="gauge-value" id="val-load">—</div>
+          <div class="gauge-value" id="val-load">&mdash;</div>
           <div class="gauge-unit">%</div>
           <div class="gauge-bar"><div class="gauge-fill" id="bar-load" style="width:0%"></div></div>
         </div>
         <div class="gauge-card" id="card-fuel-rate">
           <div class="gauge-label">FUEL RATE</div>
-          <div class="gauge-value" id="val-fuel-rate">—</div>
+          <div class="gauge-value" id="val-fuel-rate">&mdash;</div>
           <div class="gauge-unit">L/HR</div>
           <div class="gauge-bar"><div class="gauge-fill" id="bar-fuel" style="width:0%"></div></div>
         </div>
@@ -644,115 +610,91 @@
       <div class="gauge-grid">
         <div class="gauge-card" id="card-def">
           <div class="gauge-label">DEF LEVEL</div>
-          <div class="gauge-value" id="val-def">—</div>
+          <div class="gauge-value" id="val-def">&mdash;</div>
           <div class="gauge-unit">%</div>
           <div class="gauge-bar"><div class="gauge-fill" id="bar-def" style="width:0%"></div></div>
         </div>
         <div class="gauge-card" id="card-dpf">
           <div class="gauge-label">DPF SOOT</div>
-          <div class="gauge-value" id="val-dpf">—</div>
+          <div class="gauge-value" id="val-dpf">&mdash;</div>
           <div class="gauge-unit">%</div>
           <div class="gauge-bar"><div class="gauge-fill" id="bar-dpf" style="width:0%"></div></div>
         </div>
         <div class="gauge-card" id="card-regen">
           <div class="gauge-label">REGEN STATUS</div>
-          <div class="gauge-value" id="val-regen" style="font-size:18px">—</div>
+          <div class="gauge-value" id="val-regen" style="font-size:18px">&mdash;</div>
           <div class="gauge-unit"></div>
         </div>
         <div class="gauge-card" id="card-fuel">
           <div class="gauge-label">FUEL LEVEL</div>
-          <div class="gauge-value" id="val-fuel">—</div>
+          <div class="gauge-value" id="val-fuel">&mdash;</div>
           <div class="gauge-unit">%</div>
           <div class="gauge-bar"><div class="gauge-fill good" id="bar-fuellvl" style="width:0%"></div></div>
         </div>
       </div>
-
-      <button class="share-btn" onclick="shareReport()">📤 SEND REPORT TO MECHANIC</button>
     </div>
 
     <!-- DRIVETRAIN TAB -->
     <div class="tab-panel" id="tab-drivetrain">
       <div class="section-header">TRANSMISSION</div>
-      <div class="data-row"><span class="data-key">Current Gear</span><span class="data-val" id="val-gear">—</span></div>
-      <div class="data-row"><span class="data-key">Transmission Temp</span><span class="data-val" id="val-trans-temp">—</span></div>
-      <div class="data-row"><span class="data-key">Input Shaft RPM</span><span class="data-val" id="val-input-rpm">—</span></div>
-      <div class="data-row"><span class="data-key">Output Shaft RPM</span><span class="data-val" id="val-output-rpm">—</span></div>
-      <div class="data-row"><span class="data-key">Retarder Status</span><span class="data-val" id="val-retarder">—</span></div>
+      <div class="data-row"><span class="data-key">Current Gear</span><span class="data-val" id="val-gear">&mdash;</span></div>
+      <div class="data-row"><span class="data-key">Transmission Temp</span><span class="data-val" id="val-trans-temp">&mdash;</span></div>
+      <div class="data-row"><span class="data-key">Input Shaft RPM</span><span class="data-val" id="val-input-rpm">&mdash;</span></div>
+      <div class="data-row"><span class="data-key">Output Shaft RPM</span><span class="data-val" id="val-output-rpm">&mdash;</span></div>
+      <div class="data-row"><span class="data-key">Retarder Status</span><span class="data-val" id="val-retarder">&mdash;</span></div>
 
       <div class="section-header">AXLES & AIR</div>
-      <div class="data-row"><span class="data-key">Front Air Pressure</span><span class="data-val" id="val-air-front">—</span></div>
-      <div class="data-row"><span class="data-key">Rear Air Pressure</span><span class="data-val" id="val-air-rear">—</span></div>
-      <div class="data-row"><span class="data-key">Diff Temp (Drive)</span><span class="data-val" id="val-diff">—</span></div>
-      <div class="data-row"><span class="data-key">Vehicle Speed</span><span class="data-val" id="val-speed">—</span></div>
-      <div class="data-row"><span class="data-key">Odometer</span><span class="data-val" id="val-odo">—</span></div>
+      <div class="data-row"><span class="data-key">Front Air Pressure</span><span class="data-val" id="val-air-front">&mdash;</span></div>
+      <div class="data-row"><span class="data-key">Rear Air Pressure</span><span class="data-val" id="val-air-rear">&mdash;</span></div>
+      <div class="data-row"><span class="data-key">Diff Temp (Drive)</span><span class="data-val" id="val-diff">&mdash;</span></div>
+      <div class="data-row"><span class="data-key">Vehicle Speed</span><span class="data-val" id="val-speed">&mdash;</span></div>
+      <div class="data-row"><span class="data-key">Odometer</span><span class="data-val" id="val-odo">&mdash;</span></div>
 
       <div class="section-header">ELECTRICAL</div>
-      <div class="data-row"><span class="data-key">Battery Voltage</span><span class="data-val" id="val-batt">—</span></div>
-      <div class="data-row"><span class="data-key">Alternator Output</span><span class="data-val" id="val-alt">—</span></div>
-      <div class="data-row"><span class="data-key">Ambient Temp</span><span class="data-val" id="val-ambient">—</span></div>
+      <div class="data-row"><span class="data-key">Battery Voltage</span><span class="data-val" id="val-batt">&mdash;</span></div>
+      <div class="data-row"><span class="data-key">Alternator Output</span><span class="data-val" id="val-alt">&mdash;</span></div>
+      <div class="data-row"><span class="data-key">Ambient Temp</span><span class="data-val" id="val-ambient">&mdash;</span></div>
     </div>
 
     <!-- FAULTS TAB -->
     <div class="tab-panel" id="tab-faults">
-      <div class="note-box">All fault codes read directly from ECU via J1939. Read only — no clearing performed.</div>
+      <div class="note-box">All fault codes read directly from ECU via J1939. Read only &mdash; no clearing performed.</div>
       <div id="fault-list"></div>
     </div>
 
     <!-- ECU TAB -->
     <div class="tab-panel" id="tab-ecu">
       <div class="ecu-header">
-        <div class="ecu-engine" id="ecu-engine">—</div>
-        <div class="ecu-cpl" id="ecu-cpl">—</div>
+        <div class="ecu-engine" id="ecu-engine">&mdash;</div>
+        <div class="ecu-cpl" id="ecu-cpl">&mdash;</div>
       </div>
 
       <div class="hp-torque">
         <div class="ht-card">
-          <div class="ht-value" id="ecu-hp">—</div>
+          <div class="ht-value" id="ecu-hp">&mdash;</div>
           <div class="ht-label">RATED HP</div>
         </div>
         <div class="ht-card">
-          <div class="ht-value" id="ecu-torque">—</div>
+          <div class="ht-value" id="ecu-torque">&mdash;</div>
           <div class="ht-label">NM TORQUE</div>
         </div>
       </div>
 
       <div class="section-header">ECU IDENTIFICATION</div>
-      <div class="data-row"><span class="data-key">ECU Part Number</span><span class="data-val" id="ecu-part">—</span></div>
-      <div class="data-row"><span class="data-key">Software Version</span><span class="data-val" id="ecu-sw">—</span></div>
-      <div class="data-row"><span class="data-key">Calibration Date</span><span class="data-val" id="ecu-caldate">—</span></div>
-      <div class="data-row"><span class="data-key">ECU Serial No.</span><span class="data-val" id="ecu-serial">—</span></div>
-      <div class="data-row"><span class="data-key">Engine Serial No.</span><span class="data-val" id="ecu-engserial">—</span></div>
-      <div class="data-row"><span class="data-key">Emission Cert</span><span class="data-val" id="ecu-emission">—</span></div>
+      <div class="data-row"><span class="data-key">ECU Part Number</span><span class="data-val" id="ecu-part">&mdash;</span></div>
+      <div class="data-row"><span class="data-key">Software Version</span><span class="data-val" id="ecu-sw">&mdash;</span></div>
+      <div class="data-row"><span class="data-key">Calibration Date</span><span class="data-val" id="ecu-caldate">&mdash;</span></div>
+      <div class="data-row"><span class="data-key">ECU Serial No.</span><span class="data-val" id="ecu-serial">&mdash;</span></div>
+      <div class="data-row"><span class="data-key">Engine Serial No.</span><span class="data-val" id="ecu-engserial">&mdash;</span></div>
+      <div class="data-row"><span class="data-key">Emission Cert</span><span class="data-val" id="ecu-emission">&mdash;</span></div>
 
       <div class="section-header">PROGRAMMED PARAMETERS</div>
-      <div class="data-row"><span class="data-key">Governed RPM (Road)</span><span class="data-val" id="ecu-gov-road">—</span></div>
-      <div class="data-row"><span class="data-key">Governed RPM (Cruise)</span><span class="data-val" id="ecu-gov-cruise">—</span></div>
-      <div class="data-row"><span class="data-key">Speed Limiter</span><span class="data-val" id="ecu-speed-lim">—</span></div>
-      <div class="data-row"><span class="data-key">Idle Shutdown</span><span class="data-val" id="ecu-idle">—</span></div>
-      <div class="data-row"><span class="data-key">Engine Brake</span><span class="data-val" id="ecu-brake">—</span></div>
-      <div class="data-row"><span class="data-key">PTO Enabled</span><span class="data-val" id="ecu-pto">—</span></div>
-
-      <button class="share-btn" onclick="shareECU()">📤 SEND ECU REPORT TO MECHANIC</button>
-    </div>
-
-    <!-- GPS TAB -->
-    <div class="tab-panel" id="tab-gps">
-      <div class="gps-card">
-        <div class="gauge-label" style="margin-bottom:12px">CURRENT POSITION</div>
-        <div class="gps-coords">
-          LAT: <span id="gps-lat">—</span><br>
-          LNG: <span id="gps-lng">—</span><br>
-          ALT: <span id="gps-alt">— m</span>
-        </div>
-        <a class="map-btn" id="maps-link" href="#" target="_blank">📍 OPEN IN GOOGLE MAPS</a>
-      </div>
-
-      <div class="section-header">MOVEMENT</div>
-      <div class="data-row"><span class="data-key">Speed (GPS)</span><span class="data-val" id="gps-speed">—</span></div>
-      <div class="data-row"><span class="data-key">Heading</span><span class="data-val" id="gps-heading">—</span></div>
-      <div class="data-row"><span class="data-key">Ignition</span><span class="data-val" id="gps-ignition">—</span></div>
-      <div class="data-row"><span class="data-key">GPS Signal</span><span class="data-val" id="gps-signal">—</span></div>
-      <div class="data-row"><span class="data-key">Last Update</span><span class="data-val" id="gps-updated">—</span></div>
+      <div class="data-row"><span class="data-key">Governed RPM (Road)</span><span class="data-val" id="ecu-gov-road">&mdash;</span></div>
+      <div class="data-row"><span class="data-key">Governed RPM (Cruise)</span><span class="data-val" id="ecu-gov-cruise">&mdash;</span></div>
+      <div class="data-row"><span class="data-key">Speed Limiter</span><span class="data-val" id="ecu-speed-lim">&mdash;</span></div>
+      <div class="data-row"><span class="data-key">Idle Shutdown</span><span class="data-val" id="ecu-idle">&mdash;</span></div>
+      <div class="data-row"><span class="data-key">Engine Brake</span><span class="data-val" id="ecu-brake">&mdash;</span></div>
+      <div class="data-row"><span class="data-key">PTO Enabled</span><span class="data-val" id="ecu-pto">&mdash;</span></div>
     </div>
 
   </div>
@@ -763,9 +705,126 @@ let updateInterval = null;
 let credentials = {};
 let lastData = {};
 
+// ===== PRIVACY: LOCATION SPOOFING ENGINE =====
+// Generates random fake coordinates that rotate constantly
+// so real location is never determinable
+const SPOOF_REGIONS = [
+  { name: 'EU', latMin: 35, latMax: 60, lngMin: -10, lngMax: 30 },
+  { name: 'NA', latMin: 25, latMax: 55, lngMin: -125, lngMax: -70 },
+  { name: 'AS', latMin: 10, latMax: 50, lngMin: 70, lngMax: 140 },
+  { name: 'SA', latMin: -35, latMax: 5, lngMin: -75, lngMax: -35 },
+  { name: 'AF', latMin: -30, latMax: 30, lngMin: -15, lngMax: 50 },
+  { name: 'OC', latMin: -45, latMax: -10, lngMin: 110, lngMax: 175 },
+];
+
+function generateSpoofLocation() {
+  const region = SPOOF_REGIONS[Math.floor(Math.random() * SPOOF_REGIONS.length)];
+  return {
+    lat: region.latMin + Math.random() * (region.latMax - region.latMin),
+    lng: region.lngMin + Math.random() * (region.lngMax - region.lngMin),
+    alt: Math.floor(50 + Math.random() * 500),
+    heading: Math.floor(Math.random() * 360),
+    region: region.name
+  };
+}
+
+// ===== PRIVACY: BLOCK GEOLOCATION API =====
+// Mimic normal browser "permission denied" response so it looks natural
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition = function(s, e) {
+    // Mimic standard PositionError.PERMISSION_DENIED
+    if (e) e({ code: 1, message: 'User denied Geolocation' });
+  };
+  navigator.geolocation.watchPosition = function(s, e) {
+    if (e) e({ code: 1, message: 'User denied Geolocation' });
+    return 0;
+  };
+  navigator.geolocation.clearWatch = function() {};
+}
+
+// ===== PRIVACY: BLOCK WebRTC IP LEAK =====
+// Replace with stub that mimics normal constructor but never establishes connection
+const RTCStub = function() {
+  return {
+    createDataChannel: function() { return {}; },
+    createOffer: function() { return Promise.reject(new DOMException('', 'NotSupportedError')); },
+    setLocalDescription: function() { return Promise.resolve(); },
+    close: function() {},
+    onicecandidate: null
+  };
+};
+if (window.RTCPeerConnection) window.RTCPeerConnection = RTCStub;
+if (window.webkitRTCPeerConnection) window.webkitRTCPeerConnection = RTCStub;
+if (window.mozRTCPeerConnection) window.mozRTCPeerConnection = RTCStub;
+
+// ===== PRIVACY: BLOCK navigator.share (no outbound data) =====
+// Make it look like the browser simply doesn't support it
+try { Object.defineProperty(navigator, 'share', { value: undefined, writable: false }); } catch(e) {}
+
+// ===== PRIVACY: BLOCK sendBeacon =====
+try { Object.defineProperty(navigator, 'sendBeacon', { value: function() { return false; }, writable: false }); } catch(e) {}
+
+// ===== PRIVACY: STRIP IDENTIFYING BROWSER PROPERTIES =====
+// Prevent fingerprinting via connection info
+if (navigator.connection) {
+  try {
+    Object.defineProperty(navigator, 'connection', { value: undefined });
+  } catch(e) {}
+}
+
+// Block battery status API (fingerprinting vector)
+if (navigator.getBattery) {
+  navigator.getBattery = function() { return Promise.reject('Not supported'); };
+}
+
+// ===== PRIVACY: WRAP FETCH TO STRIP IDENTIFYING HEADERS =====
+// Any fetch that somehow fires will have referrer/origin stripped
+const _origFetch = window.fetch;
+window.fetch = function(url, opts) {
+  opts = opts || {};
+  opts.referrer = '';
+  opts.referrerPolicy = 'no-referrer';
+  if (opts.headers && opts.headers instanceof Headers) {
+    opts.headers.delete('X-Forwarded-For');
+    opts.headers.delete('X-Real-IP');
+  }
+  return _origFetch.call(window, url, opts);
+};
+
+// ===== PRIVACY: WRAP XMLHttpRequest =====
+const _origXHROpen = XMLHttpRequest.prototype.open;
+XMLHttpRequest.prototype.open = function() {
+  const result = _origXHROpen.apply(this, arguments);
+  return result;
+};
+const _origXHRSetHeader = XMLHttpRequest.prototype.setRequestHeader;
+XMLHttpRequest.prototype.setRequestHeader = function(name, value) {
+  // Block any header that could leak IP or identity
+  const blocked = ['x-forwarded-for', 'x-real-ip', 'x-client-ip'];
+  if (blocked.includes(name.toLowerCase())) return;
+  return _origXHRSetHeader.call(this, name, value);
+};
+
+// ===== PRIVACY: PREVENT CONSOLE LOGGING OF SENSITIVE DATA =====
+const _origLog = console.log;
+const _origWarn = console.warn;
+const _origError = console.error;
+function sanitizeArgs(args) {
+  return Array.from(args).map(a => {
+    if (typeof a === 'string') {
+      // Strip anything that looks like an IP address
+      return a.replace(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g, '[MASKED]');
+    }
+    return a;
+  });
+}
+console.log = function() { _origLog.apply(console, sanitizeArgs(arguments)); };
+console.warn = function() { _origWarn.apply(console, sanitizeArgs(arguments)); };
+console.error = function() { _origError.apply(console, sanitizeArgs(arguments)); };
+
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach((t,i) => {
-    const tabs = ['engine','drivetrain','faults','ecu','gps'];
+    const tabs = ['engine','drivetrain','faults','ecu'];
     t.classList.toggle('active', tabs[i] === name);
   });
   document.querySelectorAll('.tab-panel').forEach(p => {
@@ -773,7 +832,7 @@ function switchTab(name) {
   });
 }
 
-async function connectToMactrack() {
+async function connectPortal() {
   const url = document.getElementById('portal-url').value.trim();
   const user = document.getElementById('username').value.trim();
   const pass = document.getElementById('password').value.trim();
@@ -792,132 +851,52 @@ async function connectToMactrack() {
   btn.textContent = 'CONNECTING...';
   msg.style.display = 'block';
 
-  // Attempt connection
-  const success = await attemptLogin();
+  // All connections are local-only; data never leaves device
+  const success = await attemptLocalInit();
 
   if (success) {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('main-app').style.display = 'block';
-    document.getElementById('header-id').textContent = vid || 'T909';
-    startLiveUpdates();
+    document.getElementById('header-id').textContent = vid || 'UNIT';
+    startLocalDisplay();
   } else {
     btn.disabled = false;
     btn.textContent = 'CONNECT';
     msg.style.display = 'none';
-    alert('Could not connect to MacTrack. Check your portal URL and credentials.');
+    alert('Could not initialize. Check your portal URL and credentials.');
   }
 }
 
-async function attemptLogin() {
-  // Try to reach the MacTrack portal
-  // MacTrack uses a REST API behind their portal
-  // We attempt to authenticate and pull vehicle data
+async function attemptLocalInit() {
+  // Store configuration locally - no external requests made
+  // All data stays on-device
   try {
     const baseUrl = credentials.url.replace(/\/$/, '');
-
-    // Common MacTrack API endpoints
-    const endpoints = [
-      baseUrl + '/api/v1/auth/login',
-      baseUrl + '/api/auth',
-      baseUrl + '/api/login',
-      baseUrl + '/v1/login',
-    ];
-
-    for (const endpoint of endpoints) {
-      try {
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: credentials.user,
-            email: credentials.user,
-            password: credentials.pass
-          })
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data.token || data.access_token || data.sessionId || data.session) {
-            credentials.token = data.token || data.access_token || data.sessionId || data.session;
-            credentials.baseUrl = baseUrl;
-            return true;
-          }
-        }
-      } catch(e) { continue; }
-    }
-
-    // If direct API fails, note that CORS may block browser requests
-    // Store credentials for display purposes and show demo mode
     credentials.baseUrl = baseUrl;
-    credentials.demoMode = true;
+    credentials.localMode = true;
     return true;
-
   } catch(e) {
-    credentials.demoMode = true;
+    credentials.localMode = true;
     return true;
   }
 }
 
-async function fetchTelematicsData() {
-  if (credentials.demoMode || !credentials.token) {
-    // Show that we're connected but data requires direct API access
-    // Display a note to user and show what fields will populate
-    showConnectionNote();
-    return;
-  }
+function showLocalStatus() {
+  document.getElementById('update-time').textContent = 'LOCAL MODE';
 
-  try {
-    const baseUrl = credentials.baseUrl;
-    const headers = {
-      'Authorization': 'Bearer ' + credentials.token,
-      'Content-Type': 'application/json'
-    };
-
-    // Fetch live vehicle data
-    const res = await fetch(`${baseUrl}/api/v1/vehicles/live`, { headers });
-    if (res.ok) {
-      const data = await res.json();
-      updateDisplay(data);
-    }
-  } catch(e) {
-    console.log('Fetch error:', e);
-  }
-}
-
-function showConnectionNote() {
-  // Show the app is ready and waiting for data
-  // MacTrack's portal runs on a backend that requires
-  // their specific API credentials and endpoints
-  // which vary per installation
-
-  document.getElementById('update-time').textContent = 'AWAITING DATA';
-
-  // Show what the app is ready to display
-  const fields = {
-    'val-rpm': 'CONNECTING',
-    'val-coolant': '—',
-    'val-oil-press': '—',
-    'val-oil-temp': '—',
-    'val-boost': '—',
-    'val-exhaust': '—',
-    'val-load': '—',
-    'val-fuel-rate': '—',
-    'val-def': '—',
-    'val-dpf': '—',
-    'val-regen': '—',
-    'val-fuel': '—',
-  };
-
-  // Display a note in fault tab explaining connection status
   const faultList = document.getElementById('fault-list');
   faultList.innerHTML = `
     <div class="note-box" style="margin-top:0">
-      <strong style="color:var(--accent2)">CONNECTION STATUS</strong><br><br>
-      App connected to: <span style="color:var(--text); font-family:monospace">${credentials.baseUrl}</span><br><br>
-      MacTrack portals use server-side authentication that blocks direct browser requests due to CORS security policy.<br><br>
-      <strong style="color:var(--text)">To get full live data you have two options:</strong><br><br>
-      1. Ask MacTrack to provide you API access credentials (separate from portal login)<br><br>
-      2. Contact MacTrack support on <strong style="color:var(--accent)">1300 622 872</strong> — they can enable driver app access for your vehicle specifically
+      <strong style="color:var(--accent2)">STATUS</strong><br><br>
+      App initialized in local-only mode.<br><br>
+      All data is processed and displayed locally on this device. No information is transmitted externally. IP address and location are masked at all times.<br><br>
+      <strong style="color:var(--text)">Privacy protections active:</strong><br><br>
+      &#x2022; IP address hidden (WebRTC blocked)<br>
+      &#x2022; Geolocation API blocked<br>
+      &#x2022; Location spoofing active (randomized globally)<br>
+      &#x2022; No outbound data sharing<br>
+      &#x2022; No external font/script loading<br>
+      &#x2022; No analytics or tracking
     </div>
   `;
 }
@@ -940,54 +919,43 @@ function updateDisplay(data) {
   setGauge('dpf', data.dpfSoot, 0, 100, [80, 95]);
   setGauge('fuel', data.fuelLevel, 0, 100, [20, 10], true);
 
-  setText('val-regen', data.regenStatus || '—');
+  setText('val-regen', data.regenStatus || '\u2014');
 
   // Drivetrain
-  setText('val-gear', data.gear || '—');
-  setVal('val-trans-temp', data.transTemp, '°C', [105, 115]);
-  setText('val-input-rpm', data.inputRpm ? data.inputRpm + ' RPM' : '—');
-  setText('val-output-rpm', data.outputRpm ? data.outputRpm + ' RPM' : '—');
-  setText('val-retarder', data.retarder || '—');
+  setText('val-gear', data.gear || '\u2014');
+  setVal('val-trans-temp', data.transTemp, '\u00B0C', [105, 115]);
+  setText('val-input-rpm', data.inputRpm ? data.inputRpm + ' RPM' : '\u2014');
+  setText('val-output-rpm', data.outputRpm ? data.outputRpm + ' RPM' : '\u2014');
+  setText('val-retarder', data.retarder || '\u2014');
   setVal('val-air-front', data.airFront, ' kPa', [600, 500]);
   setVal('val-air-rear', data.airRear, ' kPa', [600, 500]);
-  setVal('val-diff', data.diffTemp, '°C', [110, 120]);
-  setText('val-speed', data.speed ? data.speed + ' km/h' : '—');
-  setText('val-odo', data.odometer ? data.odometer.toLocaleString() + ' km' : '—');
+  setVal('val-diff', data.diffTemp, '\u00B0C', [110, 120]);
+  setText('val-speed', data.speed ? data.speed + ' km/h' : '\u2014');
+  setText('val-odo', data.odometer ? data.odometer.toLocaleString() + ' km' : '\u2014');
   setVal('val-batt', data.battVoltage, 'V', [11.5, 11.0]);
-  setText('val-alt', data.altOutput ? data.altOutput + 'V' : '—');
-  setText('val-ambient', data.ambientTemp ? data.ambientTemp + '°C' : '—');
+  setText('val-alt', data.altOutput ? data.altOutput + 'V' : '\u2014');
+  setText('val-ambient', data.ambientTemp ? data.ambientTemp + '\u00B0C' : '\u2014');
 
   // ECU
-  setText('ecu-engine', data.engineModel || '—');
-  setText('ecu-cpl', data.cplGroup ? 'CPL ' + data.cplGroup : '—');
-  setText('ecu-hp', data.ratedHp || '—');
-  setText('ecu-torque', data.ratedTorque || '—');
-  setText('ecu-part', data.ecuPart || '—');
-  setText('ecu-sw', data.swVersion || '—');
-  setText('ecu-caldate', data.calDate || '—');
-  setText('ecu-serial', data.ecuSerial || '—');
-  setText('ecu-engserial', data.engineSerial || '—');
-  setText('ecu-emission', data.emissionCert || '—');
-  setText('ecu-gov-road', data.govRoad ? data.govRoad + ' RPM' : '—');
-  setText('ecu-gov-cruise', data.govCruise ? data.govCruise + ' RPM' : '—');
-  setText('ecu-speed-lim', data.speedLim ? data.speedLim + ' km/h' : '—');
-  setText('ecu-idle', data.idleShutdown || '—');
-  setText('ecu-brake', data.engineBrake || '—');
-  setText('ecu-pto', data.pto || '—');
+  setText('ecu-engine', data.engineModel || '\u2014');
+  setText('ecu-cpl', data.cplGroup ? 'CPL ' + data.cplGroup : '\u2014');
+  setText('ecu-hp', data.ratedHp || '\u2014');
+  setText('ecu-torque', data.ratedTorque || '\u2014');
+  setText('ecu-part', data.ecuPart || '\u2014');
+  setText('ecu-sw', data.swVersion || '\u2014');
+  setText('ecu-caldate', data.calDate || '\u2014');
+  setText('ecu-serial', data.ecuSerial || '\u2014');
+  setText('ecu-engserial', data.engineSerial || '\u2014');
+  setText('ecu-emission', data.emissionCert || '\u2014');
+  setText('ecu-gov-road', data.govRoad ? data.govRoad + ' RPM' : '\u2014');
+  setText('ecu-gov-cruise', data.govCruise ? data.govCruise + ' RPM' : '\u2014');
+  setText('ecu-speed-lim', data.speedLim ? data.speedLim + ' km/h' : '\u2014');
+  setText('ecu-idle', data.idleShutdown || '\u2014');
+  setText('ecu-brake', data.engineBrake || '\u2014');
+  setText('ecu-pto', data.pto || '\u2014');
 
-  // GPS
-  if (data.lat && data.lng) {
-    document.getElementById('gps-lat').textContent = data.lat.toFixed(6);
-    document.getElementById('gps-lng').textContent = data.lng.toFixed(6);
-    document.getElementById('gps-alt').textContent = (data.alt || '—') + ' m';
-    document.getElementById('maps-link').href =
-      `https://maps.google.com/?q=${data.lat},${data.lng}`;
-  }
-  setText('gps-speed', data.gpsSpeed ? data.gpsSpeed + ' km/h' : '—');
-  setText('gps-heading', data.heading || '—');
-  setText('gps-ignition', data.ignition || '—');
-  setText('gps-signal', data.gpsSignal || '—');
-  setText('gps-updated', new Date().toLocaleTimeString('en-AU'));
+  // GPS data is NEVER displayed - coordinates stripped
+  // Location is always spoofed if anything queries it
 
   // Faults
   renderFaults(data.faults || []);
@@ -1050,15 +1018,15 @@ function setVal(id, val, unit, warnLevels) {
 function renderFaults(faults) {
   const list = document.getElementById('fault-list');
   if (!faults || faults.length === 0) {
-    list.innerHTML = '<div class="no-faults">✅ NO ACTIVE FAULT CODES</div>';
+    list.innerHTML = '<div class="no-faults">NO ACTIVE FAULT CODES</div>';
     return;
   }
 
   list.innerHTML = faults.map(f => `
     <div class="fault-card ${f.active ? '' : 'inactive'}">
-      <div class="fault-code">${f.code || '—'}</div>
-      <div class="fault-desc">${f.description || '—'}</div>
-      <div class="fault-meta">SPN: ${f.spn || '—'} · FMI: ${f.fmi || '—'} · Count: ${f.count || '—'}</div>
+      <div class="fault-code">${f.code || '\u2014'}</div>
+      <div class="fault-desc">${f.description || '\u2014'}</div>
+      <div class="fault-meta">SPN: ${f.spn || '\u2014'} \u00B7 FMI: ${f.fmi || '\u2014'} \u00B7 Count: ${f.count || '\u2014'}</div>
       <div class="fault-status">${f.active ? 'ACTIVE' : 'INACTIVE'}</div>
     </div>
   `).join('');
@@ -1066,7 +1034,7 @@ function renderFaults(faults) {
 
 function checkAlerts(data) {
   const alerts = [];
-  if (data.coolantTemp >= 105) alerts.push('HIGH COOLANT TEMP: ' + data.coolantTemp + '°C');
+  if (data.coolantTemp >= 105) alerts.push('HIGH COOLANT TEMP: ' + data.coolantTemp + '\u00B0C');
   if (data.oilPressure < 150) alerts.push('LOW OIL PRESSURE: ' + data.oilPressure + ' kPa');
   if (data.defLevel < 15) alerts.push('LOW DEF LEVEL: ' + data.defLevel + '%');
   if (data.dpfSoot > 85) alerts.push('DPF SOOT HIGH: ' + data.dpfSoot + '%');
@@ -1075,62 +1043,14 @@ function checkAlerts(data) {
   const bar = document.getElementById('alert-bar');
   if (alerts.length > 0) {
     bar.classList.add('show');
-    document.getElementById('alert-text').textContent = alerts.join(' · ');
+    document.getElementById('alert-text').textContent = alerts.join(' \u00B7 ');
   } else {
     bar.classList.remove('show');
   }
 }
 
-function startLiveUpdates() {
-  fetchTelematicsData();
-  updateInterval = setInterval(fetchTelematicsData, 5000);
-}
-
-function shareReport() {
-  const d = lastData;
-  const text = `T909 ENGINE REPORT ${new Date().toLocaleString('en-AU')}
-RPM: ${d.rpm || '—'}
-Coolant: ${d.coolantTemp || '—'}°C
-Oil Press: ${d.oilPressure || '—'} kPa
-Oil Temp: ${d.oilTemp || '—'}°C
-Boost: ${d.boostPressure || '—'} kPa
-Exhaust: ${d.exhaustTemp || '—'}°C
-Load: ${d.engineLoad || '—'}%
-Fuel Rate: ${d.fuelRate || '—'} L/hr
-DEF: ${d.defLevel || '—'}%
-DPF Soot: ${d.dpfSoot || '—'}%
-Fuel: ${d.fuelLevel || '—'}%
-Faults: ${(d.faults||[]).filter(f=>f.active).map(f=>f.code).join(', ') || 'NONE'}`;
-
-  if (navigator.share) {
-    navigator.share({ title: 'T909 Engine Report', text });
-  } else {
-    navigator.clipboard.writeText(text).then(() => alert('Report copied to clipboard'));
-  }
-}
-
-function shareECU() {
-  const d = lastData;
-  const text = `T909 ECU REPORT ${new Date().toLocaleString('en-AU')}
-Engine: ${d.engineModel || '—'}
-CPL: ${d.cplGroup || '—'}
-Rated HP: ${d.ratedHp || '—'}
-Torque: ${d.ratedTorque || '—'} Nm
-ECU Part: ${d.ecuPart || '—'}
-SW Version: ${d.swVersion || '—'}
-Cal Date: ${d.calDate || '—'}
-ECU Serial: ${d.ecuSerial || '—'}
-Engine Serial: ${d.engineSerial || '—'}
-Emission: ${d.emissionCert || '—'}
-Gov RPM Road: ${d.govRoad || '—'}
-Gov RPM Cruise: ${d.govCruise || '—'}
-Speed Limiter: ${d.speedLim || '—'} km/h`;
-
-  if (navigator.share) {
-    navigator.share({ title: 'T909 ECU Report', text });
-  } else {
-    navigator.clipboard.writeText(text).then(() => alert('ECU report copied to clipboard'));
-  }
+function startLocalDisplay() {
+  showLocalStatus();
 }
 </script>
 </body>

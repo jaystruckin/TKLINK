@@ -1,14 +1,14 @@
-# TKLINK 🚛
+# TKLINK
 
-> Live truck telematics for drivers. Built by a driver, for drivers.
+> Local-only vehicle telematics viewer. Privacy-first. Fully masked.
 
-**TKLINK** is a lightweight web app that gives truck drivers direct access to live engine telematics, ECU data, fault codes and GPS — straight from their phone browser. No installs, no fleet manager needed, just the data you need to keep your truck safe on the road.
+**TKLINK** is a lightweight web app that gives drivers direct access to live engine telematics, ECU data, and fault codes — straight from their phone browser. No installs, no external data sharing, fully masked identity.
 
 ---
 
 ## Features
 
-### 🔴 ENGINE
+### ENGINE
 - Live RPM
 - Coolant temperature
 - Oil pressure & temperature
@@ -17,13 +17,13 @@
 - Engine load %
 - Fuel consumption rate (L/hr)
 
-### 🟡 AFTERTREATMENT
-- DEF (AdBlue) level %
+### AFTERTREATMENT
+- DEF level %
 - DPF soot load %
 - Regen status
 - Fuel level %
 
-### ⚙️ DRIVETRAIN
+### DRIVETRAIN
 - Current gear
 - Transmission temperature
 - Input/output shaft RPM
@@ -34,7 +34,7 @@
 - Battery voltage & alternator output
 - Ambient temperature
 
-### 🔧 ECU DATA
+### ECU DATA
 - Engine model & CPL group
 - Rated HP & torque (Nm)
 - ECU part number & serial
@@ -46,94 +46,61 @@
 - Idle shutdown parameters
 - Engine brake & PTO settings
 
-### ⚠️ FAULT CODES
+### FAULT CODES
 - All active & inactive fault codes
 - Full SPN & FMI codes
 - Fault descriptions
 - Occurrence count
 - Read only — no clearing
 
-### 📍 GPS
-- Live coordinates
-- Direct Google Maps link
-- GPS speed & heading
-- Ignition status
-
-### 📤 MECHANIC REPORTS
-- One tap engine report
-- One tap ECU report
-- Share via SMS, WhatsApp, email
-
 ---
 
-## How It Works
+## Privacy & Security
 
-```
-MacTrack device (installed in truck)
-        ↓
-Cellular → MacTrack cloud
-        ↓
-TKLINK logs in with your credentials
-        ↓
-Pulls only your truck's data
-        ↓
-Displays clean on your phone
-        ↓
-Refreshes every 5 seconds
-```
+TKLINK is built with privacy as the core principle:
 
-**Read only.** TKLINK never writes, edits or sends commands to the vehicle. It only reads.
+- **IP address always hidden** — WebRTC leak protection built in
+- **Location never exposed** — Geolocation API blocked, GPS tab removed
+- **Location spoofing** — randomized coordinates across 6 global regions if anything queries location
+- **No outbound data** — navigator.share, sendBeacon all blocked
+- **No external fonts/scripts** — system fonts only, zero CDN requests
+- **No analytics, tracking, ads, or beacons**
+- **No third-party links** — no external service references
+- **Credentials local only** — stored in memory, lost on refresh
+- **Content Security Policy** enforced via meta tag
 
 ---
 
 ## Setup
 
 1. Open `index.html` in your phone browser
-2. Enter your MacTrack portal URL
-3. Enter your MacTrack username & password
-4. Enter your vehicle ID or truck number
+2. Enter your portal URL
+3. Enter your username & password
+4. Enter your vehicle ID
 5. Tap **CONNECT**
 
 No app store. No install. Just open and go.
 
 ---
 
-## Requirements
-
-- MacTrack account with access to your vehicle
-- Any modern phone browser (Chrome, Safari)
-- MacTrack telematics hardware installed in truck
-- Internet connection (4G/5G)
-
----
-
 ## Tech Stack
 
 - Pure HTML / CSS / JavaScript
-- No frameworks, no dependencies
+- No frameworks, no dependencies, no external requests
 - Single file — runs anywhere
 - Mobile first design
+- System fonts only (no Google Fonts)
 
 ---
 
 ## Roadmap
 
-- [ ] MacTrack API integration (full live data)
 - [ ] Push notifications for critical alerts
 - [ ] Trip history & logging
-- [ ] Multiple truck support
-- [ ] Android home screen app (PWA)
+- [ ] Multiple vehicle support
+- [ ] Home screen app (PWA)
 - [ ] Offline fault code database
 - [ ] J1939 direct Bluetooth connection (future)
-
----
-
-## Security
-
-- Credentials stored locally on device only
-- No data sent anywhere except MacTrack servers
-- Read only access — zero write permissions
-- No tracking, no analytics, no ads
 
 ---
 

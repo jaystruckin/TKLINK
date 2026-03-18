@@ -1,17 +1,16 @@
 # Contributing to TKLINK
 
-Thanks for your interest in contributing. This is an open project built for truck drivers.
+Thanks for your interest in contributing. This is an open project built for drivers.
 
 ---
 
 ## What We Need Help With
 
-- MacTrack API reverse engineering & endpoint mapping
-- Support for other telematics platforms (Teletrac, Samsara, Geotab etc.)
 - J1939 direct Bluetooth connection
 - PWA / offline support
-- Additional truck makes and models
 - Fault code database expansion
+- Privacy hardening and audit
+- Additional vehicle protocol support
 
 ---
 
@@ -28,18 +27,19 @@ Thanks for your interest in contributing. This is an open project built for truc
 
 ## Guidelines
 
-- Keep it simple — this runs on a phone in a truck cab
+- Keep it simple — this runs on a phone
 - No personal data in commits
 - Test on mobile before submitting
 - Read only — no features that write to vehicle systems
-- Anonymous by default — no user tracking
+- Privacy first — no external requests, no tracking, no analytics
+- Never expose IP address or location data
+- No third-party service names or links
 
 ---
 
 ## Reporting Issues
 
 Open a GitHub Issue with:
-- What truck/telematics platform you're using
 - What you expected to happen
 - What actually happened
 - Your phone/browser details
