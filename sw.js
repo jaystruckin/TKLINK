@@ -22,7 +22,6 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
-  // Only cache same-origin local assets — never cache remote API calls
   if (url.origin !== self.location.origin) return;
 
   event.respondWith(

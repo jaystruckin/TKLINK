@@ -17,7 +17,6 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>
-  /* System fonts — zero external requests */
 
   :root {
     --bg: #080c10;
@@ -241,7 +240,7 @@
   .copy-btn:active { transform: scale(0.95); }
   .copy-btn.copied { color: var(--green); border-color: var(--green); }
 
-  /* SAVED ASSETS */
+  /* SAVED */
   .saved-section {
     margin-top: 32px;
     margin-bottom: 24px;
@@ -472,7 +471,7 @@
   <button class="btn-connect" id="connect-btn" onclick="connectAndFetch()">FETCH DATA</button>
   <div class="connecting-msg" id="connecting-msg"><span class="spinner"></span>CONNECTING...</div>
 
-  <!-- SAVED ASSETS LIST -->
+  <!-- SAVED -->
   <div class="saved-section">
     <div class="section-header">SAVED ENTRIES</div>
     <div id="saved-list"></div>
@@ -623,16 +622,13 @@ const _E = {
 };
 
 function _sf(url, opts = {}) {
-  const h = opts.headers ? { ...opts.headers } : {};
-  delete h['X-Requested-With'];
-  delete h['Origin'];
   return fetch(url, {
     ...opts,
-    headers: h,
     referrerPolicy: 'no-referrer',
     credentials: 'omit',
     mode: 'cors',
     cache: 'no-store',
+    redirect: 'error',
   });
 }
 
@@ -706,7 +702,6 @@ async function connectAndFetch() {
 
   _c = { deviceSerial };
 
-  // Wipe input from DOM
   document.getElementById('device-serial').value = '';
 
   const btn = document.getElementById('connect-btn');
@@ -935,7 +930,6 @@ function dismissInstall() {
   sessionStorage.setItem('install_dismissed', '1');
 }
 
-// Detect iOS Safari and show install instructions
 function detectiOS() {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   const isStandalone = window.navigator.standalone === true;
