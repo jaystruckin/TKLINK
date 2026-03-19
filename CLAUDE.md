@@ -17,3 +17,4 @@
 ## General Rules
 - Do not modify, integrate, or connect anything to existing projects unless the user explicitly asks.
 - The creative-hub is a standalone tool available for future use across projects.
+- **Sync all commands/rules**: Any instruction the user gives — whether in Claude Code CLI or in GitHub — must be saved to BOTH places (CLAUDE.md in the repo AND Claude memory) so they always match.
