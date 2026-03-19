@@ -1,0 +1,14 @@
+{
+  "service": "adobe-lightroom",
+  "version": "1.0",
+  "status": "pending_evaluation",
+  "description": "Adobe Lightroom integration — under evaluation for value",
+  "capabilities": {
+    "photo_editing": true,
+    "presets": true,
+    "batch_processing": true,
+    "ai_enhancements": true,
+    "export_formats": ["jpg", "png", "tiff", "dng"]
+  },
+  "notes": "Evaluate if Lightroom API adds enough value vs Higgsfield image generation"
+}

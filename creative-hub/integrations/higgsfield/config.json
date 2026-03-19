@@ -1,0 +1,33 @@
+{
+  "service": "higgsfield-ai",
+  "version": "2.0",
+  "description": "Higgsfield AI integration for jaystruckin GitHub — cinematic video & image generation",
+  "api": {
+    "base_url": "https://cloud.higgsfield.ai/api/v2",
+    "auth_type": "key_secret",
+    "env_vars": {
+      "api_key": "HF_API_KEY",
+      "api_secret": "HF_API_SECRET"
+    }
+  },
+  "capabilities": {
+    "text_to_video": true,
+    "image_to_video": true,
+    "text_to_image": true,
+    "camera_controls": true,
+    "models": [
+      "sora-2",
+      "veo-3.1",
+      "kling-3.0",
+      "wan-2.5"
+    ],
+    "max_clip_length_seconds": 20,
+    "camera_movements": "50+ professional (dolly, crane, FPV drone, etc.)"
+  },
+  "output": {
+    "save_to": "../assets/videos",
+    "image_save_to": "../assets/images",
+    "auto_commit": true,
+    "naming": "{timestamp}_{prompt_slug}.{ext}"
+  }
+}

@@ -1,0 +1,86 @@
+name: Generate Creative Assets
+
+on:
+  workflow_dispatch:
+    inputs:
+      tool:
+        description: 'Which AI tool to use'
+        required: true
+        default: 'higgsfield'
+        type: choice
+        options:
+          - higgsfield
+          - capcut
+          - lightroom
+      type:
+        description: 'Asset type'
+        required: true
+        default: 'video'
+        type: choice
+        options:
+          - video
+          - image
+      prompt:
+        description: 'What to generate (describe your vision)'
+        required: true
+        type: string
+      model:
+        description: 'AI model (sora-2, veo-3.1, kling-3.0, wan-2.5)'
+        required: false
+        type: string
+      camera:
+        description: 'Camera movement for video (dolly_zoom, crane, fpv_drone)'
+        required: false
+        type: string
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # ── HIGGSFIELD ──
+      - name: Generate with Higgsfield AI
+        if: inputs.tool == 'higgsfield'
+        env:
+          HF_API_KEY: ${{ secrets.HF_API_KEY }}
+          HF_API_SECRET: ${{ secrets.HF_API_SECRET }}
+        run: |
+          cd creative-hub
+          python integrations/higgsfield/generate.py \
+            --type "${{ inputs.type }}" \
+            --prompt "${{ inputs.prompt }}" \
+            ${{ inputs.model && format('--model "{0}"', inputs.model) || '' }} \
+            ${{ inputs.camera && format('--camera "{0}"', inputs.camera) || '' }}
+
+      # ── CAPCUT (placeholder — coming soon) ──
+      - name: Generate with CapCut
+        if: inputs.tool == 'capcut'
+        run: echo "CapCut integration coming soon"
+
+      # ── LIGHTROOM (placeholder — coming soon) ──
+      - name: Process with Lightroom
+        if: inputs.tool == 'lightroom'
+        run: echo "Lightroom integration coming soon"
+
+      # ── AUTO-COMMIT ASSETS ──
+      - name: Commit generated assets
+        run: |
+          git config user.name "jaystruckin"
+          git config user.email "jaystruckin@users.noreply.github.com"
+          git add creative-hub/assets/
+          if git diff --staged --quiet; then
+            echo "No new assets to commit"
+          else
+            git commit -m "Add generated ${{ inputs.type }} via ${{ inputs.tool }}: ${{ inputs.prompt }}"
+            git push
+          fi

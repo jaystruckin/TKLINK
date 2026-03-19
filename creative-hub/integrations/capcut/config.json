@@ -1,0 +1,14 @@
+{
+  "service": "capcut",
+  "version": "1.0",
+  "status": "pending_integration",
+  "description": "CapCut video editing integration — coming soon",
+  "capabilities": {
+    "video_editing": true,
+    "templates": true,
+    "auto_captions": true,
+    "effects_library": true,
+    "export_formats": ["mp4", "mov", "gif"]
+  },
+  "notes": "Awaiting CapCut API access or automation setup"
+}
