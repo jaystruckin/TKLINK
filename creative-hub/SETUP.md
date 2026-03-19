@@ -1,55 +1,63 @@
 # Creative Hub — Setup Guide
 
 Your one-stop creative tools integration linked to jaystruckin GitHub.
+**No API keys needed** — uses your existing paid Higgsfield account.
 
 ---
 
 ## Higgsfield AI (ACTIVE)
 
 Cinematic AI video and image generation — 50+ camera movements, multiple AI models.
+Works with your existing paid account. No separate API billing.
 
-### Quick Setup (5 minutes)
+### How It Works (Zero Setup)
 
-1. **Get your API keys**
-   - Go to https://cloud.higgsfield.ai
-   - Sign up or log in
-   - Navigate to API settings
-   - Copy your **API Key** and **API Secret**
-
-2. **Add keys to GitHub**
-   - Go to https://github.com/jaystruckin/TKLINK/settings/secrets/actions
-   - Click "New repository secret"
-   - Add `HF_API_KEY` → paste your key
-   - Add `HF_API_SECRET` → paste your secret
-
-3. **Generate your first asset**
-   - Go to https://github.com/jaystruckin/TKLINK/actions/workflows/generate-assets.yml
-   - Click "Run workflow"
-   - Pick `higgsfield`, choose `video` or `image`
-   - Type your prompt (e.g. "cinematic truck on highway at golden hour")
-   - Hit "Run workflow"
-   - Your generated asset auto-commits to `creative-hub/assets/`
-
-### Run locally
-
-```bash
-export HF_API_KEY="your_key"
-export HF_API_SECRET="your_secret"
-
-# Generate a video
-python creative-hub/integrations/higgsfield/generate.py \
-  --type video \
-  --prompt "truck dashboard futuristic UI animation" \
-  --model sora-2 \
-  --camera dolly_zoom
-
-# Generate an image
-python creative-hub/integrations/higgsfield/generate.py \
-  --type image \
-  --prompt "TKLINK app logo concept dark theme"
+```
+You create in Higgsfield → Export → Upload to inbox → Auto-sorted & committed
 ```
 
-### Available Models
+That's it. No API keys, no secrets, no double billing.
+
+### Step-by-Step
+
+1. **Create your content in Higgsfield**
+   - Open the Higgsfield app (your paid account)
+   - Generate videos, images — whatever you need
+   - Use any model (Sora-2, Veo 3.1, Kling 3.0, Wan 2.5)
+   - Use any camera movement (dolly, crane, FPV drone, etc.)
+
+2. **Export/save to your device**
+   - Download or export the finished asset to your phone/computer
+
+3. **Upload to the inbox**
+
+   **From your phone (easiest):**
+   - Go to github.com/jaystruckin/TKLINK
+   - Navigate to `creative-hub/inbox/`
+   - Tap **"Add file"** → **"Upload files"**
+   - Pick your exported file(s)
+   - Tap **"Commit changes"** — done!
+
+   **From desktop:**
+   - Same steps, or just drag & drop files into the `creative-hub/inbox/` folder on GitHub.com
+
+4. **Sit back — automation handles the rest**
+   - GitHub Action detects the new files
+   - Auto-sorts by type: videos → `assets/videos/`, images → `assets/images/`
+   - Renames with timestamps for organization
+   - Cleans up the inbox
+   - Auto-commits everything
+
+### Supported File Types
+
+| Type | Extensions | Sorted To |
+|------|-----------|-----------|
+| Video | mp4, mov, avi, mkv, webm, m4v | `assets/videos/` |
+| Image | jpg, jpeg, png, gif, webp, svg, heic | `assets/images/` |
+| Design | psd, ai, fig, sketch, pdf, eps | `assets/designs/` |
+
+### Available Models (in Higgsfield app)
+
 | Model | Best For |
 |-------|----------|
 | sora-2 | Highest quality cinematic video |
@@ -58,6 +66,7 @@ python creative-hub/integrations/higgsfield/generate.py \
 | wan-2.5 | General purpose |
 
 ### Camera Movements (video only)
+
 dolly_zoom, crane, fpv_drone, orbit, push_in, pull_out, pan_left, pan_right, tilt_up, tilt_down, and 40+ more
 
 ---
@@ -79,23 +88,29 @@ Under evaluation — may not be needed if Higgsfield image generation covers the
 ## How It All Connects
 
 ```
-jaystruckin GitHub (you are here)
+Your Higgsfield Account (paid — you already have this)
+    │
+    │  create & export
+    ▼
+jaystruckin GitHub
     │
     ├── creative-hub/
-    │   ├── integrations/
-    │   │   ├── higgsfield/  ← ACTIVE — AI video & image generation
-    │   │   ├── capcut/      ← NEXT — video editing & effects
-    │   │   └── lightroom/   ← EVALUATING — photo processing
+    │   ├── inbox/              ← DROP FILES HERE (upload zone)
     │   │
-    │   ├── assets/
-    │   │   ├── videos/      ← generated videos land here
-    │   │   ├── images/      ← generated images land here
-    │   │   └── designs/     ← edited/processed assets
+    │   ├── assets/             ← auto-sorted by GitHub Action
+    │   │   ├── videos/         ← mp4, mov, webm, etc.
+    │   │   ├── images/         ← jpg, png, gif, webp, etc.
+    │   │   └── designs/        ← psd, pdf, ai, etc.
+    │   │
+    │   ├── integrations/
+    │   │   ├── higgsfield/     ← ACTIVE — config & organizer script
+    │   │   ├── capcut/         ← NEXT — video editing & effects
+    │   │   └── lightroom/      ← EVALUATING — photo processing
     │   │
     │   └── .github/workflows/
-    │       └── generate-assets.yml  ← one-click generation from GitHub
+    │       └── generate-assets.yml  ← auto-sort action (triggers on inbox upload)
     │
-    └── (your other projects — TKLINK, future repos, etc.)
+    └── TKLINK app (index.html)
 ```
 
-All tools feed into one GitHub account. One hub. Next level visuals.
+No API keys. No double billing. One hub. Your paid account does the creating, GitHub does the organizing.

@@ -1,40 +1,16 @@
-name: Generate Creative Assets
+name: Organize Creative Assets
 
+# Auto-triggers when files are dropped into creative-hub/inbox/
 on:
+  push:
+    paths:
+      - 'creative-hub/inbox/**'
+
+  # Can also be triggered manually
   workflow_dispatch:
-    inputs:
-      tool:
-        description: 'Which AI tool to use'
-        required: true
-        default: 'higgsfield'
-        type: choice
-        options:
-          - higgsfield
-          - capcut
-          - lightroom
-      type:
-        description: 'Asset type'
-        required: true
-        default: 'video'
-        type: choice
-        options:
-          - video
-          - image
-      prompt:
-        description: 'What to generate (describe your vision)'
-        required: true
-        type: string
-      model:
-        description: 'AI model (sora-2, veo-3.1, kling-3.0, wan-2.5)'
-        required: false
-        type: string
-      camera:
-        description: 'Camera movement for video (dolly_zoom, crane, fpv_drone)'
-        required: false
-        type: string
 
 jobs:
-  generate:
+  organize:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -43,44 +19,72 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      # ── HIGGSFIELD ──
-      - name: Generate with Higgsfield AI
-        if: inputs.tool == 'higgsfield'
-        env:
-          HF_API_KEY: ${{ secrets.HF_API_KEY }}
-          HF_API_SECRET: ${{ secrets.HF_API_SECRET }}
+      - name: Sort inbox assets
         run: |
-          cd creative-hub
-          python integrations/higgsfield/generate.py \
-            --type "${{ inputs.type }}" \
-            --prompt "${{ inputs.prompt }}" \
-            ${{ inputs.model && format('--model "{0}"', inputs.model) || '' }} \
-            ${{ inputs.camera && format('--camera "{0}"', inputs.camera) || '' }}
+          INBOX="creative-hub/inbox"
+          VIDEOS="creative-hub/assets/videos"
+          IMAGES="creative-hub/assets/images"
+          DESIGNS="creative-hub/assets/designs"
 
-      # ── CAPCUT (placeholder — coming soon) ──
-      - name: Generate with CapCut
-        if: inputs.tool == 'capcut'
-        run: echo "CapCut integration coming soon"
+          mkdir -p "$VIDEOS" "$IMAGES" "$DESIGNS"
 
-      # ── LIGHTROOM (placeholder — coming soon) ──
-      - name: Process with Lightroom
-        if: inputs.tool == 'lightroom'
-        run: echo "Lightroom integration coming soon"
+          MOVED=0
 
-      # ── AUTO-COMMIT ASSETS ──
-      - name: Commit generated assets
+          for file in "$INBOX"/*; do
+            [ -f "$file" ] || continue
+
+            # Skip placeholder files
+            basename=$(basename "$file")
+            if [ "$basename" = ".gitkeep" ] || [ "$basename" = "DROP_FILES_HERE.md" ]; then
+              continue
+            fi
+
+            TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+            EXT="${basename##*.}"
+            NAME="${basename%.*}"
+            SAFE_NAME=$(echo "$NAME" | tr ' ' '_' | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9_-]//g')
+            NEW_NAME="${TIMESTAMP}_${SAFE_NAME}.${EXT}"
+
+            case "${EXT,,}" in
+              # Video formats
+              mp4|mov|avi|mkv|webm|m4v)
+                mv "$file" "$VIDEOS/$NEW_NAME"
+                echo "VIDEO: $basename → $VIDEOS/$NEW_NAME"
+                ;;
+              # Image formats
+              jpg|jpeg|png|gif|webp|svg|bmp|tiff|heic)
+                mv "$file" "$IMAGES/$NEW_NAME"
+                echo "IMAGE: $basename → $IMAGES/$NEW_NAME"
+                ;;
+              # Design / other files
+              psd|ai|fig|sketch|pdf|eps)
+                mv "$file" "$DESIGNS/$NEW_NAME"
+                echo "DESIGN: $basename → $DESIGNS/$NEW_NAME"
+                ;;
+              *)
+                mv "$file" "$IMAGES/$NEW_NAME"
+                echo "OTHER: $basename → $IMAGES/$NEW_NAME"
+                ;;
+            esac
+
+            MOVED=$((MOVED + 1))
+          done
+
+          if [ "$MOVED" -eq 0 ]; then
+            echo "No new files to organize."
+            exit 0
+          fi
+
+          echo "Organized $MOVED file(s) from inbox."
+
+      - name: Commit organized assets
         run: |
           git config user.name "jaystruckin"
           git config user.email "jaystruckin@users.noreply.github.com"
-          git add creative-hub/assets/
+          git add creative-hub/assets/ creative-hub/inbox/
           if git diff --staged --quiet; then
-            echo "No new assets to commit"
+            echo "Nothing to commit"
           else
-            git commit -m "Add generated ${{ inputs.type }} via ${{ inputs.tool }}: ${{ inputs.prompt }}"
+            git commit -m "Auto-organize: sort inbox assets into videos/images/designs"
             git push
           fi

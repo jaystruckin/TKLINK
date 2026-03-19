@@ -1,14 +1,14 @@
 {
   "service": "higgsfield-ai",
   "version": "2.0",
-  "description": "Higgsfield AI integration for jaystruckin GitHub — cinematic video & image generation",
-  "api": {
-    "base_url": "https://cloud.higgsfield.ai/api/v2",
-    "auth_type": "key_secret",
-    "env_vars": {
-      "api_key": "HF_API_KEY",
-      "api_secret": "HF_API_SECRET"
-    }
+  "description": "Higgsfield integration for jaystruckin GitHub — uses your existing paid account, no separate API billing",
+  "workflow": "direct-upload",
+  "how_it_works": {
+    "step_1": "Create videos/images in Higgsfield app (your paid account)",
+    "step_2": "Export/download to your device",
+    "step_3": "Upload to creative-hub/inbox/ on GitHub",
+    "step_4": "GitHub Action auto-sorts into assets/videos or assets/images",
+    "step_5": "Auto-commits — zero manual git work"
   },
   "capabilities": {
     "text_to_video": true,
@@ -25,9 +25,12 @@
     "camera_movements": "50+ professional (dolly, crane, FPV drone, etc.)"
   },
   "output": {
-    "save_to": "../assets/videos",
-    "image_save_to": "../assets/images",
+    "inbox": "creative-hub/inbox/",
+    "videos": "creative-hub/assets/videos/",
+    "images": "creative-hub/assets/images/",
+    "designs": "creative-hub/assets/designs/",
+    "auto_sort": true,
     "auto_commit": true,
-    "naming": "{timestamp}_{prompt_slug}.{ext}"
+    "naming": "{timestamp}_{original_name}.{ext}"
   }
 }
