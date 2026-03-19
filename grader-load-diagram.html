@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T409 + CAT 14M Grader Load Placement Diagram</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0e14;color:#c8d0dc;font-family:'Barlow Condensed',sans-serif;padding:20px;min-height:100vh}
+h1,h2,h3{font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:2px}
+h1{font-size:clamp(1.4rem,3vw,2.2rem);color:#f5a623;text-align:center;margin-bottom:4px}
+.subtitle{text-align:center;font-family:'Share Tech Mono',monospace;color:#6a7a8a;font-size:0.85rem;margin-bottom:24px}
+h2{font-size:1.3rem;color:#f5a623;margin:30px 0 14px;border-bottom:1px solid #1e2a38;padding-bottom:8px}
+.diagram-wrap{background:#0d1218;border:1px solid #1e2a38;border-radius:8px;padding:16px;overflow-x:auto;margin-bottom:20px}
+svg text{font-family:'Barlow Condensed',sans-serif}
+.mono{font-family:'Share Tech Mono',monospace}
+
+/* Pulsing markers */
+@keyframes pulseGreen{0%,100%{r:7;opacity:1}50%{r:12;opacity:.5}}
+@keyframes pulseRed{0%,100%{r:7;opacity:1}50%{r:12;opacity:.5}}
+.marker-a-pulse{animation:pulseGreen 1.5s ease-in-out infinite}
+.marker-b-pulse{animation:pulseRed 1.5s ease-in-out infinite}
+
+/* Weight table */
+.weight-table{width:100%;border-collapse:collapse;font-size:0.95rem;margin-bottom:10px}
+.weight-table th{background:#141c28;color:#f5a623;padding:10px 12px;text-align:left;font-weight:600;border-bottom:2px solid #f5a623}
+.weight-table td{padding:9px 12px;border-bottom:1px solid #1e2a38}
+.weight-table tr:hover td{background:#111923}
+.status-ok{color:#2ecc71;font-weight:700}
+.status-warn{color:#f5a623;font-weight:700}
+.status-check{color:#e84343;font-weight:700}
+
+/* Gauge */
+.gauge-section{display:flex;flex-wrap:wrap;gap:24px;align-items:center;justify-content:center;margin:20px 0}
+.gauge-container{position:relative;width:280px;height:280px}
+.gauge-label{text-align:center;font-family:'Share Tech Mono',monospace;color:#6a7a8a;font-size:.8rem;margin-top:6px}
+.sim-btn{background:linear-gradient(135deg,#f5a623,#e08d00);color:#0a0e14;border:none;padding:14px 28px;font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;border-radius:6px;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.sim-btn:hover{transform:scale(1.05);box-shadow:0 4px 20px rgba(245,166,35,.4)}
+.sim-btn:active{transform:scale(.97)}
+
+/* 360 walkthrough */
+.scene{width:320px;height:200px;perspective:800px;margin:0 auto 20px}
+.cube-wrap{width:100%;height:100%;position:relative;transform-style:preserve-3d;animation:orbit 16s linear infinite}
+@keyframes orbit{from{transform:rotateY(0deg)}to{transform:rotateY(360deg)}}
+.cube-face{position:absolute;width:320px;height:200px;display:flex;align-items:center;justify-content:center;text-align:center;padding:18px;font-size:.95rem;line-height:1.5;border:1px solid #1e2a38;border-radius:6px;backface-visibility:hidden;font-family:'Share Tech Mono',monospace}
+.face-front{background:rgba(13,18,24,.92);transform:translateZ(160px);color:#f5a623}
+.face-right{background:rgba(13,18,24,.92);transform:rotateY(90deg) translateZ(160px);color:#2ecc71}
+.face-back{background:rgba(13,18,24,.92);transform:rotateY(180deg) translateZ(160px);color:#e84343}
+.face-left{background:rgba(13,18,24,.92);transform:rotateY(-90deg) translateZ(160px);color:#ffcd11}
+.info-tag{display:inline-block;background:#141c28;border:1px solid #1e2a38;border-radius:4px;padding:3px 8px;font-family:'Share Tech Mono',monospace;font-size:.75rem;color:#6a7a8a;margin:4px 2px}
+
+@media(max-width:700px){
+  body{padding:10px}
+  .gauge-section{flex-direction:column}
+  .scene{width:240px;height:150px}
+  .cube-face{width:240px;height:150px;font-size:.8rem}
+  .face-front{transform:translateZ(120px)}
+  .face-right{transform:rotateY(90deg) translateZ(120px)}
+  .face-back{transform:rotateY(180deg) translateZ(120px)}
+  .face-left{transform:rotateY(-90deg) translateZ(120px)}
+}
+</style>
+</head>
+<body>
+
+<h1>T409 + CAT 14M Motor Grader — Load Placement Diagram</h1>
+<p class="subtitle">Western Australia · Heavy Haulage · Permit Load Configuration · DDR8</p>
+
+<!-- ===================== SIDE VIEW SVG ===================== -->
+<div class="diagram-wrap">
+<svg viewBox="0 0 1200 420" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;min-width:800px">
+<defs>
+  <linearGradient id="deckGrad" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#9a5018"/>
+    <stop offset="100%" stop-color="#6e3008"/>
+  </linearGradient>
+  <linearGradient id="cabGrad" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#f0f4fa"/>
+    <stop offset="100%" stop-color="#d8e0ec"/>
+  </linearGradient>
+  <linearGradient id="graderGrad" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#ffe04a"/>
+    <stop offset="100%" stop-color="#e8b800"/>
+  </linearGradient>
+  <filter id="shadow"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity=".3"/></filter>
+</defs>
+
+<!-- Ground line -->
+<line x1="20" y1="330" x2="1180" y2="330" stroke="#1e2a38" stroke-width="2"/>
+<text x="1170" y="345" fill="#3a4a5a" font-size="10" text-anchor="end" class="mono">GROUND LEVEL</text>
+
+<!-- ===== T409 PRIME MOVER ===== -->
+<g id="t409" filter="url(#shadow)">
+  <!-- Chassis rails -->
+  <rect x="60" y="260" width="230" height="8" rx="2" fill="#3a4050"/>
+
+  <!-- Cab body -->
+  <path d="M70,175 L70,260 L185,260 L185,175 Q185,155 170,150 L100,150 Q80,150 75,165 Z" fill="url(#cabGrad)" stroke="#b0b8c4" stroke-width="1"/>
+  <!-- Windshield -->
+  <path d="M78,168 L78,195 L100,195 L108,168 Z" fill="#4a7ab5" opacity=".6" stroke="#6a8aaa" stroke-width=".5"/>
+  <!-- Red KW stripe -->
+  <rect x="70" y="245" width="115" height="8" rx="2" fill="#cc0000"/>
+  <!-- KW badge -->
+  <text x="127" y="210" fill="#cc0000" font-size="11" font-weight="700" text-anchor="middle">KW</text>
+
+  <!-- Sleeper box -->
+  <rect x="185" y="165" width="50" height="95" rx="3" fill="#d0d8e4" stroke="#b0b8c4" stroke-width="1"/>
+
+  <!-- Exhaust stacks (twin chrome) -->
+  <rect x="192" y="120" width="6" height="50" rx="3" fill="#c0c8d0" stroke="#888" stroke-width=".5"/>
+  <rect x="204" y="125" width="6" height="45" rx="3" fill="#c0c8d0" stroke="#888" stroke-width=".5"/>
+  <!-- Exhaust caps -->
+  <ellipse cx="195" cy="120" rx="5" ry="2" fill="#a0a8b0"/>
+  <ellipse cx="207" cy="125" rx="5" ry="2" fill="#a0a8b0"/>
+
+  <!-- Fifth wheel -->
+  <path d="M250,258 Q260,248 270,258" stroke="#555" stroke-width="3" fill="none"/>
+  <rect x="245" y="258" width="30" height="5" rx="1" fill="#444"/>
+
+  <!-- Steer axle -->
+  <rect x="88" y="268" width="4" height="58" rx="1" fill="#333"/>
+  <!-- Steer wheel -->
+  <circle cx="90" cy="316" r="16" fill="#222" stroke="#444" stroke-width="1.5"/>
+  <circle cx="90" cy="316" r="11" fill="#3a3a3a"/>
+  <circle cx="90" cy="316" r="6" fill="#c0c8d0" stroke="#aaa" stroke-width="1"/>
+
+  <!-- Drive axle 1 -->
+  <rect x="228" y="268" width="4" height="58" rx="1" fill="#333"/>
+  <!-- Drive wheels (duals) -->
+  <circle cx="230" cy="318" r="16" fill="#222" stroke="#444" stroke-width="1.5"/>
+  <circle cx="230" cy="318" r="11" fill="#3a3a3a"/>
+  <circle cx="230" cy="318" r="6" fill="#c0c8d0" stroke="#aaa" stroke-width="1"/>
+
+  <!-- Drive axle 2 -->
+  <rect x="258" y="268" width="4" height="58" rx="1" fill="#333"/>
+  <circle cx="260" cy="318" r="16" fill="#222" stroke="#444" stroke-width="1.5"/>
+  <circle cx="260" cy="318" r="11" fill="#3a3a3a"/>
+  <circle cx="260" cy="318" r="6" fill="#c0c8d0" stroke="#aaa" stroke-width="1"/>
+</g>
+
+<!-- T409 Label -->
+<text x="170" y="145" fill="#8a9ab0" font-size="11" font-weight="600" text-anchor="middle" letter-spacing="2">KENWORTH T409</text>
+
+<!-- ===== LOW LOADER TRAILER ===== -->
+<g id="trailer" filter="url(#shadow)">
+  <!-- Gooseneck -->
+  <path d="M270,258 L310,258 L340,230 L380,230" stroke="#6e3008" stroke-width="6" fill="none"/>
+  <path d="M270,254 L310,254 L340,226 L380,226 L380,234 L340,234 L310,262 L270,262 Z" fill="url(#deckGrad)"/>
+
+  <!-- Main deck -->
+  <rect x="380" y="224" width="730" height="14" rx="2" fill="url(#deckGrad)" stroke="#5a2808" stroke-width=".5"/>
+
+  <!-- Headboard -->
+  <rect x="378" y="170" width="8" height="58" rx="2" fill="#8a5020" stroke="#6e3008" stroke-width="1"/>
+  <text x="382" y="165" fill="#6a7a8a" font-size="9" text-anchor="middle" class="mono">HEADBOARD</text>
+
+  <!-- Trailer chassis -->
+  <rect x="380" y="238" width="730" height="6" rx="1" fill="#4a3020"/>
+
+  <!-- Tri-axle bogie group (6 axles) -->
+  <g id="bogies">
+    <!-- Axle 1 -->
+    <rect x="988" y="244" width="3" height="52" rx="1" fill="#333"/>
+    <circle cx="990" cy="316" r="15" fill="#222" stroke="#444" stroke-width="1.5"/>
+    <circle cx="990" cy="316" r="10" fill="#3a3a3a"/>
+    <circle cx="990" cy="316" r="5.5" fill="#e8eef8" stroke="#ccc" stroke-width="1"/>
+    <!-- Axle 2 -->
+    <rect x="1018" y="244" width="3" height="52" rx="1" fill="#333"/>
+    <circle cx="1020" cy="316" r="15" fill="#222" stroke="#444" stroke-width="1.5"/>
+    <circle cx="1020" cy="316" r="10" fill="#3a3a3a"/>
+    <circle cx="1020" cy="316" r="5.5" fill="#e8eef8" stroke="#ccc" stroke-width="1"/>
+    <!-- Axle 3 -->
+    <rect x="1048" y="244" width="3" height="52" rx="1" fill="#333"/>
+    <circle cx="1050" cy="316" r="15" fill="#222" stroke="#444" stroke-width="1.5"/>
+    <circle cx="1050" cy="316" r="10" fill="#3a3a3a"/>
+    <circle cx="1050" cy="316" r="5.5" fill="#e8eef8" stroke="#ccc" stroke-width="1"/>
+    <!-- Axle 4 -->
+    <rect x="1058" y="244" width="3" height="52" rx="1" fill="#333"/>
+    <circle cx="1060" cy="316" r="15" fill="#222" stroke="#444" stroke-width="1.5"/>
+    <circle cx="1060" cy="316" r="10" fill="#3a3a3a"/>
+    <circle cx="1060" cy="316" r="5.5" fill="#e8eef8" stroke="#ccc" stroke-width="1"/>
+    <!-- Axle 5 -->
+    <rect x="1078" y="244" width="3" height="52" rx="1" fill="#333"/>
+    <circle cx="1080" cy="316" r="15" fill="#222" stroke="#444" stroke-width="1.5"/>
+    <circle cx="1080" cy="316" r="10" fill="#3a3a3a"/>
+    <circle cx="1080" cy="316" r="5.5" fill="#e8eef8" stroke="#ccc" stroke-width="1"/>
+    <!-- Axle 6 -->
+    <rect x="1098" y="244" width="3" height="52" rx="1" fill="#333"/>
+    <circle cx="1100" cy="316" r="15" fill="#222" stroke="#444" stroke-width="1.5"/>
+    <circle cx="1100" cy="316" r="10" fill="#3a3a3a"/>
+    <circle cx="1100" cy="316" r="5.5" fill="#e8eef8" stroke="#ccc" stroke-width="1"/>
+  </g>
+
+  <!-- Rego plate -->
+  <rect x="1095" y="240" width="38" height="14" rx="2" fill="#ffcd11" stroke="#333" stroke-width=".5"/>
+  <text x="1114" y="250" fill="#111" font-size="8" font-weight="700" text-anchor="middle" class="mono">DDR8</text>
+</g>
+
+<!-- ===== CAT 14M MOTOR GRADER ON DECK ===== -->
+<g id="grader" filter="url(#shadow)">
+  <!-- Grader body/frame -->
+  <rect x="400" y="185" width="680" height="36" rx="3" fill="url(#graderGrad)" stroke="#c8a000" stroke-width="1"/>
+
+  <!-- Engine block (at headboard/left) -->
+  <rect x="400" y="172" width="120" height="52" rx="4" fill="#e8b800" stroke="#b08800" stroke-width="1"/>
+  <rect x="410" y="178" width="40" height="16" rx="2" fill="#333" opacity=".3"/>
+  <text x="460" y="215" fill="#333" font-size="8" font-weight="700" text-anchor="middle" class="mono">ENGINE</text>
+
+  <!-- Counterweight -->
+  <rect x="395" y="180" width="20" height="40" rx="3" fill="#c89800" stroke="#a07800" stroke-width="1"/>
+
+  <!-- ROPS Cab -->
+  <rect x="540" y="150" width="60" height="40" rx="3" fill="#ffdd44" stroke="#c8a000" stroke-width="1"/>
+  <rect x="546" y="155" width="22" height="25" rx="2" fill="#4a7ab5" opacity=".5"/>
+  <rect x="572" y="155" width="22" height="25" rx="2" fill="#4a7ab5" opacity=".5"/>
+
+  <!-- Grader A-frame -->
+  <path d="M540,190 L620,190 L580,160" stroke="#c89800" stroke-width="2" fill="none"/>
+
+  <!-- Circle / turntable -->
+  <circle cx="700" cy="205" r="22" fill="none" stroke="#c89800" stroke-width="2"/>
+  <circle cx="700" cy="205" r="18" fill="#d8a800" opacity=".3"/>
+
+  <!-- Moldboard/Blade (at rear/right) -->
+  <rect x="1020" y="190" width="60" height="30" rx="2" fill="#888" stroke="#666" stroke-width="1"/>
+  <rect x="1025" y="195" width="50" height="5" rx="1" fill="#aaa"/>
+  <text x="1050" y="215" fill="#444" font-size="7" font-weight="700" text-anchor="middle" class="mono">BLADE</text>
+
+  <!-- Rear tandem tyres -->
+  <circle cx="430" cy="222" r="12" fill="#333" stroke="#555" stroke-width="1"/>
+  <circle cx="430" cy="222" r="7" fill="#444"/>
+  <circle cx="430" cy="222" r="3" fill="#888"/>
+  <circle cx="460" cy="222" r="12" fill="#333" stroke="#555" stroke-width="1"/>
+  <circle cx="460" cy="222" r="7" fill="#444"/>
+  <circle cx="460" cy="222" r="3" fill="#888"/>
+
+  <!-- Front steer tyre -->
+  <circle cx="1040" cy="222" r="10" fill="#333" stroke="#555" stroke-width="1"/>
+  <circle cx="1040" cy="222" r="6" fill="#444"/>
+  <circle cx="1040" cy="222" r="3" fill="#888"/>
+
+  <!-- CAT Label -->
+  <text x="650" y="208" fill="#333" font-size="14" font-weight="700" text-anchor="middle">CAT 14M</text>
+</g>
+
+<!-- ===== MARKER A — GREEN ===== -->
+<g id="markerA">
+  <circle cx="415" cy="175" r="7" fill="#2ecc71" class="marker-a-pulse"/>
+  <circle cx="415" cy="175" r="7" fill="#2ecc71" opacity=".3"/>
+  <line x1="415" y1="175" x2="415" y2="370" stroke="#2ecc71" stroke-width="1" stroke-dasharray="4,3" opacity=".6"/>
+  <rect x="340" y="370" width="260" height="18" rx="3" fill="#0d1218" stroke="#2ecc71" stroke-width="1"/>
+  <text x="345" y="383" fill="#2ecc71" font-size="10" font-weight="600" class="mono">A — FRONT WHEEL — 400mm FROM HEADBOARD · ~8,600 kg</text>
+</g>
+
+<!-- ===== MARKER B — RED ===== -->
+<g id="markerB">
+  <circle cx="960" cy="175" r="7" fill="#e84343" class="marker-b-pulse"/>
+  <circle cx="960" cy="175" r="7" fill="#e84343" opacity=".3"/>
+  <line x1="960" y1="175" x2="960" y2="395" stroke="#e84343" stroke-width="1" stroke-dasharray="4,3" opacity=".6"/>
+  <rect x="790" y="395" width="280" height="18" rx="3" fill="#0d1218" stroke="#e84343" stroke-width="1"/>
+  <text x="795" y="408" fill="#e84343" font-size="10" font-weight="600" class="mono">B — REAR TANDEM CENTRE — 10.0m FROM HDBD · ~12,900 kg</text>
+</g>
+
+<!-- ===== DIMENSION LINES ===== -->
+<!-- Grader wheelbase 9.6m -->
+<g opacity=".85">
+  <line x1="415" y1="140" x2="960" y2="140" stroke="#f5a623" stroke-width="1.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+  <line x1="415" y1="135" x2="415" y2="145" stroke="#f5a623" stroke-width="1"/>
+  <line x1="960" y1="135" x2="960" y2="145" stroke="#f5a623" stroke-width="1"/>
+  <rect x="640" y="131" width="90" height="16" rx="3" fill="#0a0e14"/>
+  <text x="685" y="143" fill="#f5a623" font-size="11" font-weight="600" text-anchor="middle" class="mono">9,600 mm</text>
+</g>
+
+<!-- T409 wheelbase 5,250mm -->
+<g opacity=".85">
+  <line x1="90" y1="350" x2="245" y2="350" stroke="#f5a623" stroke-width="1" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+  <line x1="90" y1="345" x2="90" y2="355" stroke="#f5a623" stroke-width="1"/>
+  <line x1="245" y1="345" x2="245" y2="355" stroke="#f5a623" stroke-width="1"/>
+  <rect x="130" y="341" width="75" height="16" rx="3" fill="#0a0e14"/>
+  <text x="167" y="353" fill="#f5a623" font-size="10" font-weight="600" text-anchor="middle" class="mono">5,250 mm</text>
+</g>
+
+<!-- Kingpin to bogie centre 8.5m -->
+<g opacity=".85">
+  <line x1="270" y1="120" x2="1045" y2="120" stroke="#f5a623" stroke-width="1" stroke-dasharray="6,3"/>
+  <line x1="270" y1="115" x2="270" y2="125" stroke="#f5a623" stroke-width="1"/>
+  <line x1="1045" y1="115" x2="1045" y2="125" stroke="#f5a623" stroke-width="1"/>
+  <rect x="610" y="111" width="120" height="16" rx="3" fill="#0a0e14"/>
+  <text x="670" y="123" fill="#f5a623" font-size="10" font-weight="600" text-anchor="middle" class="mono">KP→BOGIE 8,500 mm</text>
+</g>
+
+<!-- Arrow markers -->
+<defs>
+  <marker id="arrowL" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto">
+    <path d="M8,0 L0,3 L8,6" fill="#f5a623"/>
+  </marker>
+  <marker id="arrowR" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+    <path d="M0,0 L8,3 L0,6" fill="#f5a623"/>
+  </marker>
+</defs>
+
+</svg>
+</div>
+
+<!-- ===================== WEIGHT TABLE ===================== -->
+<h2>Axle Weight Distribution</h2>
+<div style="overflow-x:auto">
+<table class="weight-table">
+<thead>
+<tr>
+  <th>Axle Point</th>
+  <th>Current (420 kPa)</th>
+  <th>Target (650–750 kPa)</th>
+  <th>WA Limit</th>
+  <th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>T409 Steer Axle</td>
+  <td class="mono">~4,800 kg</td>
+  <td class="mono">~5,600 kg</td>
+  <td class="mono">6,000 kg</td>
+  <td class="status-ok">&#10003; OK</td>
+</tr>
+<tr>
+  <td>T409 Drive Axles (tandem)</td>
+  <td class="mono">~12,500 kg</td>
+  <td class="mono">~18,500 kg</td>
+  <td class="mono">20,900 kg rated</td>
+  <td class="status-warn">&#9888; Permit Required</td>
+</tr>
+<tr>
+  <td>Trailer Bogies (total)</td>
+  <td class="mono">~24,900 kg</td>
+  <td class="mono">~24,900 kg</td>
+  <td class="mono">Permit dependent</td>
+  <td class="status-check">&#9679; Check</td>
+</tr>
+<tr>
+  <td>Per Trailer Axle (&times;6)</td>
+  <td class="mono">~4,150 kg</td>
+  <td class="mono">~4,150 kg</td>
+  <td class="mono">8,200 kg</td>
+  <td class="status-ok">&#10003; OK</td>
+</tr>
+<tr>
+  <td><strong>GCM Total</strong></td>
+  <td class="mono"><strong>~57,500 kg</strong></td>
+  <td class="mono"><strong>~57,500 kg</strong></td>
+  <td class="mono"><strong>80,000 kg</strong></td>
+  <td class="status-ok">&#10003; OK</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<!-- ===================== GAUGE DIAL ===================== -->
+<h2>Airglide 460 — Drive Axle Pressure</h2>
+<div class="gauge-section">
+  <div>
+    <div class="gauge-container">
+      <canvas id="gaugeCanvas" width="280" height="280"></canvas>
+    </div>
+    <div class="gauge-label">AIRGLIDE 460 · DRIVE AXLE PRESSURE (kPa)</div>
+  </div>
+  <div style="text-align:center">
+    <button class="sim-btn" onclick="simulateShift()">Simulate Forward Shift</button>
+    <p style="margin-top:10px;font-family:'Share Tech Mono',monospace;font-size:.8rem;color:#6a7a8a">
+      420 kPa → 680 kPa target
+    </p>
+  </div>
+</div>
+
+<!-- ===================== 360° WALKTHROUGH ===================== -->
+<h2>360° Combination Walkthrough</h2>
+<div class="scene">
+  <div class="cube-wrap">
+    <div class="cube-face face-front">
+      <div>
+        <div style="font-size:1.2rem;font-weight:700;margin-bottom:8px">KENWORTH T409</div>
+        Cummins ISX 485hp<br>
+        GVM 26,500 kg · GCM 80,000 kg<br>
+        <span class="info-tag">WHITE CAB</span> <span class="info-tag">TANDEM DRIVE</span>
+      </div>
+    </div>
+    <div class="cube-face face-right">
+      <div>
+        <div style="font-size:1.2rem;font-weight:700;margin-bottom:8px">MARKER A</div>
+        Front wheel 400mm from headboard<br>
+        ~8,600 kg (40% front bias)<br>
+        <span class="info-tag">GRADER FRONT</span>
+      </div>
+    </div>
+    <div class="cube-face face-back">
+      <div>
+        <div style="font-size:1.2rem;font-weight:700;margin-bottom:8px">MARKER B</div>
+        Rear tandem over bogie centre<br>
+        ~12,900 kg (60% rear bias)<br>
+        <span class="info-tag">ENGINE END</span> <span class="info-tag">COUNTERWEIGHT</span>
+      </div>
+    </div>
+    <div class="cube-face face-left">
+      <div>
+        <div style="font-size:1.2rem;font-weight:700;margin-bottom:8px">CAT 14M GRADER</div>
+        14.0m · 21,500 kg<br>
+        Blade REAR · Engine FRONT<br>
+        <span class="info-tag">CATERPILLAR YELLOW</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p style="text-align:center;font-family:'Share Tech Mono',monospace;font-size:.7rem;color:#3a4a5a;margin-top:30px;padding-bottom:20px">
+  T409 + CAT 14M GRADER LOAD DIAGRAM · WA HEAVY HAULAGE · GENERATED 2026
+</p>
+
+<!-- ===================== GAUGE JS ===================== -->
+<script>
+(function(){
+  var canvas = document.getElementById('gaugeCanvas');
+  var ctx = canvas.getContext('2d');
+  var W = 280, H = 280, cx = W/2, cy = H/2 + 20, R = 110;
+  var currentKpa = 420, targetKpa = 420;
+  var animating = false;
+
+  function degToRad(d){ return d * Math.PI / 180; }
+  function kpaToAngle(kpa){ return -225 + (kpa / 1000) * 270; }
+
+  function drawGauge(kpa){
+    ctx.clearRect(0, 0, W, H);
+
+    // Outer ring
+    ctx.beginPath();
+    ctx.arc(cx, cy, R + 8, degToRad(-225), degToRad(45), false);
+    ctx.strokeStyle = '#1e2a38';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // Red zone (0-500)
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, degToRad(-225), degToRad(-225 + (500/1000)*270), false);
+    ctx.strokeStyle = 'rgba(232,67,67,0.3)';
+    ctx.lineWidth = 20;
+    ctx.stroke();
+
+    // Green zone (650-750)
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, degToRad(kpaToAngle(650)), degToRad(kpaToAngle(750)), false);
+    ctx.strokeStyle = 'rgba(46,204,113,0.4)';
+    ctx.lineWidth = 20;
+    ctx.stroke();
+
+    // Scale ticks and labels
+    for(var i = 0; i <= 1000; i += 100){
+      var ang = degToRad(kpaToAngle(i));
+      var inner = R - 25, outer = R - 10;
+      ctx.beginPath();
+      ctx.moveTo(cx + inner * Math.cos(ang), cy + inner * Math.sin(ang));
+      ctx.lineTo(cx + outer * Math.cos(ang), cy + outer * Math.sin(ang));
+      ctx.strokeStyle = '#6a7a8a';
+      ctx.lineWidth = i % 200 === 0 ? 2 : 1;
+      ctx.stroke();
+
+      if(i % 200 === 0){
+        var tx = cx + (R - 38) * Math.cos(ang);
+        var ty = cy + (R - 38) * Math.sin(ang);
+        ctx.fillStyle = '#8a9ab0';
+        ctx.font = '11px "Share Tech Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(i, tx, ty);
+      }
+    }
+
+    // Needle
+    var needleAng = degToRad(kpaToAngle(kpa));
+    var needleLen = R - 15;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + needleLen * Math.cos(needleAng), cy + needleLen * Math.sin(needleAng));
+    ctx.strokeStyle = kpa < 600 ? '#e84343' : '#2ecc71';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // Centre dot
+    ctx.beginPath();
+    ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#f5a623';
+    ctx.fill();
+
+    // Digital readout
+    ctx.fillStyle = kpa < 600 ? '#e84343' : '#2ecc71';
+    ctx.font = 'bold 28px "Barlow Condensed", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(Math.round(kpa) + ' kPa', cx, cy + 50);
+
+    // Status text
+    ctx.font = '12px "Share Tech Mono", monospace';
+    ctx.fillStyle = '#6a7a8a';
+    ctx.fillText(kpa < 600 ? 'UNDERLOADED' : 'TARGET ZONE', cx, cy + 68);
+  }
+
+  function animate(){
+    if(Math.abs(currentKpa - targetKpa) < 1){
+      currentKpa = targetKpa;
+      drawGauge(currentKpa);
+      animating = false;
+      return;
+    }
+    currentKpa += (targetKpa - currentKpa) * 0.04;
+    drawGauge(currentKpa);
+    requestAnimationFrame(animate);
+  }
+
+  window.simulateShift = function(){
+    if(animating) return;
+    if(targetKpa > 600){
+      targetKpa = 420;
+    } else {
+      targetKpa = 680;
+    }
+    animating = true;
+    animate();
+  };
+
+  drawGauge(currentKpa);
+})();
+</script>
+
+</body>
+</html>
