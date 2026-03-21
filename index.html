@@ -789,15 +789,30 @@ let updateInterval = null;
 let credentials = {};
 let lastData = {};
 
-function switchTab(name) {
+const validTabs = ['engine','drivetrain','faults','ecu','gps'];
+
+function switchTab(name, updateHash) {
+  if (!validTabs.includes(name)) name = 'engine';
   document.querySelectorAll('.tab').forEach((t,i) => {
-    const tabs = ['engine','drivetrain','faults','ecu','gps'];
-    t.classList.toggle('active', tabs[i] === name);
+    t.classList.toggle('active', validTabs[i] === name);
   });
   document.querySelectorAll('.tab-panel').forEach(p => {
     p.classList.toggle('active', p.id === 'tab-' + name);
   });
+  if (updateHash !== false) {
+    history.replaceState(null, '', '#' + name);
+  }
 }
+
+function getTabFromHash() {
+  const hash = location.hash.replace('#', '').toLowerCase();
+  return validTabs.includes(hash) ? hash : null;
+}
+
+window.addEventListener('hashchange', () => {
+  const tab = getTabFromHash();
+  if (tab) switchTab(tab, false);
+});
 
 async function connectToMactrack() {
   const url = document.getElementById('portal-url').value.trim();
@@ -825,6 +840,8 @@ async function connectToMactrack() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('main-app').style.display = 'block';
     document.getElementById('header-id').textContent = vid || 'T909';
+    const initialTab = getTabFromHash();
+    if (initialTab) switchTab(initialTab);
     startLiveUpdates();
   } else {
     btn.disabled = false;
