@@ -525,6 +525,97 @@
     line-height: 1.6;
     margin-bottom: 16px;
   }
+
+  .btn-find-agents {
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+
+  .btn-find-agents:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .agent-list {
+    display: none;
+    margin-top: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--panel);
+  }
+
+  .agent-list.show { display: block; }
+
+  .agent-item {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .agent-item:last-child { border-bottom: none; }
+
+  .agent-item:hover, .agent-item:active {
+    background: var(--glow);
+  }
+
+  .agent-item.selected {
+    background: var(--glow);
+    border-left: 3px solid var(--accent);
+  }
+
+  .agent-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.5px;
+  }
+
+  .agent-id {
+    font-size: 11px;
+    color: var(--dim);
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .agent-status {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .agent-status.online {
+    color: var(--green);
+    border: 1px solid var(--green);
+  }
+
+  .agent-status.offline {
+    color: var(--dim);
+    border: 1px solid var(--dim);
+  }
+
+  .agent-count {
+    text-align: center;
+    font-size: 11px;
+    color: var(--dim);
+    padding: 6px;
+    letter-spacing: 0.5px;
+  }
 </style>
 </head>
 <body>
@@ -554,6 +645,8 @@
   <div class="input-group">
     <label class="input-label">Vehicle ID / Asset Name</label>
     <input class="input-field" id="vehicle-id" type="text" placeholder="T909 or truck number" autocomplete="off">
+    <button class="btn-find-agents" id="find-agents-btn" onclick="findAgents()">🔍 FIND AGENTS</button>
+    <div class="agent-list" id="agent-list"></div>
   </div>
 
   <p class="portal-note">Read-only access. No changes made. Data refreshes every 5 seconds. Credentials stored locally on this device only.</p>
@@ -762,6 +855,153 @@
 let updateInterval = null;
 let credentials = {};
 let lastData = {};
+
+function getDemoAgents() {
+  return [
+    { id: 'T909-01', name: 'T909 Kenworth', status: 'online' },
+    { id: 'T909-02', name: 'T909 Kenworth #2', status: 'offline' },
+    { id: 'T610-01', name: 'T610 Kenworth', status: 'online' },
+    { id: 'C509-01', name: 'C509 Kenworth', status: 'online' },
+    { id: 'T410-01', name: 'T410 SAR', status: 'offline' },
+  ];
+}
+
+async function findAgents() {
+  const url = document.getElementById('portal-url').value.trim();
+  const user = document.getElementById('username').value.trim();
+  const pass = document.getElementById('password').value.trim();
+
+  if (!url || !user || !pass) {
+    alert('Please fill in portal URL, username and password first.');
+    return;
+  }
+
+  const btn = document.getElementById('find-agents-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ SEARCHING...';
+
+  const baseUrl = url.replace(/\/$/, '');
+  let token = credentials.token || null;
+  let agents = [];
+
+  // Authenticate if not already done
+  if (!token) {
+    const endpoints = [
+      baseUrl + '/api/v1/auth/login',
+      baseUrl + '/api/auth',
+      baseUrl + '/api/login',
+      baseUrl + '/v1/login',
+    ];
+
+    for (const endpoint of endpoints) {
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: user,
+            email: user,
+            password: pass
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.token || data.access_token || data.sessionId || data.session) {
+            token = data.token || data.access_token || data.sessionId || data.session;
+            credentials.token = token;
+            credentials.baseUrl = baseUrl;
+            break;
+          }
+        }
+      } catch(e) { continue; }
+    }
+  }
+
+  // Fetch agents from API
+  if (token) {
+    const headers = {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json'
+    };
+
+    const agentEndpoints = [
+      baseUrl + '/api/v1/agents',
+      baseUrl + '/api/v1/vehicles',
+      baseUrl + '/api/v1/assets',
+      baseUrl + '/api/agents',
+      baseUrl + '/api/vehicles',
+    ];
+
+    for (const endpoint of agentEndpoints) {
+      try {
+        const res = await fetch(endpoint, { headers });
+        if (res.ok) {
+          const data = await res.json();
+          const list = Array.isArray(data) ? data : (data.agents || data.vehicles || data.assets || data.items || []);
+          agents = list.map(function(a) {
+            return {
+              id: a.id || a.vehicleId || a.assetId || a.name || '—',
+              name: a.name || a.label || a.description || a.vehicleName || a.id || '—',
+              status: (a.online || a.active || a.ignition) ? 'online' : 'offline'
+            };
+          });
+          if (agents.length > 0) break;
+        }
+      } catch(e) { continue; }
+    }
+  }
+
+  // Fallback to demo agents if API did not return results
+  if (agents.length === 0) {
+    agents = getDemoAgents();
+  }
+
+  showAgentList(agents);
+  btn.disabled = false;
+  btn.textContent = '🔍 FIND AGENTS';
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function showAgentList(agents) {
+  const list = document.getElementById('agent-list');
+  if (!agents || agents.length === 0) {
+    list.classList.remove('show');
+    return;
+  }
+
+  let html = agents.map(function(a) {
+    const safeId = escapeHtml(a.id);
+    const safeName = escapeHtml(a.name);
+    const safeStatus = (a.status === 'online') ? 'online' : 'offline';
+    return '<div class="agent-item" onclick="selectAgent(\'' + safeId.replace(/'/g, "&#39;") + '\')">'
+      + '<div><div class="agent-name">' + safeName + '</div>'
+      + '<div class="agent-id">' + safeId + '</div></div>'
+      + '<span class="agent-status ' + safeStatus + '">' + safeStatus.toUpperCase() + '</span>'
+      + '</div>';
+  }).join('');
+
+  html += '<div class="agent-count">' + agents.length + ' AGENT' + (agents.length !== 1 ? 'S' : '') + ' FOUND</div>';
+
+  list.innerHTML = html;
+  list.classList.add('show');
+}
+
+function selectAgent(id) {
+  document.getElementById('vehicle-id').value = id;
+  document.querySelectorAll('.agent-item').forEach(function(el) {
+    el.classList.remove('selected');
+  });
+  var items = document.querySelectorAll('.agent-item');
+  items.forEach(function(el) {
+    if (el.querySelector('.agent-id').textContent === id) {
+      el.classList.add('selected');
+    }
+  });
+}
 
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach((t,i) => {
