@@ -2,8 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>T909 Live</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<title>TKLINK — Live Truck Telematics</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#080c10">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TKLINK">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
 
@@ -40,6 +48,7 @@
     align-items: center;
     justify-content: center;
     padding: 24px;
+    padding-bottom: 80px;
     background: radial-gradient(ellipse at 50% 0%, rgba(232,93,0,0.08) 0%, transparent 70%);
   }
 
@@ -550,6 +559,52 @@
     line-height: 1.6;
     margin-bottom: 16px;
   }
+
+  /* INSTALL BANNER */
+  .install-banner {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--panel);
+    border-top: 1px solid var(--accent);
+    padding: 14px 16px;
+    z-index: 200;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
+  }
+  .install-banner.show { display: flex; }
+  .install-banner-text {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.4;
+    flex: 1;
+  }
+  .install-banner-text strong { color: var(--accent); }
+  .btn-install {
+    background: var(--accent);
+    border: none;
+    border-radius: 4px;
+    padding: 10px 20px;
+    color: white;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .btn-dismiss {
+    background: none;
+    border: none;
+    color: var(--dim);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+  }
 </style>
 </head>
 <body>
@@ -782,6 +837,13 @@
     </div>
 
   </div>
+</div>
+
+<!-- INSTALL BANNER -->
+<div class="install-banner" id="install-banner">
+  <div class="install-banner-text"><strong>TKLINK</strong> — Add to home screen for instant access. No app store needed.</div>
+  <button class="btn-install" id="btn-install">INSTALL</button>
+  <button class="btn-dismiss" id="btn-dismiss">✕</button>
 </div>
 
 <script>
@@ -1248,6 +1310,38 @@ Speed Limiter: ${d.speedLim || '—'} km/h`;
     navigator.clipboard.writeText(text).then(() => alert('ECU report copied to clipboard'));
   }
 }
+
+// --- PWA: Service Worker Registration ---
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+
+// --- PWA: Install Prompt ---
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (!localStorage.getItem('tklink-install-dismissed')) {
+    document.getElementById('install-banner').classList.add('show');
+  }
+});
+
+document.getElementById('btn-install').addEventListener('click', () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => {
+      deferredPrompt = null;
+      document.getElementById('install-banner').classList.remove('show');
+    });
+  }
+});
+
+document.getElementById('btn-dismiss').addEventListener('click', () => {
+  document.getElementById('install-banner').classList.remove('show');
+  localStorage.setItem('tklink-install-dismissed', '1');
+});
 </script>
 </body>
 </html>
