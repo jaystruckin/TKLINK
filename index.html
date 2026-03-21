@@ -612,40 +612,33 @@
 <!-- LOGIN -->
 <div id="login-screen">
   <div class="truck-icon">🚛</div>
-  <div class="login-logo">Kenworth T909</div>
-  <div class="login-title">LIVE TELEM</div>
-  <div class="login-sub">READ ONLY • SECURE</div>
+  <div class="login-logo">TKLINK</div>
+  <div class="login-title">WORKSHOP LOGIN</div>
+  <div class="login-sub">MACTRACK TELEMATICS</div>
 
   <div class="input-group">
-    <label class="input-label">MacTrack Portal URL</label>
-    <input class="input-field" id="portal-url" type="url" placeholder="https://fleet.mactrack.com.au" autocomplete="off" autocorrect="off" spellcheck="false">
-  </div>
-
-  <div class="input-group">
-    <label class="input-label">Username / Email</label>
-    <input class="input-field" id="username" type="text" placeholder="your@email.com" autocomplete="off" autocorrect="off" spellcheck="false">
+    <label class="input-label">Email</label>
+    <input class="input-field" id="username" type="text" placeholder="workshop@email.com" autocomplete="email" spellcheck="false">
   </div>
 
   <div class="input-group">
     <label class="input-label">Password</label>
-    <input class="input-field" id="password" type="password" placeholder="••••••••" autocomplete="off">
+    <input class="input-field" id="password" type="password" placeholder="••••••••" autocomplete="current-password">
   </div>
 
   <div class="input-group">
-    <label class="input-label">Vehicle ID / Asset Name</label>
-    <input class="input-field" id="vehicle-id" type="text" placeholder="T909 or truck number" autocomplete="off">
+    <label class="input-label">Truck Number</label>
+    <input class="input-field" id="vehicle-id" type="text" placeholder="T909" autocomplete="off">
   </div>
 
-  <div class="input-group">
-    <label class="input-label">Proxy Server URL</label>
-    <input class="input-field" id="proxy-url" type="url" placeholder="https://your-proxy.onrender.com" autocomplete="off" autocorrect="off" spellcheck="false">
-  </div>
+  <p class="portal-note">Read-only access. Data refreshes every 5 seconds.</p>
 
-  <p class="portal-note">Read-only access. No changes made. Data refreshes every 5 seconds. Credentials stored locally on this device only. Proxy required for live data.</p>
-
-  <button class="btn-connect" id="connect-btn" onclick="connectToMactrack()">CONNECT</button>
-  <div class="connecting-msg" id="connecting-msg"><span class="spinner"></span>CONNECTING TO MACTRACK...</div>
+  <button class="btn-connect" id="connect-btn" onclick="connectToMactrack()">LOG IN</button>
+  <div class="connecting-msg" id="connecting-msg"><span class="spinner"></span>CONNECTING...</div>
   <div class="trial-link">No account? <a onclick="startTrialMode()">Try Demo</a></div>
+
+  <input type="hidden" id="portal-url" value="https://mactrack.telematics.guru">
+  <input type="hidden" id="proxy-url" value="">
 </div>
 
 <!-- MAIN APP -->
@@ -888,8 +881,8 @@ async function connectToMactrack() {
   const vid = document.getElementById('vehicle-id').value.trim();
   const proxy = document.getElementById('proxy-url').value.trim();
 
-  if (!url || !user || !pass) {
-    alert('Please fill in portal URL, username and password.');
+  if (!user || !pass) {
+    alert('Please enter your email and password.');
     return;
   }
 
