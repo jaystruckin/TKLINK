@@ -86,9 +86,15 @@ Refreshes every 5 seconds
 
 ---
 
+## Open TKLINK
+
+👉 **[Open TKLINK](https://jaystruckin.github.io/TKLINK/index.html)**
+
+---
+
 ## Setup
 
-1. Open `index.html` in your phone browser
+1. Open the link above in your phone browser
 2. Enter your MacTrack portal URL
 3. Enter your MacTrack username & password
 4. Enter your vehicle ID or truck number
