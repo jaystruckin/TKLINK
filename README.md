@@ -96,11 +96,17 @@ Jump straight to a specific tab by adding a hash to the URL:
 
 | Page | Link |
 |------|------|
-| Engine | `index.html#engine` |
-| Drivetrain | `index.html#drivetrain` |
-| Faults | `index.html#faults` |
-| ECU | `index.html#ecu` |
-| GPS | `index.html#gps` |
+| Engine | [Open Engine](https://jaystruckin.github.io/TKLINK/index.html#engine) |
+| Drivetrain | [Open Drivetrain](https://jaystruckin.github.io/TKLINK/index.html#drivetrain) |
+| Faults | [Open Faults](https://jaystruckin.github.io/TKLINK/index.html#faults) |
+| ECU | [Open ECU](https://jaystruckin.github.io/TKLINK/index.html#ecu) |
+| GPS | [Open GPS](https://jaystruckin.github.io/TKLINK/index.html#gps) |
+
+### Demo Mode
+
+Try TKLINK without logging in:
+
+👉 **[Open Demo](https://jaystruckin.github.io/TKLINK/index.html?demo)**
 
 ---
 
