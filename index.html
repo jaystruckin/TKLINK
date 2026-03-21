@@ -874,8 +874,14 @@ window.addEventListener('hashchange', () => {
   if (tab) switchTab(tab, false);
 });
 
+// Telematics Guru API instances to try (MacTrack is hosted on TG)
+const TG_INSTANCES = [
+  'api-apac03', 'api-apac02', 'api-apac01',
+  'api-emea01', 'api-emea02',
+  'api-us01'
+];
+
 async function connectToMactrack() {
-  const url = document.getElementById('portal-url').value.trim();
   const user = document.getElementById('username').value.trim();
   const pass = document.getElementById('password').value.trim();
   const vid = document.getElementById('vehicle-id').value.trim();
@@ -886,34 +892,37 @@ async function connectToMactrack() {
     return;
   }
 
-  credentials = { url, user, pass, vid, proxy: proxy ? proxy.replace(/\/$/, '') : '' };
+  credentials = { user, pass, vid, proxy: proxy ? proxy.replace(/\/$/, '') : '' };
 
   const btn = document.getElementById('connect-btn');
   const msg = document.getElementById('connecting-msg');
   btn.disabled = true;
-  btn.textContent = 'CONNECTING...';
+  btn.textContent = 'LOGGING IN...';
   msg.style.display = 'block';
 
-  // Attempt connection
   const success = await attemptLogin();
 
   if (success) {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('main-app').style.display = 'block';
-    document.getElementById('header-id').textContent = vid || 'T909';
+    document.getElementById('header-id').textContent = credentials.assetName || vid || 'T909';
     const initialTab = getTabFromHash();
     if (initialTab) switchTab(initialTab);
     startLiveUpdates();
   } else {
     btn.disabled = false;
-    btn.textContent = 'CONNECT';
+    btn.textContent = 'LOG IN';
     msg.style.display = 'none';
-    alert('Could not connect to MacTrack. Check your portal URL and credentials.');
+    if (!credentials.proxy) {
+      alert('Login failed. A proxy server is required to connect. Deploy the TKLINK proxy and enter the URL.');
+    } else {
+      alert('Login failed. Check your email and password.');
+    }
   }
 }
 
 // Send a request through the proxy server to bypass CORS
-async function proxiedFetch(targetUrl, options = {}) {
+function proxiedFetch(targetUrl, options = {}) {
   const proxy = credentials.proxy;
   if (!proxy) return fetch(targetUrl, options);
 
@@ -931,124 +940,210 @@ async function proxiedFetch(targetUrl, options = {}) {
 }
 
 async function attemptLogin() {
-  try {
-    const baseUrl = credentials.url.replace(/\/$/, '');
+  // Telematics Guru auth: POST https://api-{instance}.telematics.guru/user/authenticate
+  for (const instance of TG_INSTANCES) {
+    const apiBase = 'https://' + instance + '.telematics.guru';
+    try {
+      const res = await proxiedFetch(apiBase + '/user/authenticate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: credentials.user,
+          password: credentials.pass
+        })
+      });
 
-    // Common MacTrack API endpoints
-    const endpoints = [
-      baseUrl + '/api/v1/auth/login',
-      baseUrl + '/api/auth',
-      baseUrl + '/api/login',
-      baseUrl + '/v1/login',
-    ];
+      if (res.ok) {
+        const data = await res.json();
+        if (data.access_token) {
+          credentials.token = data.access_token;
+          credentials.apiBase = apiBase;
+          console.log('Authenticated on TG instance:', instance);
 
-    for (const endpoint of endpoints) {
-      try {
-        const res = await proxiedFetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: credentials.user,
-            email: credentials.user,
-            password: credentials.pass
-          })
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data.token || data.access_token || data.sessionId || data.session) {
-            credentials.token = data.token || data.access_token || data.sessionId || data.session;
-            credentials.baseUrl = baseUrl;
-            return true;
-          }
+          // Get organisation ID
+          await fetchOrgAndAsset();
+          return true;
         }
-      } catch(e) { continue; }
-    }
+      }
+    } catch(e) { continue; }
+  }
 
-    // If no auth endpoint worked but proxy is set, still allow connection
-    // MacTrack may use cookie/session auth instead of token
-    credentials.baseUrl = baseUrl;
-    if (!credentials.proxy) {
-      credentials.demoMode = true;
-    }
-    return true;
+  // All instances failed
+  return false;
+}
 
-  } catch(e) {
-    if (!credentials.proxy) credentials.demoMode = true;
-    return true;
+async function fetchOrgAndAsset() {
+  const headers = {
+    'Authorization': 'Bearer ' + credentials.token,
+    'Content-Type': 'application/json'
+  };
+
+  // Step 1: Get organisations
+  try {
+    const orgRes = await proxiedFetch(credentials.apiBase + '/v2/user/organisations', { headers });
+    if (orgRes.ok) {
+      const orgs = await orgRes.json();
+      if (orgs && orgs.length > 0) {
+        credentials.orgId = orgs[0].Id || orgs[0].id || orgs[0].OrganisationId;
+        console.log('Organisation ID:', credentials.orgId);
+      }
+    }
+  } catch(e) { console.log('Org fetch error:', e); }
+
+  // Step 2: Get assets to find the vehicle serial ID
+  if (credentials.orgId) {
+    try {
+      const assetRes = await proxiedFetch(
+        credentials.apiBase + '/v3/assets/' + credentials.orgId, { headers }
+      );
+      if (assetRes.ok) {
+        const assets = await assetRes.json();
+        if (assets && assets.length > 0) {
+          // Find matching vehicle by name/ID, or use first asset
+          const vid = credentials.vid.toLowerCase();
+          const match = vid
+            ? assets.find(a => {
+                const name = (a.Name || a.name || '').toLowerCase();
+                const id = String(a.Id || a.id || '').toLowerCase();
+                const serial = String(a.Serial || a.serial || '').toLowerCase();
+                return name.includes(vid) || id === vid || serial === vid;
+              })
+            : null;
+
+          const asset = match || assets[0];
+          credentials.assetSerial = asset.Serial || asset.serial || asset.Id || asset.id;
+          credentials.assetName = asset.Name || asset.name || credentials.vid;
+          console.log('Asset:', credentials.assetName, 'Serial:', credentials.assetSerial);
+        }
+      }
+    } catch(e) { console.log('Asset fetch error:', e); }
   }
 }
 
 async function fetchTelematicsData() {
-  if (credentials.demoMode || !credentials.token) {
+  if (!credentials.token || !credentials.apiBase) {
     showConnectionNote();
     return;
   }
 
+  const headers = {
+    'Authorization': 'Bearer ' + credentials.token,
+    'Content-Type': 'application/json'
+  };
+
   try {
-    const baseUrl = credentials.baseUrl;
-    const headers = {
-      'Authorization': 'Bearer ' + credentials.token,
-      'Content-Type': 'application/json'
-    };
+    // Get latest telemetry for the asset
+    if (credentials.orgId && credentials.assetSerial) {
+      const now = new Date();
+      const from = new Date(now.getTime() - 60000).toISOString(); // last 60 seconds
+      const to = now.toISOString();
 
-    // Try multiple common vehicle data endpoints
-    const dataEndpoints = [
-      `${baseUrl}/api/v1/vehicles/live`,
-      `${baseUrl}/api/v1/vehicles/${credentials.vid}/live`,
-      `${baseUrl}/api/v1/vehicle/${credentials.vid}`,
-      `${baseUrl}/api/vehicles/live`,
-    ];
+      const telUrl = `${credentials.apiBase}/v2/${credentials.orgId}/asset/${credentials.assetSerial}/rawtelemetry?from=${from}&to=${to}&limit=1`;
+      const res = await proxiedFetch(telUrl, { headers });
 
-    for (const endpoint of dataEndpoints) {
-      try {
-        const res = await proxiedFetch(endpoint, { headers });
-        if (res.ok) {
-          const data = await res.json();
-          updateDisplay(data);
+      if (res.ok) {
+        const records = await res.json();
+        if (records && records.length > 0) {
+          const latest = records[records.length - 1];
+          mapTGDataToDisplay(latest);
           return;
         }
-      } catch(e) { continue; }
+      }
+    }
+
+    // Fallback: try getting asset list for latest positions
+    if (credentials.orgId) {
+      const assetRes = await proxiedFetch(
+        credentials.apiBase + '/v3/assets/' + credentials.orgId, { headers }
+      );
+      if (assetRes.ok) {
+        const assets = await assetRes.json();
+        const asset = credentials.assetSerial
+          ? assets.find(a => (a.Serial || a.serial) == credentials.assetSerial) || assets[0]
+          : assets[0];
+        if (asset) {
+          mapAssetDataToDisplay(asset);
+          return;
+        }
+      }
     }
   } catch(e) {
     console.log('Fetch error:', e);
   }
 }
 
+// Map Telematics Guru raw telemetry to our display format
+function mapTGDataToDisplay(record) {
+  const data = {};
+
+  // GPS data from raw telemetry
+  if (record.Latitude || record.latitude) data.lat = record.Latitude || record.latitude;
+  if (record.Longitude || record.longitude) data.lng = record.Longitude || record.longitude;
+  if (record.Speed || record.speed) data.gpsSpeed = record.Speed || record.speed;
+  if (record.Heading || record.heading) data.heading = (record.Heading || record.heading) + '°';
+
+  // J1939/CAN bus fields (if available via TG custom fields)
+  const fields = record.Fields || record.fields || record.FieldData || {};
+  if (fields.EngineRPM || fields.engineRpm) data.rpm = fields.EngineRPM || fields.engineRpm;
+  if (fields.CoolantTemperature || fields.coolantTemp) data.coolantTemp = fields.CoolantTemperature || fields.coolantTemp;
+  if (fields.OilPressure || fields.oilPressure) data.oilPressure = fields.OilPressure || fields.oilPressure;
+  if (fields.OilTemperature || fields.oilTemp) data.oilTemp = fields.OilTemperature || fields.oilTemp;
+  if (fields.BoostPressure || fields.boostPressure) data.boostPressure = fields.BoostPressure || fields.boostPressure;
+  if (fields.ExhaustTemperature || fields.exhaustTemp) data.exhaustTemp = fields.ExhaustTemperature || fields.exhaustTemp;
+  if (fields.EngineLoad || fields.engineLoad) data.engineLoad = fields.EngineLoad || fields.engineLoad;
+  if (fields.FuelRate || fields.fuelRate) data.fuelRate = fields.FuelRate || fields.fuelRate;
+  if (fields.FuelLevel || fields.fuelLevel) data.fuelLevel = fields.FuelLevel || fields.fuelLevel;
+  if (fields.DEFLevel || fields.defLevel) data.defLevel = fields.DEFLevel || fields.defLevel;
+  if (fields.DPFSootLoad || fields.dpfSoot) data.dpfSoot = fields.DPFSootLoad || fields.dpfSoot;
+  if (fields.BatteryVoltage || fields.batteryVoltage) data.battVoltage = fields.BatteryVoltage || fields.batteryVoltage;
+  if (fields.AmbientTemperature || fields.ambientTemp) data.ambientTemp = fields.AmbientTemperature || fields.ambientTemp;
+  if (fields.TransmissionTemperature || fields.transTemp) data.transTemp = fields.TransmissionTemperature || fields.transTemp;
+  if (fields.Gear || fields.gear) data.gear = fields.Gear || fields.gear;
+
+  data.ignition = (record.DIn1 || record.Ignition) ? 'ON' : 'OFF';
+  data.speed = record.Speed || record.speed;
+  data.gpsSignal = 'LOCKED';
+  data.faults = [];
+
+  updateDisplay(data);
+}
+
+// Map TG asset data (from /v3/assets) to display format
+function mapAssetDataToDisplay(asset) {
+  const data = {};
+
+  if (asset.Latitude) data.lat = asset.Latitude;
+  if (asset.Longitude) data.lng = asset.Longitude;
+  if (asset.Speed) data.gpsSpeed = asset.Speed;
+  if (asset.Heading) data.heading = asset.Heading + '°';
+  data.speed = asset.Speed || 0;
+  data.ignition = asset.Ignition ? 'ON' : 'OFF';
+  data.gpsSignal = asset.GpsValid ? 'LOCKED' : 'NO FIX';
+
+  // Asset-level fields
+  const fields = asset.Fields || asset.FieldData || {};
+  if (fields.EngineRPM) data.rpm = fields.EngineRPM;
+  if (fields.CoolantTemperature) data.coolantTemp = fields.CoolantTemperature;
+  if (fields.FuelLevel) data.fuelLevel = fields.FuelLevel;
+  if (fields.BatteryVoltage) data.battVoltage = fields.BatteryVoltage;
+  if (fields.OilPressure) data.oilPressure = fields.OilPressure;
+
+  data.faults = [];
+  updateDisplay(data);
+}
+
 function showConnectionNote() {
-  // Show the app is ready and waiting for data
-  // MacTrack's portal runs on a backend that requires
-  // their specific API credentials and endpoints
-  // which vary per installation
+  document.getElementById('update-time').textContent = 'NO DATA YET';
 
-  document.getElementById('update-time').textContent = 'AWAITING DATA';
-
-  // Show what the app is ready to display
-  const fields = {
-    'val-rpm': 'CONNECTING',
-    'val-coolant': '—',
-    'val-oil-press': '—',
-    'val-oil-temp': '—',
-    'val-boost': '—',
-    'val-exhaust': '—',
-    'val-load': '—',
-    'val-fuel-rate': '—',
-    'val-def': '—',
-    'val-dpf': '—',
-    'val-regen': '—',
-    'val-fuel': '—',
-  };
-
-  // Display a note in fault tab explaining connection status
   const faultList = document.getElementById('fault-list');
   faultList.innerHTML = `
     <div class="note-box" style="margin-top:0">
-      <strong style="color:var(--accent2)">CONNECTION STATUS</strong><br><br>
-      App connected to: <span style="color:var(--text); font-family:monospace">${credentials.baseUrl}</span><br><br>
-      MacTrack portals use server-side authentication that blocks direct browser requests due to CORS security policy.<br><br>
-      <strong style="color:var(--text)">To get full live data you have two options:</strong><br><br>
-      1. Ask MacTrack to provide you API access credentials (separate from portal login)<br><br>
-      2. Contact MacTrack support on <strong style="color:var(--accent)">1300 622 872</strong> — they can enable driver app access for your vehicle specifically
+      <strong style="color:var(--accent2)">WAITING FOR DATA</strong><br><br>
+      Connected to Telematics Guru API<br>
+      Instance: <span style="color:var(--text); font-family:monospace">${credentials.apiBase || '—'}</span><br>
+      Organisation: <span style="color:var(--text)">${credentials.orgId || '—'}</span><br>
+      Asset: <span style="color:var(--text)">${credentials.assetName || '—'}</span><br><br>
+      Waiting for telemetry data from truck. Data appears when the vehicle ignition is on and the MacTrack device is reporting.
     </div>
   `;
 }

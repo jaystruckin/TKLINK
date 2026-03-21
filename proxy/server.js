@@ -82,10 +82,15 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // Basic URL validation
+    // Validate URL and restrict to Telematics Guru domains only
     try {
       const parsed = new URL(targetUrl);
       if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('Bad protocol');
+      if (!parsed.hostname.endsWith('.telematics.guru') && parsed.hostname !== 'telematics.guru') {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Only telematics.guru domains are allowed' }));
+        return;
+      }
     } catch {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Invalid target URL' }));
