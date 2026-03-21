@@ -143,6 +143,31 @@
     display: none;
   }
 
+  .trial-link {
+    margin-top: 24px;
+    font-size: 13px;
+    color: var(--dim);
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+
+  .trial-link:hover, .trial-link:active {
+    color: var(--accent2);
+  }
+
+  .trial-link a {
+    color: var(--accent2);
+    text-decoration: none;
+    font-weight: 600;
+    letter-spacing: 2px;
+    cursor: pointer;
+  }
+
+  .trial-link a:hover {
+    text-decoration: underline;
+  }
+
   /* MAIN APP */
   #main-app { display: none; }
 
@@ -560,6 +585,7 @@
 
   <button class="btn-connect" id="connect-btn" onclick="connectToMactrack()">CONNECT</button>
   <div class="connecting-msg" id="connecting-msg"><span class="spinner"></span>CONNECTING TO MACTRACK...</div>
+  <div class="trial-link">No account? <a onclick="startTrialMode()">Try Demo</a></div>
 </div>
 
 <!-- MAIN APP -->
@@ -1084,6 +1110,79 @@ function checkAlerts(data) {
 function startLiveUpdates() {
   fetchTelematicsData();
   updateInterval = setInterval(fetchTelematicsData, 5000);
+}
+
+function generateDemoData() {
+  const rpm = 1200 + Math.round(Math.random() * 400);
+  return {
+    rpm: rpm,
+    coolantTemp: 82 + Math.round(Math.random() * 10),
+    oilPressure: 280 + Math.round(Math.random() * 120),
+    oilTemp: 88 + Math.round(Math.random() * 12),
+    boostPressure: 140 + Math.round(Math.random() * 60),
+    exhaustTemp: 320 + Math.round(Math.random() * 80),
+    engineLoad: 45 + Math.round(Math.random() * 30),
+    fuelRate: 22 + Math.round(Math.random() * 15),
+    defLevel: 68 + Math.round(Math.random() * 20),
+    dpfSoot: 18 + Math.round(Math.random() * 25),
+    regenStatus: 'NOT ACTIVE',
+    fuelLevel: 55 + Math.round(Math.random() * 30),
+    gear: Math.ceil(Math.random() * 3) + 15 + '/18',
+    transTemp: 72 + Math.round(Math.random() * 12),
+    inputRpm: rpm + Math.round(Math.random() * 50),
+    outputRpm: Math.round(rpm * 0.6 + Math.random() * 30),
+    retarder: 'OFF',
+    airFront: 800 + Math.round(Math.random() * 60),
+    airRear: 790 + Math.round(Math.random() * 60),
+    diffTemp: 58 + Math.round(Math.random() * 14),
+    speed: 95 + Math.round(Math.random() * 10),
+    odometer: 487291 + Math.round(Math.random() * 50),
+    battVoltage: 13.8 + Math.round(Math.random() * 6) / 10,
+    altOutput: 14.1 + Math.round(Math.random() * 4) / 10,
+    ambientTemp: 24 + Math.round(Math.random() * 8),
+    engineModel: 'Cummins X15',
+    cplGroup: '4108',
+    ratedHp: '550 HP',
+    ratedTorque: '2508 Nm',
+    ecuPart: '4384755',
+    swVersion: 'CM2350A v3.2.1',
+    calDate: '2025-11-08',
+    ecuSerial: 'ECU-73491820',
+    engineSerial: '79684532',
+    emissionCert: 'ADR 80/04 Euro VI',
+    govRoad: 2000,
+    govCruise: 1700,
+    speedLim: 100,
+    idleShutdown: '5 min',
+    engineBrake: 'HIGH — Intebrake',
+    pto: 'DISABLED',
+    lat: -33.856784,
+    lng: 151.215207,
+    alt: 42,
+    gpsSpeed: 97,
+    heading: 'NE — 047°',
+    ignition: 'ON',
+    gpsSignal: 'STRONG',
+    faults: [
+      { code: 'SPN 3719', spn: '3719', fmi: '16', description: 'Aftertreatment SCR Operator Inducement — Moderate', count: 3, active: true },
+      { code: 'SPN 4364', spn: '4364', fmi: '18', description: 'Aftertreatment DEF Quality — Low', count: 1, active: false }
+    ]
+  };
+}
+
+function startTrialMode() {
+  credentials = { url: 'demo', user: 'demo', pass: '', vid: 'T909-DEMO', demoMode: true, trialMode: true };
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'block';
+  document.getElementById('header-id').textContent = 'DEMO MODE';
+
+  const demoData = generateDemoData();
+  updateDisplay(demoData);
+
+  updateInterval = setInterval(function() {
+    const data = generateDemoData();
+    updateDisplay(data);
+  }, 5000);
 }
 
 function shareReport() {

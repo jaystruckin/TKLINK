@@ -4,6 +4,16 @@ All notable changes to TKLINK will be documented here.
 
 ---
 
+## [0.1.1] - 2026-03-21
+
+### Added
+
+- Trial link on login screen — "No account? Try Demo" lets users explore the app with simulated T909 telemetry data
+- Demo data covers all tabs: engine gauges, drivetrain, faults, ECU, and GPS
+- Demo data refreshes every 5 seconds with realistic value variation
+
+---
+
 ## [0.1.0] - 2026-03-18
 
 ### Initial Release
