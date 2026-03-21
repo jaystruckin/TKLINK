@@ -4,6 +4,16 @@ All notable changes to TKLINK will be documented here.
 
 ---
 
+## [0.1.2] - 2026-03-21
+
+### Fixed
+
+- GitHub Pages deployment failing — added `enablement: true` to auto-configure Pages via GitHub Actions
+- Added `?demo` URL parameter to instantly open demo mode without clicking login (e.g., `index.html?demo`)
+- Demo mode now supports hash-based tab navigation (e.g., `index.html?demo#gps`)
+
+---
+
 ## [0.1.1] - 2026-03-21
 
 ### Added
