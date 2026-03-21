@@ -1248,6 +1248,13 @@ Speed Limiter: ${d.speedLim || '—'} km/h`;
     navigator.clipboard.writeText(text).then(() => alert('ECU report copied to clipboard'));
   }
 }
+
+// Auto-start demo mode when ?demo is in the URL
+if (new URLSearchParams(location.search).has('demo')) {
+  startTrialMode();
+  const initialTab = getTabFromHash();
+  if (initialTab) switchTab(initialTab);
+}
 </script>
 </body>
 </html>

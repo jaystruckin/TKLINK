@@ -90,6 +90,8 @@ Refreshes every 5 seconds
 
 👉 **[Open TKLINK](https://jaystruckin.github.io/TKLINK/index.html)**
 
+👻 **[Run Demo Instantly](https://jaystruckin.github.io/TKLINK/index.html?demo)** — no login, no credentials, just open and test
+
 ### Direct Page Links
 
 Jump straight to a specific tab by adding a hash to the URL:
@@ -101,6 +103,18 @@ Jump straight to a specific tab by adding a hash to the URL:
 | Faults | `index.html#faults` |
 | ECU | `index.html#ecu` |
 | GPS | `index.html#gps` |
+
+### Demo Tab Links
+
+Open demo mode on a specific tab:
+
+| Tab | Demo Link |
+|-----|-----------|
+| 🔴 Engine | [Open](https://jaystruckin.github.io/TKLINK/index.html?demo#engine) |
+| ⚙️ Drivetrain | [Open](https://jaystruckin.github.io/TKLINK/index.html?demo#drivetrain) |
+| ⚠️ Faults | [Open](https://jaystruckin.github.io/TKLINK/index.html?demo#faults) |
+| 🔧 ECU | [Open](https://jaystruckin.github.io/TKLINK/index.html?demo#ecu) |
+| 📍 GPS | [Open](https://jaystruckin.github.io/TKLINK/index.html?demo#gps) |
 
 ---
 
