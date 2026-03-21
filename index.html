@@ -636,7 +636,12 @@
     <input class="input-field" id="vehicle-id" type="text" placeholder="T909 or truck number" autocomplete="off">
   </div>
 
-  <p class="portal-note">Read-only access. No changes made. Data refreshes every 5 seconds. Credentials stored locally on this device only.</p>
+  <div class="input-group">
+    <label class="input-label">Proxy Server URL</label>
+    <input class="input-field" id="proxy-url" type="url" placeholder="https://your-proxy.onrender.com" autocomplete="off" autocorrect="off" spellcheck="false">
+  </div>
+
+  <p class="portal-note">Read-only access. No changes made. Data refreshes every 5 seconds. Credentials stored locally on this device only. Proxy required for live data.</p>
 
   <button class="btn-connect" id="connect-btn" onclick="connectToMactrack()">CONNECT</button>
   <div class="connecting-msg" id="connecting-msg"><span class="spinner"></span>CONNECTING TO MACTRACK...</div>
@@ -881,13 +886,14 @@ async function connectToMactrack() {
   const user = document.getElementById('username').value.trim();
   const pass = document.getElementById('password').value.trim();
   const vid = document.getElementById('vehicle-id').value.trim();
+  const proxy = document.getElementById('proxy-url').value.trim();
 
   if (!url || !user || !pass) {
     alert('Please fill in portal URL, username and password.');
     return;
   }
 
-  credentials = { url, user, pass, vid };
+  credentials = { url, user, pass, vid, proxy: proxy ? proxy.replace(/\/$/, '') : '' };
 
   const btn = document.getElementById('connect-btn');
   const msg = document.getElementById('connecting-msg');
@@ -913,10 +919,25 @@ async function connectToMactrack() {
   }
 }
 
+// Send a request through the proxy server to bypass CORS
+async function proxiedFetch(targetUrl, options = {}) {
+  const proxy = credentials.proxy;
+  if (!proxy) return fetch(targetUrl, options);
+
+  const headers = { 'X-Target-URL': targetUrl };
+  if (options.headers) {
+    if (options.headers['Content-Type']) headers['Content-Type'] = options.headers['Content-Type'];
+    if (options.headers['Authorization']) headers['Authorization'] = options.headers['Authorization'];
+  }
+
+  return fetch(proxy + '/proxy', {
+    method: options.method || 'GET',
+    headers,
+    body: options.body || undefined,
+  });
+}
+
 async function attemptLogin() {
-  // Try to reach the MacTrack portal
-  // MacTrack uses a REST API behind their portal
-  // We attempt to authenticate and pull vehicle data
   try {
     const baseUrl = credentials.url.replace(/\/$/, '');
 
@@ -930,7 +951,7 @@ async function attemptLogin() {
 
     for (const endpoint of endpoints) {
       try {
-        const res = await fetch(endpoint, {
+        const res = await proxiedFetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -951,22 +972,22 @@ async function attemptLogin() {
       } catch(e) { continue; }
     }
 
-    // If direct API fails, note that CORS may block browser requests
-    // Store credentials for display purposes and show demo mode
+    // If no auth endpoint worked but proxy is set, still allow connection
+    // MacTrack may use cookie/session auth instead of token
     credentials.baseUrl = baseUrl;
-    credentials.demoMode = true;
+    if (!credentials.proxy) {
+      credentials.demoMode = true;
+    }
     return true;
 
   } catch(e) {
-    credentials.demoMode = true;
+    if (!credentials.proxy) credentials.demoMode = true;
     return true;
   }
 }
 
 async function fetchTelematicsData() {
   if (credentials.demoMode || !credentials.token) {
-    // Show that we're connected but data requires direct API access
-    // Display a note to user and show what fields will populate
     showConnectionNote();
     return;
   }
@@ -978,11 +999,23 @@ async function fetchTelematicsData() {
       'Content-Type': 'application/json'
     };
 
-    // Fetch live vehicle data
-    const res = await fetch(`${baseUrl}/api/v1/vehicles/live`, { headers });
-    if (res.ok) {
-      const data = await res.json();
-      updateDisplay(data);
+    // Try multiple common vehicle data endpoints
+    const dataEndpoints = [
+      `${baseUrl}/api/v1/vehicles/live`,
+      `${baseUrl}/api/v1/vehicles/${credentials.vid}/live`,
+      `${baseUrl}/api/v1/vehicle/${credentials.vid}`,
+      `${baseUrl}/api/vehicles/live`,
+    ];
+
+    for (const endpoint of dataEndpoints) {
+      try {
+        const res = await proxiedFetch(endpoint, { headers });
+        if (res.ok) {
+          const data = await res.json();
+          updateDisplay(data);
+          return;
+        }
+      } catch(e) { continue; }
     }
   } catch(e) {
     console.log('Fetch error:', e);
