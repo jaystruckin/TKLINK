@@ -143,29 +143,27 @@
     display: none;
   }
 
-  .trial-link {
-    margin-top: 24px;
-    font-size: 13px;
-    color: var(--dim);
-    letter-spacing: 1px;
-    cursor: pointer;
-    transition: color 0.2s;
-  }
-
-  .trial-link:hover, .trial-link:active {
+  .btn-demo {
+    width: 100%;
+    max-width: 340px;
+    background: transparent;
+    border: 2px solid var(--accent2);
+    border-radius: 4px;
+    padding: 14px;
     color: var(--accent2);
-  }
-
-  .trial-link a {
-    color: var(--accent2);
-    text-decoration: none;
-    font-weight: 600;
-    letter-spacing: 2px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
     cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 12px;
   }
 
-  .trial-link a:hover {
-    text-decoration: underline;
+  .btn-demo:hover, .btn-demo:active {
+    background: rgba(255,140,0,0.1);
+    box-shadow: 0 0 20px rgba(255,140,0,0.15);
   }
 
   /* MAIN APP */
@@ -585,7 +583,8 @@
 
   <button class="btn-connect" id="connect-btn" onclick="connectToMactrack()">CONNECT</button>
   <div class="connecting-msg" id="connecting-msg"><span class="spinner"></span>CONNECTING TO MACTRACK...</div>
-  <div class="trial-link">No account? <a onclick="startTrialMode()">Try Demo</a></div>
+  <div style="width:100%;max-width:340px;text-align:center;margin-top:20px;font-size:11px;color:var(--dim);letter-spacing:2px">OR</div>
+  <button class="btn-demo" onclick="startTrialMode()">▶ TEST WITH DEMO DATA</button>
 </div>
 
 <!-- MAIN APP -->
@@ -790,6 +789,14 @@ let credentials = {};
 let lastData = {};
 
 const validTabs = ['engine','drivetrain','faults','ecu','gps'];
+
+// Auto-launch demo mode if ?demo is in the URL
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('demo')) {
+    window.addEventListener('DOMContentLoaded', function() { startTrialMode(); });
+  }
+})();
 
 function switchTab(name, updateHash) {
   if (!validTabs.includes(name)) name = 'engine';

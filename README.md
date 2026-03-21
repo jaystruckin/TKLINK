@@ -90,6 +90,18 @@ Refreshes every 5 seconds
 
 👉 **[Open TKLINK](https://jaystruckin.github.io/TKLINK/index.html)**
 
+### Test It Now (Demo Mode)
+
+No MacTrack account needed — jump straight into the app with simulated T909 data:
+
+👉 **[Launch Demo](https://jaystruckin.github.io/TKLINK/index.html?demo)**
+
+Or open the app and tap the **TEST WITH DEMO DATA** button on the login screen.
+
+Demo mode shows realistic engine, drivetrain, ECU, GPS and fault data that refreshes every 5 seconds.
+
+📖 **[Full trial guide with ghost links to every tab → LEARN.md](LEARN.md)**
+
 ### Direct Page Links
 
 Jump straight to a specific tab by adding a hash to the URL:
@@ -101,6 +113,8 @@ Jump straight to a specific tab by adding a hash to the URL:
 | Faults | `index.html#faults` |
 | ECU | `index.html#ecu` |
 | GPS | `index.html#gps` |
+
+These work with demo mode too: `index.html?demo#engine`
 
 ---
 
