@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>TKLINK — Live Truck Telematics</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#080c10">
@@ -48,7 +48,6 @@
     align-items: center;
     justify-content: center;
     padding: 24px;
-    padding-bottom: 80px;
     background: radial-gradient(ellipse at 50% 0%, rgba(232,93,0,0.08) 0%, transparent 70%);
   }
 
@@ -1322,11 +1321,24 @@ if ('serviceWorker' in navigator) {
 
 // --- PWA: Install Prompt ---
 let deferredPrompt = null;
+const installBanner = document.getElementById('install-banner');
+const loginScreen = document.getElementById('login-screen');
+
+function showInstallBanner() {
+  installBanner.classList.add('show');
+  loginScreen.style.paddingBottom = '80px';
+}
+
+function hideInstallBanner() {
+  installBanner.classList.remove('show');
+  loginScreen.style.removeProperty('padding-bottom');
+}
+
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   deferredPrompt = e;
   if (!localStorage.getItem('tklink-install-dismissed')) {
-    document.getElementById('install-banner').classList.add('show');
+    showInstallBanner();
   }
 });
 
@@ -1335,13 +1347,13 @@ document.getElementById('btn-install').addEventListener('click', () => {
     deferredPrompt.prompt();
     deferredPrompt.userChoice.then(() => {
       deferredPrompt = null;
-      document.getElementById('install-banner').classList.remove('show');
+      hideInstallBanner();
     });
   }
 });
 
 document.getElementById('btn-dismiss').addEventListener('click', () => {
-  document.getElementById('install-banner').classList.remove('show');
+  hideInstallBanner();
   localStorage.setItem('tklink-install-dismissed', '1');
 });
 </script>
