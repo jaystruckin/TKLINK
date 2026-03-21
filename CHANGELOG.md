@@ -4,6 +4,18 @@ All notable changes to TKLINK will be documented here.
 
 ---
 
+## [0.2.0] - 2026-03-21
+
+### Added
+
+- **Find Agents** button on login screen to discover available MacTrack agents (vehicles)
+- Agent list panel showing vehicle name, ID and online/offline status
+- Tap any agent to auto-fill the Vehicle ID field
+- Demo agents shown when MacTrack API is unreachable
+- Queries multiple MacTrack API endpoints for agent/vehicle/asset discovery
+
+---
+
 ## [0.1.0] - 2026-03-18
 
 ### Initial Release
