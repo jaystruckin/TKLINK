@@ -2,8 +2,7 @@ const CACHE_NAME = 'tklink-v1';
 const ASSETS = [
   './',
   './index.html',
-  './manifest.json',
-  'https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap'
+  './manifest.json'
 ];
 
 self.addEventListener('install', event => {
@@ -23,13 +22,24 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET') return;
+
   event.respondWith(
     fetch(event.request)
       .then(response => {
         const clone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        caches.open(CACHE_NAME)
+          .then(cache => cache.put(event.request, clone))
+          .catch(() => {});
         return response;
       })
-      .catch(() => caches.match(event.request))
+      .catch(() =>
+        caches.match(event.request).then(cached =>
+          cached || new Response('Offline — please reconnect', {
+            status: 503,
+            headers: { 'Content-Type': 'text/plain' }
+          })
+        )
+      )
   );
 });
