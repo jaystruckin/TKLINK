@@ -90,6 +90,18 @@ Refreshes every 5 seconds
 
 👉 **[Open TKLINK](https://jaystruckin.github.io/TKLINK/index.html)**
 
+### Direct Page Links
+
+Jump straight to a specific tab by adding a hash to the URL:
+
+| Page | Link |
+|------|------|
+| Engine | `index.html#engine` |
+| Drivetrain | `index.html#drivetrain` |
+| Faults | `index.html#faults` |
+| ECU | `index.html#ecu` |
+| GPS | `index.html#gps` |
+
 ---
 
 ## Setup
