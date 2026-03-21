@@ -914,7 +914,7 @@ async function findAgents() {
             break;
           }
         }
-      } catch(e) { continue; }
+      } catch(e) { console.log('Auth attempt failed:', e.message); continue; }
     }
   }
 
@@ -948,7 +948,7 @@ async function findAgents() {
           });
           if (agents.length > 0) break;
         }
-      } catch(e) { continue; }
+      } catch(e) { console.log('Agent fetch failed:', e.message); continue; }
     }
   }
 
@@ -977,7 +977,7 @@ function showAgentList(agents) {
     const safeId = escapeHtml(a.id);
     const safeName = escapeHtml(a.name);
     const safeStatus = (a.status === 'online') ? 'online' : 'offline';
-    return '<div class="agent-item" onclick="selectAgent(\'' + safeId.replace(/'/g, "&#39;") + '\')">'
+    return '<div class="agent-item" data-agent-id="' + safeId + '">'
       + '<div><div class="agent-name">' + safeName + '</div>'
       + '<div class="agent-id">' + safeId + '</div></div>'
       + '<span class="agent-status ' + safeStatus + '">' + safeStatus.toUpperCase() + '</span>'
@@ -988,18 +988,19 @@ function showAgentList(agents) {
 
   list.innerHTML = html;
   list.classList.add('show');
+
+  list.querySelectorAll('.agent-item').forEach(function(item) {
+    item.addEventListener('click', function() {
+      selectAgent(item.getAttribute('data-agent-id'));
+    });
+  });
 }
 
 function selectAgent(id) {
   document.getElementById('vehicle-id').value = id;
   document.querySelectorAll('.agent-item').forEach(function(el) {
-    el.classList.remove('selected');
-  });
-  var items = document.querySelectorAll('.agent-item');
-  items.forEach(function(el) {
-    if (el.querySelector('.agent-id').textContent === id) {
-      el.classList.add('selected');
-    }
+    var isMatch = el.querySelector('.agent-id') && el.querySelector('.agent-id').textContent === id;
+    el.classList.toggle('selected', isMatch);
   });
 }
 
