@@ -4,6 +4,15 @@ All notable changes to TKLINK will be documented here.
 
 ---
 
+## [0.1.3] - 2026-03-21
+
+### Added
+
+- LEARN.md — quick-start guide with ghost links for instant trial launch to every tab
+- Direct demo deep links: `index.html?demo#engine`, `?demo#gps`, etc.
+
+---
+
 ## [0.1.2] - 2026-03-21
 
 ### Added

@@ -100,6 +100,8 @@ Or open the app and tap the **TEST WITH DEMO DATA** button on the login screen.
 
 Demo mode shows realistic engine, drivetrain, ECU, GPS and fault data that refreshes every 5 seconds.
 
+📖 **[Full trial guide with ghost links to every tab → LEARN.md](LEARN.md)**
+
 ### Direct Page Links
 
 Jump straight to a specific tab by adding a hash to the URL:
