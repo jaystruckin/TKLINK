@@ -861,9 +861,14 @@ let credentials = {};
 let lastData = {};
 
 function esc(str) {
+  if (str == null) return '';
   const d = document.createElement('div');
   d.textContent = str;
   return d.innerHTML;
+}
+
+function escOr(val, fallback) {
+  return esc(String(val || fallback || '—'));
 }
 
 const validTabs = ['engine','drivetrain','faults','ecu','gps'];
@@ -1183,9 +1188,9 @@ function renderFaults(faults) {
 
   list.innerHTML = faults.map(f => `
     <div class="fault-card ${f.active ? '' : 'inactive'}">
-      <div class="fault-code">${esc(String(f.code || '—'))}</div>
-      <div class="fault-desc">${esc(String(f.description || '—'))}</div>
-      <div class="fault-meta">SPN: ${esc(String(f.spn || '—'))} · FMI: ${esc(String(f.fmi || '—'))} · Count: ${esc(String(f.count || '—'))}</div>
+      <div class="fault-code">${escOr(f.code)}</div>
+      <div class="fault-desc">${escOr(f.description)}</div>
+      <div class="fault-meta">SPN: ${escOr(f.spn)} · FMI: ${escOr(f.fmi)} · Count: ${escOr(f.count)}</div>
       <div class="fault-status">${f.active ? 'ACTIVE' : 'INACTIVE'}</div>
     </div>
   `).join('');
