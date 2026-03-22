@@ -1,15 +1,11 @@
-const CACHE_NAME = 'tklink-v2';
-const ASSETS = [
-  './',
-  './index.html',
-  './manifest.json'
-];
+const CACHE_NAME = 'tklink-v3';
+const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', event => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
@@ -23,23 +19,14 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
-
+  // Always try network first
   event.respondWith(
     fetch(event.request)
       .then(response => {
         const clone = response.clone();
-        caches.open(CACHE_NAME)
-          .then(cache => cache.put(event.request, clone))
-          .catch(() => {});
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone)).catch(() => {});
         return response;
       })
-      .catch(() =>
-        caches.match(event.request).then(cached =>
-          cached || new Response('Offline — please reconnect', {
-            status: 503,
-            headers: { 'Content-Type': 'text/plain' }
-          })
-        )
-      )
+      .catch(() => caches.match(event.request).then(c => c || new Response('Offline', { status: 503 })))
   );
 });
