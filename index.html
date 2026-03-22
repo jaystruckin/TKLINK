@@ -949,9 +949,10 @@ function fetchWithTimeout(url, options, ms = 6000) {
 
 async function fetchWithProxyFallback(targetUrl, options) {
   const proxies = [
-    (url) => 'https://proxy.corsfix.com/?' + encodeURIComponent(url),
-    (url) => 'https://corsproxy.io/?' + encodeURIComponent(url),
-    (url) => 'https://api.cors.lol/?url=' + encodeURIComponent(url),
+    (url) => 'https://thingproxy.freeboard.io/fetch/' + url,
+    (url) => 'https://proxy.corsfix.com/?' + url,
+    (url) => 'https://corsproxy.io/?url=' + encodeURIComponent(url),
+    (url) => 'https://proxy.cors.sh/' + url,
   ];
 
   for (const makeUrl of proxies) {
@@ -971,9 +972,10 @@ async function attemptLogin() {
   // Fire ALL instances x ALL proxies at once — first success wins
   const body = 'username=' + encodeURIComponent(credentials.user) + '&password=' + encodeURIComponent(credentials.pass) + '&grant_type=password';
   const proxies = [
-    (url) => 'https://proxy.corsfix.com/?' + encodeURIComponent(url),
-    (url) => 'https://corsproxy.io/?' + encodeURIComponent(url),
-    (url) => 'https://api.cors.lol/?url=' + encodeURIComponent(url),
+    (url) => 'https://thingproxy.freeboard.io/fetch/' + url,
+    (url) => 'https://proxy.corsfix.com/?' + url,
+    (url) => 'https://corsproxy.io/?url=' + encodeURIComponent(url),
+    (url) => 'https://proxy.cors.sh/' + url,
   ];
   const customProxy = credentials.proxy;
 
@@ -1007,8 +1009,9 @@ async function attemptLogin() {
       return true;
     }
   } catch(e) {
+    const reasons = e.errors ? e.errors.map(err => err.message).slice(0, 5).join('\n') : e.message;
     console.log('All login attempts failed:', e);
-    alert('Login failed.\n\nPossible causes:\n- Wrong email/password\n- CORS proxies blocked\n\nTry a custom proxy (Advanced on login).');
+    alert('Login failed.\n\nDebug info:\n' + reasons + '\n\nFix: Deploy your own proxy on Vercel (free). Repo already has /api/proxy.js ready.');
   }
   return false;
 }
