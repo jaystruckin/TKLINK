@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="TKLINK">
+<meta name="description" content="Live truck telematics for drivers — engine data, GPS, fault codes and ECU info directly on your phone. Read-only. Secure.">
 <link rel="dns-prefetch" href="https://fonts.googleapis.com">
 <link rel="dns-prefetch" href="https://fonts.gstatic.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,8 +19,6 @@
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap"></noscript>
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<link rel="preload" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap"></noscript>
 <style>
 
   :root {
@@ -987,13 +986,13 @@
     </div>
   </div>
 
-  <div class="tabs">
-    <div class="tab active" onclick="switchTab('engine')">ENGINE</div>
-    <div class="tab" onclick="switchTab('drivetrain')">DRIVE</div>
-    <div class="tab" onclick="switchTab('faults')">FAULTS</div>
-    <div class="tab" onclick="switchTab('ecu')">ECU</div>
-    <div class="tab" onclick="switchTab('gps')">GPS</div>
-    <div class="tab" onclick="switchTab('speed')">⚡ SPEED</div>
+  <div class="tabs" role="tablist">
+    <div class="tab active" role="tab" aria-selected="true" onclick="switchTab('engine')">ENGINE</div>
+    <div class="tab" role="tab" aria-selected="false" onclick="switchTab('drivetrain')">DRIVE</div>
+    <div class="tab" role="tab" aria-selected="false" onclick="switchTab('faults')">FAULTS</div>
+    <div class="tab" role="tab" aria-selected="false" onclick="switchTab('ecu')">ECU</div>
+    <div class="tab" role="tab" aria-selected="false" onclick="switchTab('gps')">GPS</div>
+    <div class="tab" role="tab" aria-selected="false" onclick="switchTab('speed')">⚡ SPEED</div>
   </div>
 
   <div class="content">
@@ -1226,6 +1225,13 @@
   <button class="btn-dismiss" id="btn-dismiss">✕</button>
 </div>
 
+<noscript>
+  <div style="padding:40px 20px;text-align:center;color:#c8d8e8;font-family:sans-serif;background:#080c10;min-height:100vh">
+    <h2 style="color:#e85d00">TKLINK requires JavaScript</h2>
+    <p>Please enable JavaScript in your browser settings to use this app.</p>
+  </div>
+</noscript>
+
 <script>
 let updateInterval = null;
 let credentials = {};
@@ -1234,8 +1240,15 @@ const REFRESH_MS = 2000;
 
 const validTabs = ['engine','drivetrain','faults','ecu','gps','speed'];
 
-function escapeHtml(str) {
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+function esc(str) {
+  if (str == null) return '';
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function escOr(val, fallback) {
+  return esc(String(val || fallback || '—'));
 }
 
 function getDemoAgents() {
@@ -1375,8 +1388,8 @@ function showAgentList(agents) {
   }
 
   let html = agents.map(function(a) {
-    const safeId = escapeHtml(a.id);
-    const safeName = escapeHtml(a.name);
+    const safeId = esc(a.id);
+    const safeName = esc(a.name);
     const safeStatus = (a.status === 'online') ? 'online' : 'offline';
     return '<div class="agent-item" data-agent-id="' + safeId + '">'
       + '<div><div class="agent-name">' + safeName + '</div>'
@@ -1408,7 +1421,9 @@ function selectAgent(id) {
 function switchTab(name, updateHash) {
   if (!validTabs.includes(name)) name = 'engine';
   document.querySelectorAll('.tab').forEach((t,i) => {
-    t.classList.toggle('active', validTabs[i] === name);
+    const isActive = validTabs[i] === name;
+    t.classList.toggle('active', isActive);
+    t.setAttribute('aria-selected', isActive ? 'true' : 'false');
   });
   document.querySelectorAll('.tab-panel').forEach(p => {
     p.classList.toggle('active', p.id === 'tab-' + name);
@@ -1432,6 +1447,7 @@ window.addEventListener('hashchange', () => {
 const TG_INSTANCES = ['api-apac03', 'api-apac02', 'api-apac01'];
 
 async function connectToMactrack() {
+  const url = document.getElementById('portal-url').value.trim();
   const user = document.getElementById('username').value.trim();
   const pass = document.getElementById('password').value.trim();
   const vid = document.getElementById('vehicle-id').value.trim();
@@ -1442,7 +1458,12 @@ async function connectToMactrack() {
     return;
   }
 
-  credentials = { user, pass, vid, proxy: proxy ? proxy.replace(/\/$/, '') : '' };
+  if (url && !/^https?:\/\/.+/i.test(url)) {
+    alert('Please enter a valid portal URL starting with http:// or https://');
+    return;
+  }
+
+  credentials = { url, user, pass, vid, proxy: proxy ? proxy.replace(/\/$/, '') : '' };
 
   const btn = document.getElementById('connect-btn');
   const msg = document.getElementById('connecting-msg');
@@ -1761,9 +1782,9 @@ function showConnectionNote() {
     <div class="note-box" style="margin-top:0">
       <strong style="color:var(--accent2)">WAITING FOR DATA</strong><br><br>
       Connected to Telematics Guru API<br>
-      Instance: <span style="color:var(--text); font-family:monospace">${credentials.apiBase || '—'}</span><br>
-      Organisation: <span style="color:var(--text)">${credentials.orgId || '—'}</span><br>
-      Asset: <span style="color:var(--text)">${credentials.assetName || '—'}</span><br><br>
+      Instance: <span style="color:var(--text); font-family:monospace">${esc(credentials.apiBase || '—')}</span><br>
+      Organisation: <span style="color:var(--text)">${esc(credentials.orgId || '—')}</span><br>
+      Asset: <span style="color:var(--text)">${esc(credentials.assetName || '—')}</span><br><br>
       Waiting for telemetry data from truck. Data appears when the vehicle ignition is on and the MacTrack device is reporting.
     </div>
   `;
@@ -1948,19 +1969,14 @@ function renderFaults(faults) {
     return;
   }
 
-  const fragment = document.createDocumentFragment();
-  faults.forEach(f => {
-    const card = document.createElement('div');
-    card.className = 'fault-card' + (f.active ? '' : ' inactive');
-    card.innerHTML =
-      '<div class="fault-code">' + (f.code || '—') + '</div>' +
-      '<div class="fault-desc">' + (f.description || '—') + '</div>' +
-      '<div class="fault-meta">SPN: ' + (f.spn || '—') + ' · FMI: ' + (f.fmi || '—') + ' · Count: ' + (f.count || '—') + '</div>' +
-      '<div class="fault-status">' + (f.active ? 'ACTIVE' : 'INACTIVE') + '</div>';
-    fragment.appendChild(card);
-  });
-  list.textContent = '';
-  list.appendChild(fragment);
+  list.innerHTML = faults.map(f => `
+    <div class="fault-card ${f.active ? '' : 'inactive'}">
+      <div class="fault-code">${escOr(f.code)}</div>
+      <div class="fault-desc">${escOr(f.description)}</div>
+      <div class="fault-meta">SPN: ${escOr(f.spn)} · FMI: ${escOr(f.fmi)} · Count: ${escOr(f.count)}</div>
+      <div class="fault-status">${f.active ? 'ACTIVE' : 'INACTIVE'}</div>
+    </div>
+  `).join('');
 }
 
 function checkAlerts(data) {
