@@ -1179,11 +1179,6 @@ const REFRESH_MS = 2000;
 
 const validTabs = ['engine','drivetrain','faults','ecu','gps','speed'];
 
-function escapeHtml(str) {
-  if (str == null) return '';
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
 function getDemoAgents() {
   return [
     { id: 'DEMO-001', name: 'Kenworth T409 #1', status: 'online' },
@@ -1241,7 +1236,7 @@ function showAgentList(agents) {
   agents.forEach(a => {
     const item = document.createElement('div');
     item.className = 'agent-item';
-    item.innerHTML = `<div><div class="agent-name">${escapeHtml(a.name)}</div><div class="agent-id">${escapeHtml(a.id)}</div></div><div class="agent-status ${a.status === 'online' ? 'online' : 'offline'}">${a.status === 'online' ? 'ONLINE' : 'OFFLINE'}</div>`;
+    item.innerHTML = `<div><div class="agent-name">${esc(a.name)}</div><div class="agent-id">${esc(a.id)}</div></div><div class="agent-status ${a.status === 'online' ? 'online' : 'offline'}">${a.status === 'online' ? 'ONLINE' : 'OFFLINE'}</div>`;
     item.addEventListener('click', () => selectAgent(a));
     frag.appendChild(item);
   });
@@ -1474,7 +1469,7 @@ async function fetchOrgAndAsset() {
   if (credentials.orgId) {
     try {
       const assetRes = await proxiedFetch(
-        credentials.apiBase + '/v3/assets/' + credentials.orgId, { headers, signal: controller.signal }
+        credentials.apiBase + '/v3/assets/' + credentials.orgId, { headers }
       );
       if (assetRes.ok) {
         const assets = await assetRes.json();
