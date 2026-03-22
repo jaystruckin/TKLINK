@@ -882,6 +882,26 @@ window.addEventListener('hashchange', () => {
 // Telematics Guru API instances to try (MacTrack is hosted on TG)
 const TG_INSTANCES = ['api-apac03', 'api-apac02', 'api-apac01'];
 
+// Detect if running on Vercel (has built-in /api/proxy)
+const IS_VERCEL = location.hostname.endsWith('.vercel.app') || location.hostname.endsWith('.vercel.sh');
+
+// Build proxy list — self-hosted first if available
+function getProxyList() {
+  const list = [];
+  if (IS_VERCEL) {
+    list.push((url) => location.origin + '/api/proxy?url=' + encodeURIComponent(url));
+  }
+  list.push(
+    (url) => 'https://corsproxy.io/?url=' + encodeURIComponent(url),
+    (url) => 'https://api.cors.lol/?url=' + encodeURIComponent(url),
+    (url) => 'https://thingproxy.freeboard.io/fetch/' + url,
+    (url) => 'https://proxy.corsfix.com/?' + url,
+    (url) => 'https://proxy.cors.sh/' + url,
+    (url) => 'https://corsproxy.org/?' + encodeURIComponent(url),
+  );
+  return list;
+}
+
 async function connectToMactrack() {
   const user = document.getElementById('username').value.trim();
   const pass = document.getElementById('password').value.trim();
@@ -921,22 +941,12 @@ async function connectToMactrack() {
 // Send a request through CORS proxy to bypass browser restrictions
 function proxiedFetch(targetUrl, options = {}) {
   // Reuse the proxy that worked during login
-  if (credentials._workingProxy) {
-    const wp = credentials._workingProxy;
-    // Extract the proxy base from the working URL
-    let proxyBase = '';
-    if (wp.includes('corsfix.com')) proxyBase = 'https://proxy.corsfix.com/?';
-    else if (wp.includes('corsproxy.io')) proxyBase = 'https://corsproxy.io/?';
-    else if (wp.includes('cors.lol')) proxyBase = 'https://api.cors.lol/?url=';
-    else proxyBase = wp.split('?')[0] + '?url=';
-
-    if (proxyBase) {
-      return fetchWithTimeout(proxyBase + encodeURIComponent(targetUrl), {
-        method: options.method || 'GET',
-        headers: options.headers || {},
-        body: options.body || undefined,
-      }, 10000);
-    }
+  if (credentials._workingProxyFn) {
+    return fetchWithTimeout(credentials._workingProxyFn(targetUrl), {
+      method: options.method || 'GET',
+      headers: options.headers || {},
+      body: options.body || undefined,
+    }, 10000);
   }
   return fetchWithProxyFallback(targetUrl, options);
 }
@@ -948,12 +958,7 @@ function fetchWithTimeout(url, options, ms = 6000) {
 }
 
 async function fetchWithProxyFallback(targetUrl, options) {
-  const proxies = [
-    (url) => 'https://thingproxy.freeboard.io/fetch/' + url,
-    (url) => 'https://proxy.corsfix.com/?' + url,
-    (url) => 'https://corsproxy.io/?url=' + encodeURIComponent(url),
-    (url) => 'https://proxy.cors.sh/' + url,
-  ];
+  const proxies = getProxyList();
 
   for (const makeUrl of proxies) {
     try {
@@ -962,7 +967,10 @@ async function fetchWithProxyFallback(targetUrl, options) {
         headers: options.headers || {},
         body: options.body || undefined,
       }, 6000);
-      if (res.ok || res.status === 401 || res.status === 403) return res;
+      if (res.ok || res.status === 401 || res.status === 403) {
+        credentials._workingProxyFn = makeUrl;
+        return res;
+      }
     } catch(e) { continue; }
   }
   throw new Error('All proxies failed');
@@ -971,12 +979,7 @@ async function fetchWithProxyFallback(targetUrl, options) {
 async function attemptLogin() {
   // Fire ALL instances x ALL proxies at once — first success wins
   const body = 'username=' + encodeURIComponent(credentials.user) + '&password=' + encodeURIComponent(credentials.pass) + '&grant_type=password';
-  const proxies = [
-    (url) => 'https://thingproxy.freeboard.io/fetch/' + url,
-    (url) => 'https://proxy.corsfix.com/?' + url,
-    (url) => 'https://corsproxy.io/?url=' + encodeURIComponent(url),
-    (url) => 'https://proxy.cors.sh/' + url,
-  ];
+  const proxies = getProxyList();
   const customProxy = credentials.proxy;
 
   const attempts = [];
@@ -986,12 +989,13 @@ async function attemptLogin() {
 
     if (customProxy) {
       // Custom proxy — try both formats
-      attempts.push(tryAuth(customProxy + '/?url=' + encodeURIComponent(authUrl), body, apiBase));
+      const customFn = (url) => customProxy + '/?url=' + encodeURIComponent(url);
+      attempts.push(tryAuth(customFn(authUrl), body, apiBase, null, customFn));
       attempts.push(tryAuth(customProxy + '/proxy', body, apiBase, { 'X-Target-URL': authUrl }));
     }
 
     for (const makeUrl of proxies) {
-      attempts.push(tryAuth(makeUrl(authUrl), body, apiBase));
+      attempts.push(tryAuth(makeUrl(authUrl), body, apiBase, null, makeUrl));
     }
 
     // Also try direct (some APIs allow CORS)
@@ -1003,20 +1007,20 @@ async function attemptLogin() {
     if (result) {
       credentials.token = result.token;
       credentials.apiBase = result.apiBase;
-      // Store working proxy for future requests
-      if (result.workingProxy) credentials._workingProxy = result.workingProxy;
+      // Store working proxy function for future requests
+      if (result.proxyFn) credentials._workingProxyFn = result.proxyFn;
       await fetchOrgAndAsset();
       return true;
     }
   } catch(e) {
     const reasons = e.errors ? e.errors.map(err => err.message).slice(0, 5).join('\n') : e.message;
     console.log('All login attempts failed:', e);
-    alert('Login failed.\n\nDebug info:\n' + reasons + '\n\nFix: Deploy your own proxy on Vercel (free). Repo already has /api/proxy.js ready.');
+    alert('Login failed.\n\nDebug info:\n' + reasons + '\n\nFix: Deploy to Vercel (free) where the built-in proxy works automatically.\n\n1. Go to vercel.com → Import Git Repository\n2. Select jaystruckin/TKLINK → Deploy\n3. Use your-app.vercel.app instead of GitHub Pages');
   }
   return false;
 }
 
-async function tryAuth(url, body, apiBase, extraHeaders) {
+async function tryAuth(url, body, apiBase, extraHeaders, proxyFn) {
   const headers = { 'Content-Type': 'application/x-www-form-urlencoded', ...extraHeaders };
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 8000);
@@ -1028,7 +1032,7 @@ async function tryAuth(url, body, apiBase, extraHeaders) {
     const token = data.access_token || data.AccessToken || data.token || data.Token;
     if (!token) throw new Error('No token');
     console.log('LOGIN SUCCESS via', url);
-    return { token, apiBase, workingProxy: url };
+    return { token, apiBase, proxyFn };
   } catch(e) {
     clearTimeout(timer);
     throw e;
