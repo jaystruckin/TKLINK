@@ -631,6 +631,11 @@
     <input class="input-field" id="vehicle-id" type="text" placeholder="T909" autocomplete="off">
   </div>
 
+  <div class="input-group">
+    <label class="input-label">Proxy URL</label>
+    <input class="input-field" id="proxy-url" type="url" placeholder="https://tklink-proxy.onrender.com" autocomplete="off" spellcheck="false">
+  </div>
+
   <p class="portal-note">Read-only access. Data refreshes every 5 seconds.</p>
 
   <button class="btn-connect" id="connect-btn" onclick="connectToMactrack()">LOG IN</button>
@@ -638,7 +643,6 @@
   <div class="trial-link">No account? <a onclick="startTrialMode()">Try Demo</a></div>
 
   <input type="hidden" id="portal-url" value="https://mactrack.telematics.guru">
-  <input type="hidden" id="proxy-url" value="">
 </div>
 
 <!-- MAIN APP -->
