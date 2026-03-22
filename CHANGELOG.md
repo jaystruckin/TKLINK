@@ -21,6 +21,16 @@ All notable changes to TKLINK will be documented here.
 - Pre-cached all icon files and fonts in service worker
 - Bumped service worker cache version to v2
 
+### Added
+
+- **Find Agents** button on login screen to discover all available MacTrack agents (vehicles)
+- Parallel authentication — all auth endpoints tried simultaneously for maximum speed
+- Parallel agent endpoint fetching — all API variants queried at once; first successful response wins
+- Full pagination — iterates all pages automatically so every agent is returned, no cap
+- Agent list panel shows vehicle name, ID and online/offline status badge
+- Tap any agent to auto-fill the Vehicle ID field
+- Demo agents shown when MacTrack API is unreachable
+
 ---
 
 ## [0.1.2] - 2026-03-22

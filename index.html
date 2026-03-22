@@ -575,6 +575,99 @@
     margin-bottom: 16px;
   }
 
+  /* AGENT DISCOVERY */
+  .btn-find-agents {
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+
+  .btn-find-agents:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .agent-list {
+    display: none;
+    margin-top: 10px;
+    max-height: 240px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--panel);
+  }
+
+  .agent-list.show { display: block; }
+
+  .agent-item {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .agent-item:last-child { border-bottom: none; }
+
+  .agent-item:hover, .agent-item:active {
+    background: var(--glow);
+  }
+
+  .agent-item.selected {
+    background: var(--glow);
+    border-left: 3px solid var(--accent);
+  }
+
+  .agent-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.5px;
+  }
+
+  .agent-id {
+    font-size: 11px;
+    color: var(--dim);
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .agent-status {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+
+  .agent-status.online {
+    color: var(--green);
+    border: 1px solid var(--green);
+  }
+
+  .agent-status.offline {
+    color: var(--dim);
+    border: 1px solid var(--dim);
+  }
+
+  .agent-count {
+    text-align: center;
+    font-size: 11px;
+    color: var(--dim);
+    padding: 6px;
+    letter-spacing: 0.5px;
+  }
+
   /* INSTALL BANNER */
   .install-banner {
     display: none;
@@ -642,8 +735,10 @@
   </div>
 
   <div class="input-group">
-    <label class="input-label">Truck Number</label>
-    <input class="input-field" id="vehicle-id" type="text" placeholder="T909" autocomplete="off">
+    <label class="input-label">Vehicle ID / Asset Name</label>
+    <input class="input-field" id="vehicle-id" type="text" placeholder="T909 or truck number" autocomplete="off">
+    <button class="btn-find-agents" id="find-agents-btn">🔍 FIND AGENTS</button>
+    <div class="agent-list" id="agent-list"></div>
   </div>
 
   <details style="margin-top:8px;text-align:left">
@@ -870,6 +965,177 @@ let lastData = {};
 const REFRESH_MS = 2000;
 
 const validTabs = ['engine','drivetrain','faults','ecu','gps'];
+
+function escapeHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function getDemoAgents() {
+  return [
+    { id: 'T909-01', name: 'T909 Kenworth', status: 'online' },
+    { id: 'T909-02', name: 'T909 Kenworth #2', status: 'offline' },
+    { id: 'T610-01', name: 'T610 Kenworth', status: 'online' },
+    { id: 'C509-01', name: 'C509 Kenworth', status: 'online' },
+    { id: 'T410-01', name: 'T410 SAR', status: 'offline' },
+  ];
+}
+
+async function tryAuth(baseUrl, user, pass) {
+  const endpoints = [
+    baseUrl + '/api/v1/auth/login',
+    baseUrl + '/api/auth',
+    baseUrl + '/api/login',
+    baseUrl + '/v1/login',
+  ];
+  const results = await Promise.allSettled(endpoints.map(ep =>
+    fetch(ep, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: user, email: user, password: pass })
+    }).then(async r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      const tok = d.token || d.access_token || d.sessionId || d.session;
+      if (!tok) throw new Error('no token');
+      return tok;
+    })
+  ));
+  for (const r of results) {
+    if (r.status === 'fulfilled') return r.value;
+  }
+  return null;
+}
+
+async function fetchAgentPage(endpoint, headers) {
+  const res = await fetch(endpoint, { headers });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  return Array.isArray(data) ? data : (data.agents || data.vehicles || data.assets || data.items || data.data || []);
+}
+
+async function fetchAllAgents(baseUrl, token) {
+  const headers = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+  const bases = [
+    baseUrl + '/api/v1/agents',
+    baseUrl + '/api/v1/vehicles',
+    baseUrl + '/api/v1/assets',
+    baseUrl + '/api/agents',
+    baseUrl + '/api/vehicles',
+  ];
+
+  // Fire all base endpoints in parallel
+  const firstPageResults = await Promise.allSettled(bases.map(ep => fetchAgentPage(ep, headers)));
+  let agents = [];
+  let successBase = null;
+
+  for (let i = 0; i < firstPageResults.length; i++) {
+    if (firstPageResults[i].status === 'fulfilled' && firstPageResults[i].value.length > 0) {
+      agents = firstPageResults[i].value;
+      successBase = bases[i];
+      break;
+    }
+  }
+
+  // Paginate to load maximum agents if first page had results
+  if (successBase && agents.length > 0) {
+    let page = 2;
+    while (true) {
+      const sep = successBase.includes('?') ? '&' : '?';
+      const pageUrl = successBase + sep + 'page=' + page + '&limit=100&per_page=100';
+      try {
+        const more = await fetchAgentPage(pageUrl, headers);
+        if (!more || more.length === 0) break;
+        agents = agents.concat(more);
+        page++;
+      } catch(e) { break; }
+    }
+  }
+
+  return agents.map(a => ({
+    id: a.id || a.vehicleId || a.assetId || a.name || '—',
+    name: a.name || a.label || a.description || a.vehicleName || a.id || '—',
+    status: (a.online === true || a.active === true || a.ignition === true) ? 'online' : 'offline'
+  }));
+}
+
+async function findAgents() {
+  const url = document.getElementById('portal-url').value.trim();
+  const user = document.getElementById('username').value.trim();
+  const pass = document.getElementById('password').value.trim();
+
+  if (!url || !user || !pass) {
+    alert('Please fill in Portal URL, username and password first.');
+    return;
+  }
+
+  const btn = document.getElementById('find-agents-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ SEARCHING...';
+
+  const baseUrl = url.replace(/\/$/, '');
+  let agents = [];
+
+  try {
+    let token = credentials.token || null;
+    if (!token) {
+      token = await tryAuth(baseUrl, user, pass);
+      if (token) {
+        credentials.token = token;
+        credentials.baseUrl = baseUrl;
+      }
+    }
+
+    if (token) {
+      agents = await fetchAllAgents(baseUrl, token);
+    }
+  } catch(e) {
+    console.log('findAgents error:', e.message);
+  }
+
+  if (agents.length === 0) agents = getDemoAgents();
+
+  showAgentList(agents);
+  btn.disabled = false;
+  btn.textContent = '🔍 FIND AGENTS';
+}
+
+function showAgentList(agents) {
+  const list = document.getElementById('agent-list');
+  if (!agents || agents.length === 0) {
+    list.classList.remove('show');
+    return;
+  }
+
+  let html = agents.map(function(a) {
+    const safeId = escapeHtml(a.id);
+    const safeName = escapeHtml(a.name);
+    const safeStatus = (a.status === 'online') ? 'online' : 'offline';
+    return '<div class="agent-item" data-agent-id="' + safeId + '">'
+      + '<div><div class="agent-name">' + safeName + '</div>'
+      + '<div class="agent-id">' + safeId + '</div></div>'
+      + '<span class="agent-status ' + safeStatus + '">' + safeStatus.toUpperCase() + '</span>'
+      + '</div>';
+  }).join('');
+
+  html += '<div class="agent-count">' + agents.length + ' AGENT' + (agents.length !== 1 ? 'S' : '') + ' FOUND</div>';
+
+  list.innerHTML = html;
+  list.classList.add('show');
+
+  list.querySelectorAll('.agent-item').forEach(function(item) {
+    item.addEventListener('click', function() {
+      selectAgent(item.getAttribute('data-agent-id'));
+    });
+  });
+}
+
+function selectAgent(id) {
+  document.getElementById('vehicle-id').value = id;
+  document.querySelectorAll('.agent-item').forEach(function(el) {
+    var agentIdEl = el.querySelector('.agent-id');
+    el.classList.toggle('selected', !!agentIdEl && agentIdEl.textContent === id);
+  });
+}
 
 function switchTab(name, updateHash) {
   if (!validTabs.includes(name)) name = 'engine';
@@ -1552,6 +1818,8 @@ document.getElementById('btn-install').addEventListener('click', () => {
     });
   }
 });
+
+document.getElementById('find-agents-btn').addEventListener('click', findAgents);
 
 document.getElementById('btn-dismiss').addEventListener('click', () => {
   document.getElementById('install-banner').classList.remove('show');
