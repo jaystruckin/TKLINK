@@ -10,10 +10,15 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="TKLINK">
+<meta name="description" content="Live truck telematics for drivers — engine data, GPS, fault codes and ECU info directly on your phone. Read-only. Secure.">
+<link rel="dns-prefetch" href="https://fonts.googleapis.com">
+<link rel="dns-prefetch" href="https://fonts.gstatic.com">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap"></noscript>
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<link rel="preload" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap"></noscript>
 <style>
 
   :root {
@@ -184,18 +189,26 @@
   .header {
     background: var(--panel);
     border-bottom: 1px solid var(--border);
-    padding: 12px 16px;
+    padding: 14px 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     position: sticky;
     top: 0;
     z-index: 100;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.4);
+    background: linear-gradient(180deg, #111820 0%, var(--panel) 100%);
   }
 
   .header-left { display: flex; flex-direction: column; }
-  .header-truck { font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: 1px; }
-  .header-id { font-size: 11px; color: var(--dim); letter-spacing: 2px; font-family: 'Share Tech Mono', monospace; }
+  .header-truck {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-shadow: 0 0 16px rgba(232,93,0,0.4);
+  }
+  .header-id { font-size: 11px; color: var(--dim); letter-spacing: 2px; font-family: 'Share Tech Mono', monospace; margin-top: 2px; }
 
   .live-badge {
     display: flex;
@@ -204,13 +217,16 @@
     font-size: 11px;
     letter-spacing: 2px;
     color: var(--green);
+    text-shadow: 0 0 8px rgba(0,230,118,0.5);
   }
 
   .live-dot {
     width: 8px; height: 8px;
     border-radius: 50%;
     background: var(--green);
+    box-shadow: 0 0 8px rgba(0,230,118,0.8);
     animation: pulse 1.5s infinite;
+    will-change: opacity, transform;
   }
 
   @keyframes pulse {
@@ -223,6 +239,11 @@
     color: var(--dim);
     font-family: 'Share Tech Mono', monospace;
     text-align: right;
+    margin-top: 4px;
+  }
+
+  .update-time.stale {
+    color: #ff6b35;
   }
 
   /* TABS */
@@ -238,10 +259,10 @@
   .tab {
     flex: 1;
     min-width: 70px;
-    padding: 12px 8px;
+    padding: 13px 8px 11px;
     text-align: center;
     font-size: 11px;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
     color: var(--dim);
     cursor: pointer;
     border-bottom: 2px solid transparent;
@@ -249,21 +270,28 @@
     white-space: nowrap;
   }
 
+  .tab:active { background: rgba(232,93,0,0.05); }
+
   .tab.active {
     color: var(--accent);
     border-bottom-color: var(--accent);
+    text-shadow: 0 0 10px rgba(232,93,0,0.4);
   }
 
   /* CONTENT */
-  .content { padding: 16px; padding-bottom: 32px; }
+  .content {
+    padding: 16px;
+    padding-bottom: 32px;
+    background: radial-gradient(ellipse at 50% 0%, rgba(232,93,0,0.04) 0%, transparent 60%);
+  }
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
   /* ALERT BAR */
   .alert-bar {
-    background: rgba(255, 23, 68, 0.1);
+    background: rgba(255, 23, 68, 0.08);
     border: 1px solid rgba(255, 23, 68, 0.3);
-    border-radius: 4px;
+    border-radius: 6px;
     padding: 12px 16px;
     margin-bottom: 16px;
     display: flex;
@@ -272,6 +300,7 @@
     font-size: 13px;
     color: var(--red);
     display: none;
+    box-shadow: 0 2px 16px rgba(255,23,68,0.08);
   }
 
   .alert-bar.show { display: flex; }
@@ -287,10 +316,12 @@
   .gauge-card {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 8px;
     padding: 14px;
     position: relative;
     overflow: hidden;
+    contain: layout style paint;
+    transition: border-color 0.3s, box-shadow 0.3s;
   }
 
   .gauge-card::before {
@@ -302,8 +333,18 @@
     opacity: 0.5;
   }
 
+  .gauge-card.warning {
+    border-color: rgba(255,214,0,0.3);
+    box-shadow: 0 0 16px rgba(255,214,0,0.06);
+  }
   .gauge-card.warning::before { background: var(--yellow); opacity: 1; }
+
+  .gauge-card.critical {
+    border-color: rgba(255,23,68,0.4);
+    box-shadow: 0 0 20px rgba(255,23,68,0.1);
+  }
   .gauge-card.critical::before { background: var(--red); opacity: 1; }
+
   .gauge-card.good::before { background: var(--green); opacity: 1; }
 
   .gauge-label {
@@ -321,10 +362,14 @@
     color: var(--text);
     line-height: 1;
     margin-bottom: 4px;
+    transition: color 0.3s;
   }
 
   .gauge-value.warning { color: var(--yellow); }
-  .gauge-value.critical { color: var(--red); }
+  .gauge-value.critical {
+    color: var(--red);
+    text-shadow: 0 0 10px rgba(255,23,68,0.4);
+  }
   .gauge-value.good { color: var(--green); }
 
   .gauge-unit {
@@ -344,24 +389,26 @@
   .gauge-fill {
     height: 100%;
     border-radius: 2px;
-    background: var(--accent);
-    transition: width 0.5s ease;
+    background: linear-gradient(90deg, rgba(232,93,0,0.6), var(--accent));
+    transition: width 0.3s ease;
+    will-change: width;
   }
 
-  .gauge-fill.warning { background: var(--yellow); }
-  .gauge-fill.critical { background: var(--red); }
-  .gauge-fill.good { background: var(--green); }
+  .gauge-fill.warning { background: linear-gradient(90deg, rgba(255,214,0,0.6), var(--yellow)); }
+  .gauge-fill.critical { background: linear-gradient(90deg, rgba(255,23,68,0.6), var(--red)); }
+  .gauge-fill.good { background: linear-gradient(90deg, rgba(0,230,118,0.5), var(--green)); }
 
   /* SECTION HEADER */
   .section-header {
-    font-size: 11px;
+    font-size: 10px;
     letter-spacing: 3px;
-    color: var(--dim);
+    color: var(--accent);
     text-transform: uppercase;
     margin-bottom: 10px;
-    margin-top: 20px;
+    margin-top: 24px;
     padding-bottom: 8px;
     border-bottom: 1px solid var(--border);
+    opacity: 0.8;
   }
 
   /* DATA ROWS */
@@ -369,9 +416,10 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 11px 0;
+    padding: 12px 0;
     border-bottom: 1px solid rgba(26,37,48,0.5);
     font-size: 14px;
+    transition: background 0.15s;
   }
 
   .data-key { color: var(--dim); font-size: 13px; }
@@ -388,17 +436,20 @@
   /* FAULT CODES */
   .fault-card {
     background: var(--panel);
-    border: 1px solid rgba(255,23,68,0.3);
+    border: 1px solid rgba(255,23,68,0.25);
     border-left: 3px solid var(--red);
-    border-radius: 4px;
+    border-radius: 6px;
     padding: 14px;
     margin-bottom: 10px;
+    contain: layout style;
+    box-shadow: 0 2px 12px rgba(255,23,68,0.06);
   }
 
   .fault-card.inactive {
     border-color: rgba(26,37,48,0.8);
     border-left-color: var(--dim);
     opacity: 0.6;
+    box-shadow: none;
   }
 
   .fault-code {
@@ -443,13 +494,21 @@
   .ecu-header {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 16px;
+    border-radius: 8px;
+    padding: 20px 16px;
     margin-bottom: 16px;
     text-align: center;
+    background: linear-gradient(180deg, rgba(232,93,0,0.05) 0%, var(--panel) 100%);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
   }
 
-  .ecu-engine { font-size: 22px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+  .ecu-engine {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 4px;
+    text-shadow: 0 0 16px rgba(232,93,0,0.3);
+  }
   .ecu-cpl { font-family: 'Share Tech Mono', monospace; font-size: 13px; color: var(--dim); }
 
   .hp-torque {
@@ -462,9 +521,20 @@
   .ht-card {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 16px;
+    border-radius: 8px;
+    padding: 18px 16px;
     text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ht-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    opacity: 0.4;
   }
 
   .ht-value {
@@ -472,35 +542,38 @@
     font-size: 36px;
     color: var(--accent);
     line-height: 1;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+    text-shadow: 0 0 20px rgba(232,93,0,0.25);
   }
 
-  .ht-label { font-size: 11px; color: var(--dim); letter-spacing: 2px; }
+  .ht-label { font-size: 10px; color: var(--dim); letter-spacing: 2px; }
 
   /* GPS */
   .gps-card {
     background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 16px;
+    border: 1px solid rgba(0,176,255,0.2);
+    border-radius: 8px;
+    padding: 18px 16px;
     margin-bottom: 16px;
+    box-shadow: 0 2px 16px rgba(0,176,255,0.04);
   }
 
   .gps-coords {
     font-family: 'Share Tech Mono', monospace;
     font-size: 14px;
     color: var(--blue);
-    margin-bottom: 12px;
-    line-height: 1.8;
+    margin-bottom: 14px;
+    line-height: 2;
+    text-shadow: 0 0 8px rgba(0,176,255,0.3);
   }
 
   .map-btn {
     display: block;
     width: 100%;
-    background: rgba(0,176,255,0.1);
-    border: 1px solid rgba(0,176,255,0.3);
-    border-radius: 4px;
-    padding: 12px;
+    background: rgba(0,176,255,0.08);
+    border: 1px solid rgba(0,176,255,0.25);
+    border-radius: 6px;
+    padding: 13px;
     color: var(--blue);
     font-family: 'Rajdhani', sans-serif;
     font-size: 14px;
@@ -510,15 +583,21 @@
     cursor: pointer;
     text-decoration: none;
     margin-bottom: 10px;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .map-btn:active {
+    background: rgba(0,176,255,0.15);
+    border-color: rgba(0,176,255,0.4);
   }
 
   /* SHARE */
   .share-btn {
     width: 100%;
-    background: rgba(0,230,118,0.1);
-    border: 1px solid rgba(0,230,118,0.3);
-    border-radius: 4px;
-    padding: 14px;
+    background: rgba(0,230,118,0.08);
+    border: 1px solid rgba(0,230,118,0.25);
+    border-radius: 6px;
+    padding: 15px;
     color: var(--green);
     font-family: 'Rajdhani', sans-serif;
     font-size: 15px;
@@ -526,7 +605,13 @@
     letter-spacing: 2px;
     text-align: center;
     cursor: pointer;
-    margin-top: 20px;
+    margin-top: 24px;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .share-btn:active {
+    background: rgba(0,230,118,0.14);
+    border-color: rgba(0,230,118,0.4);
   }
 
   .no-faults {
@@ -559,6 +644,246 @@
     color: var(--dim);
     line-height: 1.6;
     margin-bottom: 16px;
+  }
+
+  /* AGENT DISCOVERY */
+  .btn-find-agents {
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+
+  .btn-find-agents:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .agent-list {
+    display: none;
+    margin-top: 10px;
+    max-height: 240px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--panel);
+  }
+
+  .agent-list.show { display: block; }
+
+  .agent-item {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .agent-item:last-child { border-bottom: none; }
+
+  .agent-item:hover, .agent-item:active {
+    background: var(--glow);
+  }
+
+  .agent-item.selected {
+    background: var(--glow);
+    border-left: 3px solid var(--accent);
+  }
+
+  .agent-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.5px;
+  }
+
+  .agent-id {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px 24px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .speed-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(232,93,0,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .speed-label {
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .speed-number {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 96px;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--text);
+    transition: color 0.3s;
+  }
+
+  .speed-number.good   { color: var(--green); text-shadow: 0 0 30px rgba(0,230,118,0.4); }
+  .speed-number.warning { color: var(--yellow); text-shadow: 0 0 30px rgba(255,214,0,0.4); }
+  .speed-number.critical { color: var(--red); text-shadow: 0 0 30px rgba(255,23,68,0.4); }
+
+  .speed-unit {
+    font-size: 18px;
+    color: var(--dim);
+    letter-spacing: 3px;
+    margin-top: 4px;
+  }
+
+  .speed-src-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 16px;
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 1px;
+  }
+
+  .speed-src-badge {
+    padding: 3px 8px;
+    border-radius: 2px;
+    border: 1px solid var(--border);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+
+  .speed-src-badge.active-src {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(232,93,0,0.08);
+  }
+
+  .speed-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .speed-stat-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px;
+    text-align: center;
+  }
+
+  .speed-stat-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .speed-stat-value {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 28px;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .speed-stat-unit {
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  .speed-limit-bar {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+
+  .speed-limit-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .speed-limit-track {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+
+  .speed-limit-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--green);
+    transition: width 0.5s ease, background 0.3s;
+  }
+
+  .speed-limit-fill.warning  { background: var(--yellow); }
+  .speed-limit-fill.critical { background: var(--red); }
+
+  .speed-limit-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--dim);
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .agent-status {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+
+  .agent-status.online {
+    color: var(--green);
+    border: 1px solid var(--green);
+  }
+
+  .agent-status.offline {
+    color: var(--dim);
+    border: 1px solid var(--dim);
+  }
+
+  .agent-count {
+    text-align: center;
+    font-size: 11px;
+    color: var(--dim);
+    padding: 6px;
+    letter-spacing: 0.5px;
   }
 
   /* INSTALL BANNER */
@@ -629,7 +954,9 @@
 
   <div class="input-group">
     <label class="input-label">Truck Number</label>
-    <input class="input-field" id="vehicle-id" type="text" placeholder="T909" autocomplete="off">
+    <input class="input-field" id="vehicle-id" type="text" placeholder="T409" autocomplete="off">
+    <button class="btn-find-agents" id="find-agents-btn">🔍 FIND AGENTS</button>
+    <div class="agent-list" id="agent-list"></div>
   </div>
 
   <details style="margin-top:8px;text-align:left">
@@ -637,7 +964,7 @@
     <input class="input-field" id="proxy-url" type="url" placeholder="https://your-worker.workers.dev" autocomplete="off" spellcheck="false" style="margin-top:6px">
   </details>
 
-  <p class="portal-note">Read-only access. Data refreshes every 5 seconds.</p>
+  <p class="portal-note">Read-only access. No changes made. Data refreshes every 2 seconds. Credentials stored locally on this device only.</p>
 
   <button class="btn-connect" id="connect-btn" onclick="connectToMactrack()">LOG IN</button>
   <div class="connecting-msg" id="connecting-msg"><span class="spinner"></span>CONNECTING...</div>
@@ -650,7 +977,7 @@
 <div id="main-app">
   <div class="header">
     <div class="header-left">
-      <div class="header-truck">T909 KENWORTH</div>
+      <div class="header-truck">T409 KENWORTH</div>
       <div class="header-id" id="header-id">—</div>
     </div>
     <div style="text-align:right">
@@ -659,12 +986,13 @@
     </div>
   </div>
 
-  <div class="tabs">
-    <div class="tab active" onclick="switchTab('engine')">ENGINE</div>
-    <div class="tab" onclick="switchTab('drivetrain')">DRIVE</div>
-    <div class="tab" onclick="switchTab('faults')">FAULTS</div>
-    <div class="tab" onclick="switchTab('ecu')">ECU</div>
-    <div class="tab" onclick="switchTab('gps')">GPS</div>
+  <div class="tabs" role="tablist">
+    <div class="tab active" role="tab" aria-selected="true" onclick="switchTab('engine')">ENGINE</div>
+    <div class="tab" role="tab" aria-selected="false" onclick="switchTab('drivetrain')">DRIVE</div>
+    <div class="tab" role="tab" aria-selected="false" onclick="switchTab('faults')">FAULTS</div>
+    <div class="tab" role="tab" aria-selected="false" onclick="switchTab('ecu')">ECU</div>
+    <div class="tab" role="tab" aria-selected="false" onclick="switchTab('gps')">GPS</div>
+    <div class="tab" role="tab" aria-selected="false" onclick="switchTab('speed')">⚡ SPEED</div>
   </div>
 
   <div class="content">
@@ -839,6 +1167,54 @@
       <div class="data-row"><span class="data-key">Last Update</span><span class="data-val" id="gps-updated">—</span></div>
     </div>
 
+    <!-- SPEED TAB -->
+    <div class="tab-panel" id="tab-speed">
+      <div class="speed-hero">
+        <div class="speed-label">VEHICLE SPEED</div>
+        <div class="speed-number" id="speed-big">—</div>
+        <div class="speed-unit">KM/H</div>
+        <div class="speed-src-row">
+          <span class="speed-src-badge" id="spdbadge-ecu">ECU</span>
+          <span class="speed-src-badge" id="spdbadge-gps">GPS</span>
+        </div>
+      </div>
+
+      <div class="speed-stats">
+        <div class="speed-stat-card">
+          <div class="speed-stat-label">GPS SPEED</div>
+          <div class="speed-stat-value" id="spd-gps">—</div>
+          <div class="speed-stat-unit">KM/H</div>
+        </div>
+        <div class="speed-stat-card">
+          <div class="speed-stat-label">CURRENT GEAR</div>
+          <div class="speed-stat-value" id="spd-gear">—</div>
+          <div class="speed-stat-unit">GEAR</div>
+        </div>
+        <div class="speed-stat-card">
+          <div class="speed-stat-label">ENGINE RPM</div>
+          <div class="speed-stat-value" id="spd-rpm">—</div>
+          <div class="speed-stat-unit">RPM</div>
+        </div>
+        <div class="speed-stat-card">
+          <div class="speed-stat-label">HEADING</div>
+          <div class="speed-stat-value" id="spd-heading" style="font-size:18px">—</div>
+          <div class="speed-stat-unit">DIRECTION</div>
+        </div>
+      </div>
+
+      <div class="speed-limit-bar">
+        <div class="speed-limit-label">SPEED VS LIMIT</div>
+        <div class="speed-limit-track">
+          <div class="speed-limit-fill" id="spd-limit-fill" style="width:0%"></div>
+        </div>
+        <div class="speed-limit-meta">
+          <span>0</span>
+          <span id="spd-limit-now">— km/h</span>
+          <span id="spd-limit-max">LIMIT: — km/h</span>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -849,17 +1225,205 @@
   <button class="btn-dismiss" id="btn-dismiss">✕</button>
 </div>
 
+<noscript>
+  <div style="padding:40px 20px;text-align:center;color:#c8d8e8;font-family:sans-serif;background:#080c10;min-height:100vh">
+    <h2 style="color:#e85d00">TKLINK requires JavaScript</h2>
+    <p>Please enable JavaScript in your browser settings to use this app.</p>
+  </div>
+</noscript>
+
 <script>
 let updateInterval = null;
 let credentials = {};
 let lastData = {};
+const REFRESH_MS = 2000;
 
-const validTabs = ['engine','drivetrain','faults','ecu','gps'];
+const validTabs = ['engine','drivetrain','faults','ecu','gps','speed'];
+
+function esc(str) {
+  if (str == null) return '';
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function escOr(val, fallback) {
+  return esc(String(val || fallback || '—'));
+}
+
+function getDemoAgents() {
+  return [
+    { id: 'T409-01', name: 'T409 Kenworth', status: 'online' },
+    { id: 'T409-02', name: 'T409 Kenworth #2', status: 'offline' },
+    { id: 'T610-01', name: 'T610 Kenworth', status: 'online' },
+    { id: 'C509-01', name: 'C509 Kenworth', status: 'online' },
+    { id: 'T410-01', name: 'T410 SAR', status: 'offline' },
+  ];
+}
+
+async function tryAuth(baseUrl, user, pass) {
+  const endpoints = [
+    baseUrl + '/api/v1/auth/login',
+    baseUrl + '/api/auth',
+    baseUrl + '/api/login',
+    baseUrl + '/v1/login',
+  ];
+  const results = await Promise.allSettled(endpoints.map(ep =>
+    fetch(ep, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: user, email: user, password: pass })
+    }).then(async r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      const tok = d.token || d.access_token || d.sessionId || d.session;
+      if (!tok) throw new Error('no token');
+      return tok;
+    })
+  ));
+  for (const r of results) {
+    if (r.status === 'fulfilled') return r.value;
+  }
+  return null;
+}
+
+async function fetchAgentPage(endpoint, headers) {
+  const res = await fetch(endpoint, { headers });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  return Array.isArray(data) ? data : (data.agents || data.vehicles || data.assets || data.items || data.data || []);
+}
+
+async function fetchAllAgents(baseUrl, token) {
+  const headers = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+  const bases = [
+    baseUrl + '/api/v1/agents',
+    baseUrl + '/api/v1/vehicles',
+    baseUrl + '/api/v1/assets',
+    baseUrl + '/api/agents',
+    baseUrl + '/api/vehicles',
+  ];
+
+  // Fire all base endpoints in parallel
+  const firstPageResults = await Promise.allSettled(bases.map(ep => fetchAgentPage(ep, headers)));
+  let agents = [];
+  let successBase = null;
+
+  for (let i = 0; i < firstPageResults.length; i++) {
+    if (firstPageResults[i].status === 'fulfilled' && firstPageResults[i].value.length > 0) {
+      agents = firstPageResults[i].value;
+      successBase = bases[i];
+      break;
+    }
+  }
+
+  // Paginate to load maximum agents if first page had results
+  if (successBase && agents.length > 0) {
+    let page = 2;
+    while (true) {
+      const sep = successBase.includes('?') ? '&' : '?';
+      const pageUrl = successBase + sep + 'page=' + page + '&limit=100&per_page=100';
+      try {
+        const more = await fetchAgentPage(pageUrl, headers);
+        if (!more || more.length === 0) break;
+        agents = agents.concat(more);
+        page++;
+      } catch(e) { break; }
+    }
+  }
+
+  return agents.map(a => ({
+    id: a.id || a.vehicleId || a.assetId || a.name || '—',
+    name: a.name || a.label || a.description || a.vehicleName || a.id || '—',
+    status: (a.online === true || a.active === true || a.ignition === true) ? 'online' : 'offline'
+  }));
+}
+
+async function findAgents() {
+  const url = document.getElementById('portal-url').value.trim();
+  const user = document.getElementById('username').value.trim();
+  const pass = document.getElementById('password').value.trim();
+
+  if (!url || !user || !pass) {
+    alert('Please fill in Portal URL, username and password first.');
+    return;
+  }
+
+  const btn = document.getElementById('find-agents-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ SEARCHING...';
+
+  const baseUrl = url.replace(/\/$/, '');
+  let agents = [];
+
+  try {
+    let token = credentials.token || null;
+    if (!token) {
+      token = await tryAuth(baseUrl, user, pass);
+      if (token) {
+        credentials.token = token;
+        credentials.baseUrl = baseUrl;
+      }
+    }
+
+    if (token) {
+      agents = await fetchAllAgents(baseUrl, token);
+    }
+  } catch(e) {
+    console.log('findAgents error:', e.message);
+  }
+
+  if (agents.length === 0) agents = getDemoAgents();
+
+  showAgentList(agents);
+  btn.disabled = false;
+  btn.textContent = '🔍 FIND AGENTS';
+}
+
+function showAgentList(agents) {
+  const list = document.getElementById('agent-list');
+  if (!agents || agents.length === 0) {
+    list.classList.remove('show');
+    return;
+  }
+
+  let html = agents.map(function(a) {
+    const safeId = esc(a.id);
+    const safeName = esc(a.name);
+    const safeStatus = (a.status === 'online') ? 'online' : 'offline';
+    return '<div class="agent-item" data-agent-id="' + safeId + '">'
+      + '<div><div class="agent-name">' + safeName + '</div>'
+      + '<div class="agent-id">' + safeId + '</div></div>'
+      + '<span class="agent-status ' + safeStatus + '">' + safeStatus.toUpperCase() + '</span>'
+      + '</div>';
+  }).join('');
+
+  html += '<div class="agent-count">' + agents.length + ' AGENT' + (agents.length !== 1 ? 'S' : '') + ' FOUND</div>';
+
+  list.innerHTML = html;
+  list.classList.add('show');
+
+  list.querySelectorAll('.agent-item').forEach(function(item) {
+    item.addEventListener('click', function() {
+      selectAgent(item.getAttribute('data-agent-id'));
+    });
+  });
+}
+
+function selectAgent(id) {
+  document.getElementById('vehicle-id').value = id;
+  document.querySelectorAll('.agent-item').forEach(function(el) {
+    const agentIdEl = el.querySelector('.agent-id');
+    el.classList.toggle('selected', !!agentIdEl && agentIdEl.textContent === id);
+  });
+}
 
 function switchTab(name, updateHash) {
   if (!validTabs.includes(name)) name = 'engine';
   document.querySelectorAll('.tab').forEach((t,i) => {
-    t.classList.toggle('active', validTabs[i] === name);
+    const isActive = validTabs[i] === name;
+    t.classList.toggle('active', isActive);
+    t.setAttribute('aria-selected', isActive ? 'true' : 'false');
   });
   document.querySelectorAll('.tab-panel').forEach(p => {
     p.classList.toggle('active', p.id === 'tab-' + name);
@@ -883,6 +1447,7 @@ window.addEventListener('hashchange', () => {
 const TG_INSTANCES = ['api-apac03', 'api-apac02', 'api-apac01'];
 
 async function connectToMactrack() {
+  const url = document.getElementById('portal-url').value.trim();
   const user = document.getElementById('username').value.trim();
   const pass = document.getElementById('password').value.trim();
   const vid = document.getElementById('vehicle-id').value.trim();
@@ -893,7 +1458,12 @@ async function connectToMactrack() {
     return;
   }
 
-  credentials = { user, pass, vid, proxy: proxy ? proxy.replace(/\/$/, '') : '' };
+  if (url && !/^https?:\/\/.+/i.test(url)) {
+    alert('Please enter a valid portal URL starting with http:// or https://');
+    return;
+  }
+
+  credentials = { url, user, pass, vid, proxy: proxy ? proxy.replace(/\/$/, '') : '' };
 
   const btn = document.getElementById('connect-btn');
   const msg = document.getElementById('connecting-msg');
@@ -906,7 +1476,7 @@ async function connectToMactrack() {
   if (success) {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('main-app').style.display = 'block';
-    document.getElementById('header-id').textContent = credentials.assetName || vid || 'T909';
+    document.getElementById('header-id').textContent = credentials.assetName || vid || 'T409';
     const initialTab = getTabFromHash();
     if (initialTab) switchTab(initialTab);
     startLiveUpdates();
@@ -1083,6 +1653,12 @@ async function fetchOrgAndAsset() {
   }
 }
 
+function markDataAsStale() {
+  const el = document.getElementById('update-time');
+  el.classList.add('stale');
+  el.textContent = 'STALE DATA — retrying';
+}
+
 async function fetchTelematicsData() {
   if (!credentials.token || !credentials.apiBase) {
     showConnectionNote();
@@ -1102,12 +1678,13 @@ async function fetchTelematicsData() {
       const to = now.toISOString();
 
       const telUrl = `${credentials.apiBase}/v2/${credentials.orgId}/asset/${credentials.assetSerial}/rawtelemetry?from=${from}&to=${to}&limit=1`;
-      const res = await proxiedFetch(telUrl, { headers });
+      const res = await proxiedFetch(telUrl, { headers, cache: 'no-store' });
 
       if (res.ok) {
         const records = await res.json();
         if (records && records.length > 0) {
           const latest = records[records.length - 1];
+          document.getElementById('update-time').classList.remove('stale');
           mapTGDataToDisplay(latest);
           return;
         }
@@ -1117,7 +1694,7 @@ async function fetchTelematicsData() {
     // Fallback: try getting asset list for latest positions
     if (credentials.orgId) {
       const assetRes = await proxiedFetch(
-        credentials.apiBase + '/v3/assets/' + credentials.orgId, { headers }
+        credentials.apiBase + '/v3/assets/' + credentials.orgId, { headers, cache: 'no-store' }
       );
       if (assetRes.ok) {
         const assets = await assetRes.json();
@@ -1125,12 +1702,14 @@ async function fetchTelematicsData() {
           ? assets.find(a => (a.Serial || a.serial) == credentials.assetSerial) || assets[0]
           : assets[0];
         if (asset) {
+          document.getElementById('update-time').classList.remove('stale');
           mapAssetDataToDisplay(asset);
           return;
         }
       }
     }
   } catch(e) {
+    markDataAsStale();
     console.log('Fetch error:', e);
   }
 }
@@ -1203,9 +1782,9 @@ function showConnectionNote() {
     <div class="note-box" style="margin-top:0">
       <strong style="color:var(--accent2)">WAITING FOR DATA</strong><br><br>
       Connected to Telematics Guru API<br>
-      Instance: <span style="color:var(--text); font-family:monospace">${credentials.apiBase || '—'}</span><br>
-      Organisation: <span style="color:var(--text)">${credentials.orgId || '—'}</span><br>
-      Asset: <span style="color:var(--text)">${credentials.assetName || '—'}</span><br><br>
+      Instance: <span style="color:var(--text); font-family:monospace">${esc(credentials.apiBase || '—')}</span><br>
+      Organisation: <span style="color:var(--text)">${esc(credentials.orgId || '—')}</span><br>
+      Asset: <span style="color:var(--text)">${esc(credentials.assetName || '—')}</span><br><br>
       Waiting for telemetry data from truck. Data appears when the vehicle ignition is on and the MacTrack device is reporting.
     </div>
   `;
@@ -1278,11 +1857,58 @@ function updateDisplay(data) {
   setText('gps-signal', data.gpsSignal || '—');
   setText('gps-updated', new Date().toLocaleTimeString('en-AU'));
 
+  // Speed tab
+  updateSpeedTab(data);
+
   // Faults
   renderFaults(data.faults || []);
 
   // Alert bar
   checkAlerts(data);
+}
+
+function updateSpeedTab(data) {
+  const ecuSpeed  = data.speed    || null;
+  const gpsSpeed  = data.gpsSpeed || null;
+  const speedLim  = data.speedLim || 100;
+
+  // Use ECU speed as primary, fall back to GPS
+  const displaySpeed = ecuSpeed !== null ? ecuSpeed : gpsSpeed;
+
+  const bigEl   = document.getElementById('speed-big');
+  const fillEl  = document.getElementById('spd-limit-fill');
+  const nowEl   = document.getElementById('spd-limit-now');
+  const maxEl   = document.getElementById('spd-limit-max');
+  const ecuBadge = document.getElementById('spdbadge-ecu');
+  const gpsBadge = document.getElementById('spdbadge-gps');
+
+  if (displaySpeed !== null) {
+    bigEl.textContent = displaySpeed;
+    const pct = Math.min(100, Math.round((displaySpeed / speedLim) * 100));
+    let state = 'good';
+    if (displaySpeed >= speedLim)            state = 'critical';
+    else if (displaySpeed >= speedLim * 0.9) state = 'warning';
+
+    bigEl.className   = 'speed-number ' + state;
+    fillEl.className  = 'speed-limit-fill ' + (state === 'good' ? '' : state);
+    fillEl.style.width = pct + '%';
+    nowEl.textContent  = displaySpeed + ' km/h';
+    maxEl.textContent  = 'LIMIT: ' + speedLim + ' km/h';
+
+    ecuBadge.className = 'speed-src-badge' + (ecuSpeed !== null ? ' active-src' : '');
+    gpsBadge.className = 'speed-src-badge' + (gpsSpeed !== null && ecuSpeed === null ? ' active-src' : '');
+  } else {
+    bigEl.textContent  = '—';
+    bigEl.className    = 'speed-number';
+    fillEl.style.width = '0%';
+    nowEl.textContent  = '— km/h';
+    maxEl.textContent  = 'LIMIT: ' + speedLim + ' km/h';
+  }
+
+  setText('spd-gps',     gpsSpeed !== null ? String(gpsSpeed) : '—');
+  setText('spd-gear',    data.gear    || '—');
+  setText('spd-rpm',     data.rpm     ? String(data.rpm) : '—');
+  setText('spd-heading', data.heading || '—');
 }
 
 function setGauge(id, value, min, max, warnLevels, invertWarn) {
@@ -1345,9 +1971,9 @@ function renderFaults(faults) {
 
   list.innerHTML = faults.map(f => `
     <div class="fault-card ${f.active ? '' : 'inactive'}">
-      <div class="fault-code">${f.code || '—'}</div>
-      <div class="fault-desc">${f.description || '—'}</div>
-      <div class="fault-meta">SPN: ${f.spn || '—'} · FMI: ${f.fmi || '—'} · Count: ${f.count || '—'}</div>
+      <div class="fault-code">${escOr(f.code)}</div>
+      <div class="fault-desc">${escOr(f.description)}</div>
+      <div class="fault-meta">SPN: ${escOr(f.spn)} · FMI: ${escOr(f.fmi)} · Count: ${escOr(f.count)}</div>
       <div class="fault-status">${f.active ? 'ACTIVE' : 'INACTIVE'}</div>
     </div>
   `).join('');
@@ -1372,7 +1998,7 @@ function checkAlerts(data) {
 
 function startLiveUpdates() {
   fetchTelematicsData();
-  updateInterval = setInterval(fetchTelematicsData, 5000);
+  updateInterval = setInterval(fetchTelematicsData, REFRESH_MS);
 }
 
 function generateDemoData() {
@@ -1434,7 +2060,7 @@ function generateDemoData() {
 }
 
 function startTrialMode() {
-  credentials = { url: 'demo', user: 'demo', pass: '', vid: 'T909-DEMO', demoMode: true, trialMode: true };
+  credentials = { url: 'demo', user: 'demo', pass: '', vid: 'T409-DEMO', demoMode: true, trialMode: true };
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('main-app').style.display = 'block';
   document.getElementById('header-id').textContent = 'DEMO MODE';
@@ -1445,12 +2071,12 @@ function startTrialMode() {
   updateInterval = setInterval(function() {
     const data = generateDemoData();
     updateDisplay(data);
-  }, 5000);
+  }, REFRESH_MS);
 }
 
 function shareReport() {
   const d = lastData;
-  const text = `T909 ENGINE REPORT ${new Date().toLocaleString('en-AU')}
+  const text = `T409 ENGINE REPORT ${new Date().toLocaleString('en-AU')}
 RPM: ${d.rpm || '—'}
 Coolant: ${d.coolantTemp || '—'}°C
 Oil Press: ${d.oilPressure || '—'} kPa
@@ -1465,7 +2091,7 @@ Fuel: ${d.fuelLevel || '—'}%
 Faults: ${(d.faults||[]).filter(f=>f.active).map(f=>f.code).join(', ') || 'NONE'}`;
 
   if (navigator.share) {
-    navigator.share({ title: 'T909 Engine Report', text });
+    navigator.share({ title: 'T409 Engine Report', text });
   } else {
     navigator.clipboard.writeText(text).then(() => alert('Report copied to clipboard'));
   }
@@ -1473,7 +2099,7 @@ Faults: ${(d.faults||[]).filter(f=>f.active).map(f=>f.code).join(', ') || 'NONE'
 
 function shareECU() {
   const d = lastData;
-  const text = `T909 ECU REPORT ${new Date().toLocaleString('en-AU')}
+  const text = `T409 ECU REPORT ${new Date().toLocaleString('en-AU')}
 Engine: ${d.engineModel || '—'}
 CPL: ${d.cplGroup || '—'}
 Rated HP: ${d.ratedHp || '—'}
@@ -1489,7 +2115,7 @@ Gov RPM Cruise: ${d.govCruise || '—'}
 Speed Limiter: ${d.speedLim || '—'} km/h`;
 
   if (navigator.share) {
-    navigator.share({ title: 'T909 ECU Report', text });
+    navigator.share({ title: 'T409 ECU Report', text });
   } else {
     navigator.clipboard.writeText(text).then(() => alert('ECU report copied to clipboard'));
   }
@@ -1523,6 +2149,8 @@ document.getElementById('btn-install').addEventListener('click', () => {
     });
   }
 });
+
+document.getElementById('find-agents-btn').addEventListener('click', findAgents);
 
 document.getElementById('btn-dismiss').addEventListener('click', () => {
   document.getElementById('install-banner').classList.remove('show');
