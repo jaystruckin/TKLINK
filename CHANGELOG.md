@@ -30,6 +30,13 @@ All notable changes to TKLINK will be documented here.
 - Agent list panel shows vehicle name, ID and online/offline status badge
 - Tap any agent to auto-fill the Vehicle ID field
 - Demo agents shown when MacTrack API is unreachable
+- **SPEED tab** — a dedicated full-screen speedometer for at-a-glance driving use
+  - Giant digital speed readout (colour-coded: green → yellow → red at speed limit)
+  - GPS speed and ECU speed side-by-side with active-source badge
+  - Current gear, engine RPM, and heading stat cards
+  - Speed-vs-limit progress bar showing % of programmed ECU speed limit
+  - Works in both live and demo modes
+  - Accessible via `#speed` URL hash for direct navigation
 
 ---
 

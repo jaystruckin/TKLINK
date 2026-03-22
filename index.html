@@ -708,6 +708,153 @@
   }
 
   .agent-id {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px 24px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .speed-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(232,93,0,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .speed-label {
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .speed-number {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 96px;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--text);
+    transition: color 0.3s;
+  }
+
+  .speed-number.good   { color: var(--green); text-shadow: 0 0 30px rgba(0,230,118,0.4); }
+  .speed-number.warning { color: var(--yellow); text-shadow: 0 0 30px rgba(255,214,0,0.4); }
+  .speed-number.critical { color: var(--red); text-shadow: 0 0 30px rgba(255,23,68,0.4); }
+
+  .speed-unit {
+    font-size: 18px;
+    color: var(--dim);
+    letter-spacing: 3px;
+    margin-top: 4px;
+  }
+
+  .speed-src-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 16px;
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 1px;
+  }
+
+  .speed-src-badge {
+    padding: 3px 8px;
+    border-radius: 2px;
+    border: 1px solid var(--border);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+
+  .speed-src-badge.active-src {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(232,93,0,0.08);
+  }
+
+  .speed-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .speed-stat-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px;
+    text-align: center;
+  }
+
+  .speed-stat-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .speed-stat-value {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 28px;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .speed-stat-unit {
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  .speed-limit-bar {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+
+  .speed-limit-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .speed-limit-track {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+
+  .speed-limit-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--green);
+    transition: width 0.5s ease, background 0.3s;
+  }
+
+  .speed-limit-fill.warning  { background: var(--yellow); }
+  .speed-limit-fill.critical { background: var(--red); }
+
+  .speed-limit-meta {
+    display: flex;
+    justify-content: space-between;
     font-size: 11px;
     color: var(--dim);
     font-family: 'Share Tech Mono', monospace;
@@ -846,6 +993,7 @@
     <div class="tab" onclick="switchTab('faults')">FAULTS</div>
     <div class="tab" onclick="switchTab('ecu')">ECU</div>
     <div class="tab" onclick="switchTab('gps')">GPS</div>
+    <div class="tab" onclick="switchTab('speed')">⚡ SPEED</div>
   </div>
 
   <div class="content">
@@ -1020,6 +1168,54 @@
       <div class="data-row"><span class="data-key">Last Update</span><span class="data-val" id="gps-updated">—</span></div>
     </div>
 
+    <!-- SPEED TAB -->
+    <div class="tab-panel" id="tab-speed">
+      <div class="speed-hero">
+        <div class="speed-label">VEHICLE SPEED</div>
+        <div class="speed-number" id="speed-big">—</div>
+        <div class="speed-unit">KM/H</div>
+        <div class="speed-src-row">
+          <span class="speed-src-badge" id="spdbadge-ecu">ECU</span>
+          <span class="speed-src-badge" id="spdbadge-gps">GPS</span>
+        </div>
+      </div>
+
+      <div class="speed-stats">
+        <div class="speed-stat-card">
+          <div class="speed-stat-label">GPS SPEED</div>
+          <div class="speed-stat-value" id="spd-gps">—</div>
+          <div class="speed-stat-unit">KM/H</div>
+        </div>
+        <div class="speed-stat-card">
+          <div class="speed-stat-label">CURRENT GEAR</div>
+          <div class="speed-stat-value" id="spd-gear">—</div>
+          <div class="speed-stat-unit">GEAR</div>
+        </div>
+        <div class="speed-stat-card">
+          <div class="speed-stat-label">ENGINE RPM</div>
+          <div class="speed-stat-value" id="spd-rpm">—</div>
+          <div class="speed-stat-unit">RPM</div>
+        </div>
+        <div class="speed-stat-card">
+          <div class="speed-stat-label">HEADING</div>
+          <div class="speed-stat-value" id="spd-heading" style="font-size:18px">—</div>
+          <div class="speed-stat-unit">DIRECTION</div>
+        </div>
+      </div>
+
+      <div class="speed-limit-bar">
+        <div class="speed-limit-label">SPEED VS LIMIT</div>
+        <div class="speed-limit-track">
+          <div class="speed-limit-fill" id="spd-limit-fill" style="width:0%"></div>
+        </div>
+        <div class="speed-limit-meta">
+          <span>0</span>
+          <span id="spd-limit-now">— km/h</span>
+          <span id="spd-limit-max">LIMIT: — km/h</span>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1036,7 +1232,7 @@ let credentials = {};
 let lastData = {};
 const REFRESH_MS = 2000;
 
-const validTabs = ['engine','drivetrain','faults','ecu','gps'];
+const validTabs = ['engine','drivetrain','faults','ecu','gps','speed'];
 
 function escapeHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
@@ -1640,11 +1836,58 @@ function updateDisplay(data) {
   setText('gps-signal', data.gpsSignal || '—');
   setText('gps-updated', new Date().toLocaleTimeString('en-AU'));
 
+  // Speed tab
+  updateSpeedTab(data);
+
   // Faults
   renderFaults(data.faults || []);
 
   // Alert bar
   checkAlerts(data);
+}
+
+function updateSpeedTab(data) {
+  const ecuSpeed  = data.speed    || null;
+  const gpsSpeed  = data.gpsSpeed || null;
+  const speedLim  = data.speedLim || 100;
+
+  // Use ECU speed as primary, fall back to GPS
+  const primary = ecuSpeed !== null ? ecuSpeed : gpsSpeed;
+
+  const bigEl   = document.getElementById('speed-big');
+  const fillEl  = document.getElementById('spd-limit-fill');
+  const nowEl   = document.getElementById('spd-limit-now');
+  const maxEl   = document.getElementById('spd-limit-max');
+  const ecuBadge = document.getElementById('spdbadge-ecu');
+  const gpsBadge = document.getElementById('spdbadge-gps');
+
+  if (primary !== null) {
+    bigEl.textContent = primary;
+    const pct = Math.min(100, Math.round((primary / speedLim) * 100));
+    let state = 'good';
+    if (primary >= speedLim)            state = 'critical';
+    else if (primary >= speedLim * 0.9) state = 'warning';
+
+    bigEl.className   = 'speed-number ' + state;
+    fillEl.className  = 'speed-limit-fill ' + (state === 'good' ? '' : state);
+    fillEl.style.width = pct + '%';
+    nowEl.textContent  = primary + ' km/h';
+    maxEl.textContent  = 'LIMIT: ' + speedLim + ' km/h';
+
+    ecuBadge.className = 'speed-src-badge' + (ecuSpeed !== null ? ' active-src' : '');
+    gpsBadge.className = 'speed-src-badge' + (gpsSpeed !== null && ecuSpeed === null ? ' active-src' : '');
+  } else {
+    bigEl.textContent  = '—';
+    bigEl.className    = 'speed-number';
+    fillEl.style.width = '0%';
+    nowEl.textContent  = '— km/h';
+    maxEl.textContent  = 'LIMIT: ' + speedLim + ' km/h';
+  }
+
+  setText('spd-gps',     gpsSpeed !== null ? String(gpsSpeed) : '—');
+  setText('spd-gear',    data.gear    || '—');
+  setText('spd-rpm',     data.rpm     ? String(data.rpm) : '—');
+  setText('spd-heading', data.heading || '—');
 }
 
 function setGauge(id, value, min, max, warnLevels, invertWarn) {
