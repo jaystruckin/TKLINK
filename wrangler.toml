@@ -1,0 +1,7 @@
+# TKLINK CORS Proxy — Cloudflare Worker
+# Deploy in seconds: npx wrangler deploy
+# Or: workers.cloudflare.com → Create Worker → paste proxy/worker.js
+
+name = "tklink-proxy"
+main = "proxy/worker.js"
+compatibility_date = "2024-01-01"

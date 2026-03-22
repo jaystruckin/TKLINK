@@ -639,6 +639,12 @@
 
   <p class="portal-note">Read-only access. Data refreshes every 5 seconds.</p>
 
+  <div id="proxy-warning" style="display:none;background:#3a2200;border:1px solid #ff9800;border-radius:8px;padding:10px 14px;margin:8px 0;text-align:left;font-size:12px;color:#ffcc80;">
+    <b style="color:#ff9800;">Proxy Required</b><br>
+    GitHub Pages can't proxy API calls. Enter your Cloudflare Worker URL above, or
+    <a href="https://pages.cloudflare.com" target="_blank" style="color:#4fc3f7;text-decoration:underline">deploy to Cloudflare Pages</a> for auto-proxy.
+  </div>
+
   <button class="btn-connect" id="connect-btn" onclick="connectToMactrack()">LOG IN</button>
   <div class="connecting-msg" id="connecting-msg"><span class="spinner"></span>CONNECTING...</div>
   <div class="trial-link">No account? <a onclick="startTrialMode()">Try Demo</a></div>
@@ -853,6 +859,12 @@
 let updateInterval = null;
 let credentials = {};
 
+// Show proxy warning on GitHub Pages (no self-hosted proxy available)
+if (location.hostname.endsWith('.github.io')) {
+  const w = document.getElementById('proxy-warning');
+  if (w) w.style.display = 'block';
+}
+
 // --- Persistent Login ---
 const CRED_KEY = 'tklink-creds';
 
@@ -907,26 +919,23 @@ const TG_INSTANCES = ['api-apac03', 'api-apac02', 'api-apac01'];
 // Detect self-hosted proxy environments
 const IS_VERCEL = location.hostname.endsWith('.vercel.app') || location.hostname.endsWith('.vercel.sh');
 const IS_CF_PAGES = location.hostname.endsWith('.pages.dev');
+const IS_NETLIFY = location.hostname.endsWith('.netlify.app');
+const IS_SELF_HOSTED = IS_VERCEL || IS_CF_PAGES || IS_NETLIFY;
+const IS_LOCALHOST = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 
 // Build proxy list — self-hosted first if available
 function getProxyList() {
   const list = [];
-  // Self-hosted proxies (most reliable)
-  if (IS_VERCEL) {
+  // Self-hosted proxies (most reliable — auto-detected)
+  if (IS_VERCEL || IS_CF_PAGES || IS_NETLIFY) {
     list.push((url) => location.origin + '/api/proxy?url=' + encodeURIComponent(url));
   }
-  if (IS_CF_PAGES) {
+  if (IS_LOCALHOST) {
     list.push((url) => location.origin + '/api/proxy?url=' + encodeURIComponent(url));
   }
-  // Public CORS proxies (fallbacks)
-  list.push(
-    (url) => 'https://corsproxy.io/?url=' + encodeURIComponent(url),
-    (url) => 'https://api.cors.lol/?url=' + encodeURIComponent(url),
-    (url) => 'https://thingproxy.freeboard.io/fetch/' + url,
-    (url) => 'https://proxy.corsfix.com/?' + url,
-    (url) => 'https://proxy.cors.sh/' + url,
-    (url) => 'https://corsproxy.org/?' + encodeURIComponent(url),
-  );
+  // NOTE: Public CORS proxies are unreliable and frequently go offline.
+  // For reliable access, deploy to Cloudflare Pages, Vercel, or Netlify (free).
+  // Or deploy your own Cloudflare Worker using proxy/worker.js.
   return list;
 }
 
@@ -1081,7 +1090,26 @@ async function attemptLogin(silent) {
     console.log('All login attempts failed');
     if (!silent) {
       const reasons = e.errors ? e.errors.map(err => (err.message || '').replace(/https?:\/\/[^\s]*/gi, '[proxy]')).slice(0, 5).join('\n') : (e.message || '');
-      alert('Login failed.\n\nDebug info:\n' + reasons + '\n\nFix: Deploy your own CORS proxy (free).\n\nCloudflare Workers (recommended):\n1. workers.cloudflare.com → Create Worker\n2. Paste code from proxy/worker.js → Deploy\n3. Enter your worker URL in the Proxy URL field');
+      let msg = 'Login failed.\n\nDebug info:\n' + reasons + '\n\n';
+      if (!IS_SELF_HOSTED && !credentials.proxy) {
+        msg += 'CAUSE: No CORS proxy available.\n'
+          + 'GitHub Pages cannot proxy API calls.\n\n'
+          + 'EASIEST FIX (2 min, free):\n'
+          + '→ Deploy this app to Cloudflare Pages:\n'
+          + '  pages.cloudflare.com → Connect GitHub repo → Deploy\n'
+          + '  The proxy works automatically!\n\n'
+          + 'OR: Deploy a Cloudflare Worker:\n'
+          + '  1. workers.cloudflare.com → Create Worker\n'
+          + '  2. Paste code from proxy/worker.js → Deploy\n'
+          + '  3. Enter your worker URL below in Proxy URL';
+      } else if (credentials.proxy) {
+        msg += 'Your custom proxy did not work.\n'
+          + 'Check the URL is correct and the worker is deployed.\n'
+          + 'Test it: open your-worker-url/health in browser.';
+      } else {
+        msg += 'Check your email and password are correct.';
+      }
+      alert(msg);
     }
   }
   return false;

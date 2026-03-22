@@ -2,23 +2,29 @@
 // Deploy at: https://workers.cloudflare.com
 // 1. Sign up free → 2. Create Worker → 3. Paste this code → 4. Deploy
 
-const ALLOWED_ORIGIN = 'https://jaystruckin.github.io';
+// Allowed origins — add your domains here
+const ALLOWED_ORIGINS = [
+  'https://jaystruckin.github.io',
+  'http://localhost:3000',
+  'http://localhost:5500',
+  'http://127.0.0.1:5500',
+];
 
 export default {
   async fetch(request) {
+    const origin = request.headers.get('Origin') || '';
+    const cors = corsHeaders(origin);
+
     // Handle CORS preflight
     if (request.method === 'OPTIONS') {
-      return new Response(null, {
-        status: 204,
-        headers: corsHeaders(request),
-      });
+      return new Response(null, { status: 204, headers: cors });
     }
 
     // Health check
     const url = new URL(request.url);
     if (url.pathname === '/' || url.pathname === '/health') {
-      return new Response(JSON.stringify({ status: 'ok' }), {
-        headers: { ...corsHeaders(request), 'Content-Type': 'application/json' },
+      return new Response(JSON.stringify({ status: 'ok', service: 'tklink-proxy' }), {
+        headers: { ...cors, 'Content-Type': 'application/json' },
       });
     }
 
@@ -27,7 +33,7 @@ export default {
     if (!targetUrl) {
       return new Response(JSON.stringify({ error: 'Missing ?url= parameter' }), {
         status: 400,
-        headers: { ...corsHeaders(request), 'Content-Type': 'application/json' },
+        headers: { ...cors, 'Content-Type': 'application/json' },
       });
     }
 
@@ -37,13 +43,13 @@ export default {
       if (!parsed.hostname.endsWith('telematics.guru')) {
         return new Response(JSON.stringify({ error: 'Only telematics.guru allowed' }), {
           status: 403,
-          headers: { ...corsHeaders(request), 'Content-Type': 'application/json' },
+          headers: { ...cors, 'Content-Type': 'application/json' },
         });
       }
     } catch {
       return new Response(JSON.stringify({ error: 'Invalid URL' }), {
         status: 400,
-        headers: { ...corsHeaders(request), 'Content-Type': 'application/json' },
+        headers: { ...cors, 'Content-Type': 'application/json' },
       });
     }
 
@@ -63,22 +69,23 @@ export default {
       return new Response(body, {
         status: response.status,
         headers: {
-          ...corsHeaders(request),
+          ...cors,
           'Content-Type': response.headers.get('Content-Type') || 'application/json',
         },
       });
     } catch (err) {
       return new Response(JSON.stringify({ error: err.message }), {
         status: 502,
-        headers: { ...corsHeaders(request), 'Content-Type': 'application/json' },
+        headers: { ...cors, 'Content-Type': 'application/json' },
       });
     }
   },
 };
 
-function corsHeaders(request) {
+function corsHeaders(origin) {
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
-    'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
+    'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Max-Age': '86400',
