@@ -629,7 +629,7 @@
 
   <div class="input-group">
     <label class="input-label">Truck Number</label>
-    <input class="input-field" id="vehicle-id" type="text" placeholder="T909" autocomplete="off">
+    <input class="input-field" id="vehicle-id" type="text" placeholder="T409" autocomplete="off">
   </div>
 
   <p class="portal-note">Read-only access. Data refreshes every 5 seconds.</p>
@@ -646,7 +646,7 @@
 <div id="main-app">
   <div class="header">
     <div class="header-left">
-      <div class="header-truck">T909 KENWORTH</div>
+      <div class="header-truck">T409 KENWORTH</div>
       <div class="header-id" id="header-id">—</div>
     </div>
     <div style="text-align:right">
@@ -906,7 +906,7 @@ async function connectToMactrack() {
   if (success) {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('main-app').style.display = 'block';
-    document.getElementById('header-id').textContent = credentials.assetName || vid || 'T909';
+    document.getElementById('header-id').textContent = credentials.assetName || vid || 'T409';
     const initialTab = getTabFromHash();
     if (initialTab) switchTab(initialTab);
     startLiveUpdates();
@@ -1372,7 +1372,7 @@ function generateDemoData() {
 }
 
 function startTrialMode() {
-  credentials = { url: 'demo', user: 'demo', pass: '', vid: 'T909-DEMO', demoMode: true, trialMode: true };
+  credentials = { url: 'demo', user: 'demo', pass: '', vid: 'T409-DEMO', demoMode: true, trialMode: true };
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('main-app').style.display = 'block';
   document.getElementById('header-id').textContent = 'DEMO MODE';
@@ -1388,7 +1388,7 @@ function startTrialMode() {
 
 function shareReport() {
   const d = lastData;
-  const text = `T909 ENGINE REPORT ${new Date().toLocaleString('en-AU')}
+  const text = `T409 ENGINE REPORT ${new Date().toLocaleString('en-AU')}
 RPM: ${d.rpm || '—'}
 Coolant: ${d.coolantTemp || '—'}°C
 Oil Press: ${d.oilPressure || '—'} kPa
@@ -1403,7 +1403,7 @@ Fuel: ${d.fuelLevel || '—'}%
 Faults: ${(d.faults||[]).filter(f=>f.active).map(f=>f.code).join(', ') || 'NONE'}`;
 
   if (navigator.share) {
-    navigator.share({ title: 'T909 Engine Report', text });
+    navigator.share({ title: 'T409 Engine Report', text });
   } else {
     navigator.clipboard.writeText(text).then(() => alert('Report copied to clipboard'));
   }
@@ -1411,7 +1411,7 @@ Faults: ${(d.faults||[]).filter(f=>f.active).map(f=>f.code).join(', ') || 'NONE'
 
 function shareECU() {
   const d = lastData;
-  const text = `T909 ECU REPORT ${new Date().toLocaleString('en-AU')}
+  const text = `T409 ECU REPORT ${new Date().toLocaleString('en-AU')}
 Engine: ${d.engineModel || '—'}
 CPL: ${d.cplGroup || '—'}
 Rated HP: ${d.ratedHp || '—'}
@@ -1427,7 +1427,7 @@ Gov RPM Cruise: ${d.govCruise || '—'}
 Speed Limiter: ${d.speedLim || '—'} km/h`;
 
   if (navigator.share) {
-    navigator.share({ title: 'T909 ECU Report', text });
+    navigator.share({ title: 'T409 ECU Report', text });
   } else {
     navigator.clipboard.writeText(text).then(() => alert('ECU report copied to clipboard'));
   }
