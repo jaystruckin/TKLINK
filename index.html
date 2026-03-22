@@ -232,6 +232,10 @@
     text-align: right;
   }
 
+  .update-time.stale {
+    color: #ff6b35;
+  }
+
   /* TABS */
   .tabs {
     display: flex;
@@ -1094,6 +1098,12 @@ async function fetchOrgAndAsset() {
   }
 }
 
+function markDataAsStale() {
+  const el = document.getElementById('update-time');
+  el.classList.add('stale');
+  el.textContent = 'STALE DATA — retrying';
+}
+
 async function fetchTelematicsData() {
   if (!credentials.token || !credentials.apiBase) {
     showConnectionNote();
@@ -1113,12 +1123,13 @@ async function fetchTelematicsData() {
       const to = now.toISOString();
 
       const telUrl = `${credentials.apiBase}/v2/${credentials.orgId}/asset/${credentials.assetSerial}/rawtelemetry?from=${from}&to=${to}&limit=1`;
-      const res = await proxiedFetch(telUrl, { headers });
+      const res = await proxiedFetch(telUrl, { headers, cache: 'no-store' });
 
       if (res.ok) {
         const records = await res.json();
         if (records && records.length > 0) {
           const latest = records[records.length - 1];
+          document.getElementById('update-time').classList.remove('stale');
           mapTGDataToDisplay(latest);
           return;
         }
@@ -1128,7 +1139,7 @@ async function fetchTelematicsData() {
     // Fallback: try getting asset list for latest positions
     if (credentials.orgId) {
       const assetRes = await proxiedFetch(
-        credentials.apiBase + '/v3/assets/' + credentials.orgId, { headers }
+        credentials.apiBase + '/v3/assets/' + credentials.orgId, { headers, cache: 'no-store' }
       );
       if (assetRes.ok) {
         const assets = await assetRes.json();
@@ -1136,12 +1147,14 @@ async function fetchTelematicsData() {
           ? assets.find(a => (a.Serial || a.serial) == credentials.assetSerial) || assets[0]
           : assets[0];
         if (asset) {
+          document.getElementById('update-time').classList.remove('stale');
           mapAssetDataToDisplay(asset);
           return;
         }
       }
     }
   } catch(e) {
+    markDataAsStale();
     console.log('Fetch error:', e);
   }
 }

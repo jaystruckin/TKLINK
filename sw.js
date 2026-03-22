@@ -52,7 +52,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Network-first for API calls (live data)
+  // Network-first for API calls (live data) — never serve cached API responses
   event.respondWith(
     fetch(event.request)
       .then(response => {
