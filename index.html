@@ -952,6 +952,8 @@ async function fetchWithProxyFallback(targetUrl, options) {
     (url) => 'https://proxy.corsfix.com/?' + encodeURIComponent(url),
     (url) => 'https://corsproxy.io/?' + encodeURIComponent(url),
     (url) => 'https://api.cors.lol/?url=' + encodeURIComponent(url),
+    (url) => 'https://thingproxy.freeboard.io/fetch/' + url,
+    (url) => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url),
   ];
 
   for (const makeUrl of proxies) {
@@ -974,6 +976,8 @@ async function attemptLogin() {
     (url) => 'https://proxy.corsfix.com/?' + encodeURIComponent(url),
     (url) => 'https://corsproxy.io/?' + encodeURIComponent(url),
     (url) => 'https://api.cors.lol/?url=' + encodeURIComponent(url),
+    (url) => 'https://thingproxy.freeboard.io/fetch/' + url,
+    (url) => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url),
   ];
   const customProxy = credentials.proxy;
 
@@ -1007,8 +1011,9 @@ async function attemptLogin() {
       return true;
     }
   } catch(e) {
+    const reasons = e.errors ? e.errors.map(err => err.message).slice(0, 5).join('\n') : e.message;
     console.log('All login attempts failed:', e);
-    alert('Login failed.\n\nPossible causes:\n- Wrong email/password\n- CORS proxies blocked\n\nTry a custom proxy (Advanced on login).');
+    alert('Login failed.\n\nDebug info:\n' + reasons + '\n\nFix: Deploy your own proxy on Vercel (free). Repo already has /api/proxy.js ready.');
   }
   return false;
 }
