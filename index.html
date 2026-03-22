@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="TKLINK">
+<meta name="description" content="Live truck telematics for drivers — engine data, GPS, fault codes and ECU info directly on your phone. Read-only. Secure.">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -657,12 +658,12 @@
     </div>
   </div>
 
-  <div class="tabs">
-    <div class="tab active" onclick="switchTab('engine')">ENGINE</div>
-    <div class="tab" onclick="switchTab('drivetrain')">DRIVE</div>
-    <div class="tab" onclick="switchTab('faults')">FAULTS</div>
-    <div class="tab" onclick="switchTab('ecu')">ECU</div>
-    <div class="tab" onclick="switchTab('gps')">GPS</div>
+  <div class="tabs" role="tablist">
+    <div class="tab active" role="tab" aria-selected="true" onclick="switchTab('engine')">ENGINE</div>
+    <div class="tab" role="tab" aria-selected="false" onclick="switchTab('drivetrain')">DRIVE</div>
+    <div class="tab" role="tab" aria-selected="false" onclick="switchTab('faults')">FAULTS</div>
+    <div class="tab" role="tab" aria-selected="false" onclick="switchTab('ecu')">ECU</div>
+    <div class="tab" role="tab" aria-selected="false" onclick="switchTab('gps')">GPS</div>
   </div>
 
   <div class="content">
@@ -847,17 +848,37 @@
   <button class="btn-dismiss" id="btn-dismiss">✕</button>
 </div>
 
+<noscript>
+  <div style="padding:40px 20px;text-align:center;color:#c8d8e8;font-family:sans-serif;background:#080c10;min-height:100vh">
+    <h2 style="color:#e85d00">TKLINK requires JavaScript</h2>
+    <p>Please enable JavaScript in your browser settings to use this app.</p>
+  </div>
+</noscript>
+
 <script>
 let updateInterval = null;
 let credentials = {};
 let lastData = {};
+
+function esc(str) {
+  if (str == null) return '';
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function escOr(val, fallback) {
+  return esc(String(val || fallback || '—'));
+}
 
 const validTabs = ['engine','drivetrain','faults','ecu','gps'];
 
 function switchTab(name, updateHash) {
   if (!validTabs.includes(name)) name = 'engine';
   document.querySelectorAll('.tab').forEach((t,i) => {
-    t.classList.toggle('active', validTabs[i] === name);
+    const isActive = validTabs[i] === name;
+    t.classList.toggle('active', isActive);
+    t.setAttribute('aria-selected', isActive ? 'true' : 'false');
   });
   document.querySelectorAll('.tab-panel').forEach(p => {
     p.classList.toggle('active', p.id === 'tab-' + name);
@@ -885,6 +906,11 @@ async function connectToMactrack() {
 
   if (!url || !user || !pass) {
     alert('Please fill in portal URL, username and password.');
+    return;
+  }
+
+  if (!/^https?:\/\/.+/i.test(url)) {
+    alert('Please enter a valid portal URL starting with http:// or https://');
     return;
   }
 
@@ -1019,7 +1045,7 @@ function showConnectionNote() {
   faultList.innerHTML = `
     <div class="note-box" style="margin-top:0">
       <strong style="color:var(--accent2)">CONNECTION STATUS</strong><br><br>
-      App connected to: <span style="color:var(--text); font-family:monospace">${credentials.baseUrl}</span><br><br>
+      App connected to: <span style="color:var(--text); font-family:monospace">${esc(credentials.baseUrl || '')}</span><br><br>
       MacTrack portals use server-side authentication that blocks direct browser requests due to CORS security policy.<br><br>
       <strong style="color:var(--text)">To get full live data you have two options:</strong><br><br>
       1. Ask MacTrack to provide you API access credentials (separate from portal login)<br><br>
@@ -1162,9 +1188,9 @@ function renderFaults(faults) {
 
   list.innerHTML = faults.map(f => `
     <div class="fault-card ${f.active ? '' : 'inactive'}">
-      <div class="fault-code">${f.code || '—'}</div>
-      <div class="fault-desc">${f.description || '—'}</div>
-      <div class="fault-meta">SPN: ${f.spn || '—'} · FMI: ${f.fmi || '—'} · Count: ${f.count || '—'}</div>
+      <div class="fault-code">${escOr(f.code)}</div>
+      <div class="fault-desc">${escOr(f.description)}</div>
+      <div class="fault-meta">SPN: ${escOr(f.spn)} · FMI: ${escOr(f.fmi)} · Count: ${escOr(f.count)}</div>
       <div class="fault-status">${f.active ? 'ACTIVE' : 'INACTIVE'}</div>
     </div>
   `).join('');
