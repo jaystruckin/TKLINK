@@ -882,15 +882,21 @@ window.addEventListener('hashchange', () => {
 // Telematics Guru API instances to try (MacTrack is hosted on TG)
 const TG_INSTANCES = ['api-apac03', 'api-apac02', 'api-apac01'];
 
-// Detect if running on Vercel (has built-in /api/proxy)
+// Detect self-hosted proxy environments
 const IS_VERCEL = location.hostname.endsWith('.vercel.app') || location.hostname.endsWith('.vercel.sh');
+const IS_CF_PAGES = location.hostname.endsWith('.pages.dev');
 
 // Build proxy list — self-hosted first if available
 function getProxyList() {
   const list = [];
+  // Self-hosted proxies (most reliable)
   if (IS_VERCEL) {
     list.push((url) => location.origin + '/api/proxy?url=' + encodeURIComponent(url));
   }
+  if (IS_CF_PAGES) {
+    list.push((url) => location.origin + '/api/proxy?url=' + encodeURIComponent(url));
+  }
+  // Public CORS proxies (fallbacks)
   list.push(
     (url) => 'https://corsproxy.io/?url=' + encodeURIComponent(url),
     (url) => 'https://api.cors.lol/?url=' + encodeURIComponent(url),
@@ -1013,9 +1019,9 @@ async function attemptLogin() {
       return true;
     }
   } catch(e) {
-    const reasons = e.errors ? e.errors.map(err => err.message).slice(0, 5).join('\n') : e.message;
-    console.log('All login attempts failed:', e);
-    alert('Login failed.\n\nDebug info:\n' + reasons + '\n\nFix: Deploy to Vercel (free) where the built-in proxy works automatically.\n\n1. Go to vercel.com → Import Git Repository\n2. Select jaystruckin/TKLINK → Deploy\n3. Use your-app.vercel.app instead of GitHub Pages');
+    const reasons = e.errors ? e.errors.map(err => (err.message || '').replace(/https?:\/\/[^\s]*/gi, '[proxy]')).slice(0, 5).join('\n') : (e.message || '');
+    console.log('All login attempts failed');
+    alert('Login failed.\n\nDebug info:\n' + reasons + '\n\nFix: Deploy your own CORS proxy (free).\n\nCloudflare Workers (recommended):\n1. workers.cloudflare.com → Create Worker\n2. Paste code from proxy/worker.js → Deploy\n3. Enter your worker URL in the Proxy URL field');
   }
   return false;
 }
@@ -1031,8 +1037,8 @@ async function tryAuth(url, body, apiBase, extraHeaders, proxyFn) {
     const data = await res.json();
     const token = data.access_token || data.AccessToken || data.token || data.Token;
     if (!token) throw new Error('No token');
-    console.log('LOGIN SUCCESS via', url);
-    return { token, apiBase, proxyFn };
+    console.log('LOGIN SUCCESS via proxy');
+    return { token: token, apiBase, proxyFn };
   } catch(e) {
     clearTimeout(timer);
     throw e;
