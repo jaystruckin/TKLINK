@@ -4,6 +4,22 @@ All notable changes to TKLINK will be documented here.
 
 ---
 
+## [0.1.2] - 2026-03-22
+
+### Changed
+
+- Modernised login screen with a fresh, bold look
+- TKLINK brand name is now the prominent title on the login screen
+- Dynamic multi-layer gradient background with subtle grid overlay
+- Login form now presented in a glassmorphism card with frosted blur effect
+- Truck icon now has a floating animation and stronger glow
+- Connect button updated with a gradient and hover lift effect
+- Input fields updated with rounded corners and improved focus glow
+- Entrance animations (fade-in-up) on brand and card sections
+- Replaced render-blocking `@import` font load with `<link rel="stylesheet">` and preconnect hints
+
+---
+
 ## [0.1.1] - 2026-03-21
 
 ### Added
