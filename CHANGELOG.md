@@ -4,6 +4,21 @@ All notable changes to TKLINK will be documented here.
 
 ---
 
+## [0.1.2] - 2026-03-22
+
+### Fixed
+
+- `?demo` URL parameter now auto-starts demo mode as documented
+- Service worker no longer caches API or cross-origin requests — fixes stale live data
+- Font loading is now non-blocking (preload instead of CSS @import)
+- GitHub Pages deployment now includes `enablement: true` to prevent first-deploy failures
+
+### Added
+
+- Icon files (SVG, 192px, 512px) added to service worker pre-cache for offline PWA support
+
+---
+
 ## [0.1.1] - 2026-03-21
 
 ### Added
@@ -33,6 +48,7 @@ All notable changes to TKLINK will be documented here.
 - Dark industrial UI theme
 - Single file — no install required
 - Mobile first design
+- PWA support: manifest, service worker, install-to-home-screen banner
 
 ---
 
@@ -40,5 +56,7 @@ All notable changes to TKLINK will be documented here.
 
 - Full MacTrack API integration
 - Push notifications for critical alerts
-- PWA support for home screen install
+- Trip history & logging
+- Multiple truck support
 - Offline fault code database
+- J1939 direct Bluetooth connection (future)
