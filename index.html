@@ -945,22 +945,39 @@ function proxiedFetch(targetUrl, options = {}) {
 }
 
 async function fetchWithProxyFallback(targetUrl, options) {
+  // Try direct fetch first (in case API allows CORS)
+  try {
+    const directRes = await fetch(targetUrl, {
+      method: options.method || 'GET',
+      headers: options.headers || {},
+      body: options.body || undefined,
+    });
+    if (directRes.ok || directRes.status === 401 || directRes.status === 403) return directRes;
+  } catch(e) { /* CORS blocked, try proxies */ }
+
+  // Proxy chain - try multiple reliable free CORS proxies
   const proxies = [
-    (url) => 'https://corsproxy.io/?' + encodeURIComponent(url),
-    (url) => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
-    (url) => 'https://cors-anywhere.herokuapp.com/' + url,
+    { name: 'corsfix', makeUrl: (url) => 'https://proxy.corsfix.com/?' + encodeURIComponent(url), direct: true },
+    { name: 'corsproxy', makeUrl: (url) => 'https://corsproxy.io/?' + encodeURIComponent(url), direct: true },
+    { name: 'cors.lol', makeUrl: (url) => 'https://api.cors.lol/?url=' + encodeURIComponent(url), direct: true },
+    { name: 'codetabs', makeUrl: (url) => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url), direct: true },
   ];
-  for (const makeUrl of proxies) {
+
+  for (const proxy of proxies) {
     try {
-      const res = await fetch(makeUrl(targetUrl), {
+      console.log('Trying proxy:', proxy.name);
+      const res = await fetch(proxy.makeUrl(targetUrl), {
         method: options.method || 'GET',
         headers: options.headers || {},
         body: options.body || undefined,
       });
-      if (res.ok || res.status === 401 || res.status === 403) return res;
-    } catch(e) { continue; }
+      if (res.ok || res.status === 401 || res.status === 403) {
+        console.log('Working proxy:', proxy.name);
+        return res;
+      }
+    } catch(e) { console.log('Proxy failed:', proxy.name, e.message); continue; }
   }
-  throw new Error('All CORS proxies failed');
+  throw new Error('All CORS proxies failed. Open Advanced and enter a custom proxy URL.');
 }
 
 async function attemptLogin() {
