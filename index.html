@@ -183,18 +183,26 @@
   .header {
     background: var(--panel);
     border-bottom: 1px solid var(--border);
-    padding: 12px 16px;
+    padding: 14px 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     position: sticky;
     top: 0;
     z-index: 100;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.4);
+    background: linear-gradient(180deg, #111820 0%, var(--panel) 100%);
   }
 
   .header-left { display: flex; flex-direction: column; }
-  .header-truck { font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: 1px; }
-  .header-id { font-size: 11px; color: var(--dim); letter-spacing: 2px; font-family: 'Share Tech Mono', monospace; }
+  .header-truck {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-shadow: 0 0 16px rgba(232,93,0,0.4);
+  }
+  .header-id { font-size: 11px; color: var(--dim); letter-spacing: 2px; font-family: 'Share Tech Mono', monospace; margin-top: 2px; }
 
   .live-badge {
     display: flex;
@@ -203,12 +211,14 @@
     font-size: 11px;
     letter-spacing: 2px;
     color: var(--green);
+    text-shadow: 0 0 8px rgba(0,230,118,0.5);
   }
 
   .live-dot {
     width: 8px; height: 8px;
     border-radius: 50%;
     background: var(--green);
+    box-shadow: 0 0 8px rgba(0,230,118,0.8);
     animation: pulse 1.5s infinite;
   }
 
@@ -222,7 +232,10 @@
     color: var(--dim);
     font-family: 'Share Tech Mono', monospace;
     text-align: right;
+    margin-top: 4px;
   }
+
+  .update-time.stale { color: #ff6b35; }
 
   /* TABS */
   .tabs {
@@ -237,10 +250,10 @@
   .tab {
     flex: 1;
     min-width: 70px;
-    padding: 12px 8px;
+    padding: 13px 8px 11px;
     text-align: center;
     font-size: 11px;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
     color: var(--dim);
     cursor: pointer;
     border-bottom: 2px solid transparent;
@@ -248,21 +261,28 @@
     white-space: nowrap;
   }
 
+  .tab:active { background: rgba(232,93,0,0.05); }
+
   .tab.active {
     color: var(--accent);
     border-bottom-color: var(--accent);
+    text-shadow: 0 0 10px rgba(232,93,0,0.4);
   }
 
   /* CONTENT */
-  .content { padding: 16px; padding-bottom: 32px; }
+  .content {
+    padding: 16px;
+    padding-bottom: 32px;
+    background: radial-gradient(ellipse at 50% 0%, rgba(232,93,0,0.04) 0%, transparent 60%);
+  }
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
   /* ALERT BAR */
   .alert-bar {
-    background: rgba(255, 23, 68, 0.1);
+    background: rgba(255, 23, 68, 0.08);
     border: 1px solid rgba(255, 23, 68, 0.3);
-    border-radius: 4px;
+    border-radius: 6px;
     padding: 12px 16px;
     margin-bottom: 16px;
     display: flex;
@@ -271,6 +291,7 @@
     font-size: 13px;
     color: var(--red);
     display: none;
+    box-shadow: 0 2px 16px rgba(255,23,68,0.08);
   }
 
   .alert-bar.show { display: flex; }
@@ -286,10 +307,11 @@
   .gauge-card {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 8px;
     padding: 14px;
     position: relative;
     overflow: hidden;
+    transition: border-color 0.3s, box-shadow 0.3s;
   }
 
   .gauge-card::before {
@@ -301,8 +323,18 @@
     opacity: 0.5;
   }
 
+  .gauge-card.warning {
+    border-color: rgba(255,214,0,0.3);
+    box-shadow: 0 0 16px rgba(255,214,0,0.06);
+  }
   .gauge-card.warning::before { background: var(--yellow); opacity: 1; }
+
+  .gauge-card.critical {
+    border-color: rgba(255,23,68,0.4);
+    box-shadow: 0 0 20px rgba(255,23,68,0.1);
+  }
   .gauge-card.critical::before { background: var(--red); opacity: 1; }
+
   .gauge-card.good::before { background: var(--green); opacity: 1; }
 
   .gauge-label {
@@ -320,10 +352,14 @@
     color: var(--text);
     line-height: 1;
     margin-bottom: 4px;
+    transition: color 0.3s;
   }
 
   .gauge-value.warning { color: var(--yellow); }
-  .gauge-value.critical { color: var(--red); }
+  .gauge-value.critical {
+    color: var(--red);
+    text-shadow: 0 0 10px rgba(255,23,68,0.4);
+  }
   .gauge-value.good { color: var(--green); }
 
   .gauge-unit {
@@ -343,24 +379,25 @@
   .gauge-fill {
     height: 100%;
     border-radius: 2px;
-    background: var(--accent);
+    background: linear-gradient(90deg, rgba(232,93,0,0.6), var(--accent));
     transition: width 0.5s ease;
   }
 
-  .gauge-fill.warning { background: var(--yellow); }
-  .gauge-fill.critical { background: var(--red); }
-  .gauge-fill.good { background: var(--green); }
+  .gauge-fill.warning { background: linear-gradient(90deg, rgba(255,214,0,0.6), var(--yellow)); }
+  .gauge-fill.critical { background: linear-gradient(90deg, rgba(255,23,68,0.6), var(--red)); }
+  .gauge-fill.good { background: linear-gradient(90deg, rgba(0,230,118,0.5), var(--green)); }
 
   /* SECTION HEADER */
   .section-header {
-    font-size: 11px;
+    font-size: 10px;
     letter-spacing: 3px;
-    color: var(--dim);
+    color: var(--accent);
     text-transform: uppercase;
     margin-bottom: 10px;
-    margin-top: 20px;
+    margin-top: 24px;
     padding-bottom: 8px;
     border-bottom: 1px solid var(--border);
+    opacity: 0.8;
   }
 
   /* DATA ROWS */
@@ -368,9 +405,10 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 11px 0;
+    padding: 12px 0;
     border-bottom: 1px solid rgba(26,37,48,0.5);
     font-size: 14px;
+    transition: background 0.15s;
   }
 
   .data-key { color: var(--dim); font-size: 13px; }
@@ -387,17 +425,19 @@
   /* FAULT CODES */
   .fault-card {
     background: var(--panel);
-    border: 1px solid rgba(255,23,68,0.3);
+    border: 1px solid rgba(255,23,68,0.25);
     border-left: 3px solid var(--red);
-    border-radius: 4px;
+    border-radius: 6px;
     padding: 14px;
     margin-bottom: 10px;
+    box-shadow: 0 2px 12px rgba(255,23,68,0.06);
   }
 
   .fault-card.inactive {
     border-color: rgba(26,37,48,0.8);
     border-left-color: var(--dim);
     opacity: 0.6;
+    box-shadow: none;
   }
 
   .fault-code {
@@ -442,13 +482,21 @@
   .ecu-header {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 16px;
+    border-radius: 8px;
+    padding: 20px 16px;
     margin-bottom: 16px;
     text-align: center;
+    background: linear-gradient(180deg, rgba(232,93,0,0.05) 0%, var(--panel) 100%);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
   }
 
-  .ecu-engine { font-size: 22px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+  .ecu-engine {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 4px;
+    text-shadow: 0 0 16px rgba(232,93,0,0.3);
+  }
   .ecu-cpl { font-family: 'Share Tech Mono', monospace; font-size: 13px; color: var(--dim); }
 
   .hp-torque {
@@ -461,9 +509,20 @@
   .ht-card {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 16px;
+    border-radius: 8px;
+    padding: 18px 16px;
     text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ht-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    opacity: 0.4;
   }
 
   .ht-value {
@@ -471,35 +530,38 @@
     font-size: 36px;
     color: var(--accent);
     line-height: 1;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+    text-shadow: 0 0 20px rgba(232,93,0,0.25);
   }
 
-  .ht-label { font-size: 11px; color: var(--dim); letter-spacing: 2px; }
+  .ht-label { font-size: 10px; color: var(--dim); letter-spacing: 2px; }
 
   /* GPS */
   .gps-card {
     background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 16px;
+    border: 1px solid rgba(0,176,255,0.2);
+    border-radius: 8px;
+    padding: 18px 16px;
     margin-bottom: 16px;
+    box-shadow: 0 2px 16px rgba(0,176,255,0.04);
   }
 
   .gps-coords {
     font-family: 'Share Tech Mono', monospace;
     font-size: 14px;
     color: var(--blue);
-    margin-bottom: 12px;
-    line-height: 1.8;
+    margin-bottom: 14px;
+    line-height: 2;
+    text-shadow: 0 0 8px rgba(0,176,255,0.3);
   }
 
   .map-btn {
     display: block;
     width: 100%;
-    background: rgba(0,176,255,0.1);
-    border: 1px solid rgba(0,176,255,0.3);
-    border-radius: 4px;
-    padding: 12px;
+    background: rgba(0,176,255,0.08);
+    border: 1px solid rgba(0,176,255,0.25);
+    border-radius: 6px;
+    padding: 13px;
     color: var(--blue);
     font-family: 'Rajdhani', sans-serif;
     font-size: 14px;
@@ -509,15 +571,21 @@
     cursor: pointer;
     text-decoration: none;
     margin-bottom: 10px;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .map-btn:active {
+    background: rgba(0,176,255,0.15);
+    border-color: rgba(0,176,255,0.4);
   }
 
   /* SHARE */
   .share-btn {
     width: 100%;
-    background: rgba(0,230,118,0.1);
-    border: 1px solid rgba(0,230,118,0.3);
-    border-radius: 4px;
-    padding: 14px;
+    background: rgba(0,230,118,0.08);
+    border: 1px solid rgba(0,230,118,0.25);
+    border-radius: 6px;
+    padding: 15px;
     color: var(--green);
     font-family: 'Rajdhani', sans-serif;
     font-size: 15px;
@@ -525,7 +593,13 @@
     letter-spacing: 2px;
     text-align: center;
     cursor: pointer;
-    margin-top: 20px;
+    margin-top: 24px;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .share-btn:active {
+    background: rgba(0,230,118,0.14);
+    border-color: rgba(0,230,118,0.4);
   }
 
   .no-faults {
