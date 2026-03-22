@@ -146,7 +146,7 @@ No app store. No install. Just open and go.
 - [ ] Push notifications for critical alerts
 - [ ] Trip history & logging
 - [ ] Multiple truck support
-- [ ] Android home screen app (PWA)
+- [x] Android home screen app (PWA)
 - [ ] Offline fault code database
 - [ ] J1939 direct Bluetooth connection (future)
 

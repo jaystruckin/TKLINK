@@ -40,5 +40,4 @@ All notable changes to TKLINK will be documented here.
 
 - Full MacTrack API integration
 - Push notifications for critical alerts
-- PWA support for home screen install
 - Offline fault code database

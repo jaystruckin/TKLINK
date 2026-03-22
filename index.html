@@ -12,8 +12,9 @@
 <meta name="apple-mobile-web-app-title" content="TKLINK">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap"></noscript>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
 
   :root {
     --bg: #080c10;
@@ -1344,6 +1345,13 @@ document.getElementById('btn-dismiss').addEventListener('click', () => {
   document.getElementById('install-banner').classList.remove('show');
   localStorage.setItem('tklink-install-dismissed', '1');
 });
+
+// --- Auto-start demo mode via ?demo URL parameter ---
+if (location.search.indexOf('demo') !== -1) {
+  startTrialMode();
+  const initialTab = getTabFromHash();
+  if (initialTab) switchTab(initialTab);
+}
 </script>
 </body>
 </html>
