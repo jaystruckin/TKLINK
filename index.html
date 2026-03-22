@@ -1177,6 +1177,7 @@ let credentials = {};
 let lastData = {};
 
 const REFRESH_MS = 2000;
+const FETCH_TIMEOUT_MS = 4000;
 
 const validTabs = ['engine','drivetrain','faults','ecu','gps','speed'];
 
@@ -1298,9 +1299,14 @@ async function connectToMactrack() {
     return;
   }
 
-  if (proxy && !/^https?:\/\/.+/i.test(proxy)) {
-    alert('Custom proxy URL must start with http:// or https://');
-    return;
+  if (proxy) {
+    try {
+      const u = new URL(proxy);
+      if (u.protocol !== 'http:' && u.protocol !== 'https:') throw new Error();
+    } catch {
+      alert('Custom proxy URL must be a valid http:// or https:// URL');
+      return;
+    }
   }
 
   credentials = { user, pass, vid, proxy: proxy ? proxy.replace(/\/$/, '') : '' };
@@ -1509,7 +1515,7 @@ async function fetchTelematicsData() {
   }
 
   const controller = new AbortController();
-  const fetchTimer = setTimeout(() => controller.abort(), 4000);
+  const fetchTimer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
   const headers = {
     'Authorization': 'Bearer ' + credentials.token,
