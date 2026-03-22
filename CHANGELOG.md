@@ -4,6 +4,25 @@ All notable changes to TKLINK will be documented here.
 
 ---
 
+## [0.2.0] - 2026-03-22
+
+### Performance
+
+- Reduced live data refresh interval from 5 seconds to 2 seconds for faster updates
+- Replaced render-blocking `@import` font loading with non-blocking `<link rel="preload">`
+- Added `preconnect` and `dns-prefetch` hints for Google Fonts domains
+- Added CSS `contain` on gauge and fault cards for faster layout recalculation
+- Added `will-change` hints on animated gauge bars and live dot
+- Shortened gauge bar CSS transition from 0.5s to 0.3s for snappier feel
+- Optimized fault list rendering with `DocumentFragment` instead of `innerHTML`
+- Added 6-second timeout on login API attempts and try all endpoints in parallel
+- Added 4-second timeout on live data fetch to avoid hanging requests
+- Upgraded service worker to stale-while-revalidate strategy for instant repeat loads
+- Pre-cached all icon files and fonts in service worker
+- Bumped service worker cache version to v2
+
+---
+
 ## [0.1.2] - 2026-03-22
 
 ### Improved
