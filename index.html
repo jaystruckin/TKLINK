@@ -981,10 +981,12 @@ async function fetchWithProxyFallback(targetUrl, options) {
 }
 
 async function attemptLogin() {
+  const errors = [];
   // Telematics Guru auth: POST https://api-{instance}.telematics.guru/user/authenticate
   for (const instance of TG_INSTANCES) {
     const apiBase = 'https://' + instance + '.telematics.guru';
     try {
+      console.log('Trying instance:', instance);
       const res = await proxiedFetch(apiBase + '/user/authenticate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -994,22 +996,43 @@ async function attemptLogin() {
         })
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        if (data.access_token) {
-          credentials.token = data.access_token;
-          credentials.apiBase = apiBase;
-          console.log('Authenticated on TG instance:', instance);
+      console.log('Response status:', res.status, 'from', instance);
+      const text = await res.text();
+      console.log('Response body:', text.substring(0, 500));
 
-          // Get organisation ID
-          await fetchOrgAndAsset();
-          return true;
+      if (res.ok || res.status === 200) {
+        try {
+          const data = JSON.parse(text);
+          // Try common token field names
+          const token = data.access_token || data.AccessToken || data.token || data.Token;
+          if (token) {
+            credentials.token = token;
+            credentials.apiBase = apiBase;
+            console.log('Authenticated on TG instance:', instance);
+            await fetchOrgAndAsset();
+            return true;
+          } else {
+            console.log('No token in response. Keys:', Object.keys(data));
+            errors.push(instance + ': no token in response (keys: ' + Object.keys(data).join(',') + ')');
+          }
+        } catch(parseErr) {
+          errors.push(instance + ': invalid JSON response');
         }
+      } else {
+        errors.push(instance + ': HTTP ' + res.status);
       }
-    } catch(e) { continue; }
+    } catch(e) {
+      console.log('Error on', instance, ':', e.message);
+      errors.push(instance + ': ' + e.message);
+      continue;
+    }
   }
 
-  // All instances failed
+  // All instances failed - show debug info
+  console.log('All login attempts failed:', errors);
+  if (errors.length > 0 && errors.every(e => e.includes('CORS') || e.includes('proxy') || e.includes('Failed to fetch') || e.includes('NetworkError'))) {
+    alert('Login failed: CORS proxies could not reach the API.\n\nYou need a custom proxy. See Advanced on login screen.\n\nErrors:\n' + errors.join('\n'));
+  }
   return false;
 }
 
