@@ -225,6 +225,7 @@
     font-family: 'Share Tech Mono', monospace;
     text-align: right;
   }
+  .update-time.stale { color: #ff6b35; }
 
   /* TABS */
   .tabs {
@@ -1046,7 +1047,8 @@ async function tryAuth(url, body, apiBase, extraHeaders) {
 async function fetchOrgAndAsset() {
   const headers = {
     'Authorization': 'Bearer ' + credentials.token,
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    'Cache-Control': 'no-store'
   };
 
   // Step 1: Get organisations
@@ -1091,6 +1093,12 @@ async function fetchOrgAndAsset() {
   }
 }
 
+function markDataAsStale() {
+  const el = document.getElementById('update-time');
+  el.classList.add('stale');
+  el.textContent = 'STALE DATA — retrying';
+}
+
 async function fetchTelematicsData() {
   if (!credentials.token || !credentials.apiBase) {
     showConnectionNote();
@@ -1113,7 +1121,7 @@ async function fetchTelematicsData() {
       const to = now.toISOString();
 
       const telUrl = `${credentials.apiBase}/v2/${credentials.orgId}/asset/${credentials.assetSerial}/rawtelemetry?from=${from}&to=${to}&limit=1`;
-      const res = await proxiedFetch(telUrl, { headers, signal: controller.signal });
+      const res = await proxiedFetch(telUrl, { headers, signal: controller.signal, cache: 'no-store' });
 
       if (res.ok) {
         const records = await res.json();
@@ -1128,7 +1136,7 @@ async function fetchTelematicsData() {
     // Fallback: try getting asset list for latest positions
     if (credentials.orgId) {
       const assetRes = await proxiedFetch(
-        credentials.apiBase + '/v3/assets/' + credentials.orgId, { headers }
+        credentials.apiBase + '/v3/assets/' + credentials.orgId, { headers, signal: controller.signal, cache: 'no-store' }
       );
       if (assetRes.ok) {
         const assets = await assetRes.json();
@@ -1136,13 +1144,17 @@ async function fetchTelematicsData() {
           ? assets.find(a => (a.Serial || a.serial) == credentials.assetSerial) || assets[0]
           : assets[0];
         if (asset) {
+          document.getElementById('update-time').classList.remove('stale');
           mapAssetDataToDisplay(asset);
           return;
         }
+      } else {
+        markDataAsStale();
       }
     }
   } catch(e) {
     console.log('Fetch error:', e);
+    markDataAsStale();
   } finally {
     clearTimeout(fetchTimer);
   }
