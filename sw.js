@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tklink-v1';
+const CACHE_NAME = 'tklink-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -24,6 +24,14 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
+  const url = new URL(event.request.url);
+
+  // Never cache API or cross-origin requests — always fetch fresh live data
+  if (url.origin !== self.location.origin || url.pathname.includes('/api/')) {
+    return;
+  }
+
+  // For static app assets: network-first with cache fallback for offline use
   event.respondWith(
     fetch(event.request)
       .then(response => {

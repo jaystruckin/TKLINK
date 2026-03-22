@@ -224,6 +224,10 @@
     text-align: right;
   }
 
+  .update-time.stale {
+    color: #ff6b35;
+  }
+
   /* TABS */
   .tabs {
     display: flex;
@@ -963,6 +967,12 @@ async function attemptLogin() {
   }
 }
 
+function markDataAsStale() {
+  const el = document.getElementById('update-time');
+  el.classList.add('stale');
+  el.textContent = 'STALE DATA — retrying';
+}
+
 async function fetchTelematicsData() {
   if (credentials.demoMode || !credentials.token) {
     // Show that we're connected but data requires direct API access
@@ -978,13 +988,20 @@ async function fetchTelematicsData() {
       'Content-Type': 'application/json'
     };
 
-    // Fetch live vehicle data
-    const res = await fetch(`${baseUrl}/api/v1/vehicles/live`, { headers });
+    // Fetch live vehicle data — always bypass cache to get the latest readings
+    const res = await fetch(`${baseUrl}/api/v1/vehicles/live`, {
+      headers,
+      cache: 'no-store'
+    });
     if (res.ok) {
       const data = await res.json();
+      document.getElementById('update-time').classList.remove('stale');
       updateDisplay(data);
+    } else {
+      markDataAsStale();
     }
   } catch(e) {
+    markDataAsStale();
     console.log('Fetch error:', e);
   }
 }
