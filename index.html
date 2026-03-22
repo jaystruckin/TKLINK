@@ -211,6 +211,7 @@
     border-radius: 50%;
     background: var(--green);
     animation: pulse 1.5s infinite;
+    will-change: opacity, transform;
   }
 
   @keyframes pulse {
@@ -291,6 +292,7 @@
     padding: 14px;
     position: relative;
     overflow: hidden;
+    contain: layout style paint;
   }
 
   .gauge-card::before {
@@ -345,7 +347,8 @@
     height: 100%;
     border-radius: 2px;
     background: var(--accent);
-    transition: width 0.5s ease;
+    transition: width 0.3s ease;
+    will-change: width;
   }
 
   .gauge-fill.warning { background: var(--yellow); }
@@ -393,6 +396,7 @@
     border-radius: 4px;
     padding: 14px;
     margin-bottom: 10px;
+    contain: layout style;
   }
 
   .fault-card.inactive {
@@ -637,7 +641,7 @@
     <input class="input-field" id="proxy-url" type="url" placeholder="https://your-worker.workers.dev" autocomplete="off" spellcheck="false" style="margin-top:6px">
   </details>
 
-  <p class="portal-note">Read-only access. Data refreshes every 5 seconds.</p>
+  <p class="portal-note">Read-only access. Data refreshes every 2 seconds.</p>
 
   <button class="btn-connect" id="connect-btn" onclick="connectToMactrack()">LOG IN</button>
   <div class="connecting-msg" id="connecting-msg"><span class="spinner"></span>CONNECTING...</div>
@@ -854,6 +858,8 @@ let updateInterval = null;
 let credentials = {};
 let lastData = {};
 
+const REFRESH_MS = 2000;
+
 const validTabs = ['engine','drivetrain','faults','ecu','gps'];
 
 function switchTab(name, updateHash) {
@@ -935,6 +941,8 @@ function proxiedFetch(targetUrl, options = {}) {
         method: options.method || 'GET',
         headers: options.headers || {},
         body: options.body || undefined,
+        cache: options.cache || undefined,
+        signal: options.signal || undefined,
       }, 10000);
     }
   }
@@ -1057,7 +1065,7 @@ async function fetchOrgAndAsset() {
   if (credentials.orgId) {
     try {
       const assetRes = await proxiedFetch(
-        credentials.apiBase + '/v3/assets/' + credentials.orgId, { headers }
+        credentials.apiBase + '/v3/assets/' + credentials.orgId, { headers, signal: controller.signal }
       );
       if (assetRes.ok) {
         const assets = await assetRes.json();
@@ -1089,6 +1097,9 @@ async function fetchTelematicsData() {
     return;
   }
 
+  const controller = new AbortController();
+  const fetchTimer = setTimeout(() => controller.abort(), 4000);
+
   const headers = {
     'Authorization': 'Bearer ' + credentials.token,
     'Content-Type': 'application/json'
@@ -1102,7 +1113,7 @@ async function fetchTelematicsData() {
       const to = now.toISOString();
 
       const telUrl = `${credentials.apiBase}/v2/${credentials.orgId}/asset/${credentials.assetSerial}/rawtelemetry?from=${from}&to=${to}&limit=1`;
-      const res = await proxiedFetch(telUrl, { headers });
+      const res = await proxiedFetch(telUrl, { headers, signal: controller.signal });
 
       if (res.ok) {
         const records = await res.json();
@@ -1132,6 +1143,8 @@ async function fetchTelematicsData() {
     }
   } catch(e) {
     console.log('Fetch error:', e);
+  } finally {
+    clearTimeout(fetchTimer);
   }
 }
 
@@ -1342,15 +1355,30 @@ function renderFaults(faults) {
     list.innerHTML = '<div class="no-faults">✅ NO ACTIVE FAULT CODES</div>';
     return;
   }
-
-  list.innerHTML = faults.map(f => `
-    <div class="fault-card ${f.active ? '' : 'inactive'}">
-      <div class="fault-code">${f.code || '—'}</div>
-      <div class="fault-desc">${f.description || '—'}</div>
-      <div class="fault-meta">SPN: ${f.spn || '—'} · FMI: ${f.fmi || '—'} · Count: ${f.count || '—'}</div>
-      <div class="fault-status">${f.active ? 'ACTIVE' : 'INACTIVE'}</div>
-    </div>
-  `).join('');
+  const frag = document.createDocumentFragment();
+  faults.forEach(f => {
+    const card = document.createElement('div');
+    card.className = 'fault-card' + (f.active ? '' : ' inactive');
+    const code = document.createElement('div');
+    code.className = 'fault-code';
+    code.textContent = f.code || '—';
+    const desc = document.createElement('div');
+    desc.className = 'fault-desc';
+    desc.textContent = f.description || '—';
+    const meta = document.createElement('div');
+    meta.className = 'fault-meta';
+    meta.textContent = 'SPN: ' + (f.spn || '—') + ' · FMI: ' + (f.fmi || '—') + ' · Count: ' + (f.count || '—');
+    const status = document.createElement('div');
+    status.className = 'fault-status';
+    status.textContent = f.active ? 'ACTIVE' : 'INACTIVE';
+    card.appendChild(code);
+    card.appendChild(desc);
+    card.appendChild(meta);
+    card.appendChild(status);
+    frag.appendChild(card);
+  });
+  list.innerHTML = '';
+  list.appendChild(frag);
 }
 
 function checkAlerts(data) {
@@ -1372,7 +1400,7 @@ function checkAlerts(data) {
 
 function startLiveUpdates() {
   fetchTelematicsData();
-  updateInterval = setInterval(fetchTelematicsData, 5000);
+  updateInterval = setInterval(fetchTelematicsData, REFRESH_MS);
 }
 
 function generateDemoData() {
@@ -1445,7 +1473,7 @@ function startTrialMode() {
   updateInterval = setInterval(function() {
     const data = generateDemoData();
     updateDisplay(data);
-  }, 5000);
+  }, REFRESH_MS);
 }
 
 function shareReport() {
