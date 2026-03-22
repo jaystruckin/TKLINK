@@ -852,6 +852,28 @@
 <script>
 let updateInterval = null;
 let credentials = {};
+
+// --- Persistent Login ---
+const CRED_KEY = 'tklink-creds';
+
+function saveCredentials() {
+  try {
+    const save = { user: credentials.user, pass: credentials.pass, vid: credentials.vid, proxy: credentials.proxy };
+    localStorage.setItem(CRED_KEY, btoa(JSON.stringify(save)));
+  } catch(e) {}
+}
+
+function loadCredentials() {
+  try {
+    const raw = localStorage.getItem(CRED_KEY);
+    if (!raw) return null;
+    return JSON.parse(atob(raw));
+  } catch(e) { localStorage.removeItem(CRED_KEY); return null; }
+}
+
+function clearCredentials() {
+  localStorage.removeItem(CRED_KEY);
+}
 let lastData = {};
 
 const validTabs = ['engine','drivetrain','faults','ecu','gps'];
@@ -882,15 +904,21 @@ window.addEventListener('hashchange', () => {
 // Telematics Guru API instances to try (MacTrack is hosted on TG)
 const TG_INSTANCES = ['api-apac03', 'api-apac02', 'api-apac01'];
 
-// Detect if running on Vercel (has built-in /api/proxy)
+// Detect self-hosted proxy environments
 const IS_VERCEL = location.hostname.endsWith('.vercel.app') || location.hostname.endsWith('.vercel.sh');
+const IS_CF_PAGES = location.hostname.endsWith('.pages.dev');
 
 // Build proxy list — self-hosted first if available
 function getProxyList() {
   const list = [];
+  // Self-hosted proxies (most reliable)
   if (IS_VERCEL) {
     list.push((url) => location.origin + '/api/proxy?url=' + encodeURIComponent(url));
   }
+  if (IS_CF_PAGES) {
+    list.push((url) => location.origin + '/api/proxy?url=' + encodeURIComponent(url));
+  }
+  // Public CORS proxies (fallbacks)
   list.push(
     (url) => 'https://corsproxy.io/?url=' + encodeURIComponent(url),
     (url) => 'https://api.cors.lol/?url=' + encodeURIComponent(url),
@@ -924,31 +952,68 @@ async function connectToMactrack() {
   const success = await attemptLogin();
 
   if (success) {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('main-app').style.display = 'block';
-    document.getElementById('header-id').textContent = credentials.assetName || vid || 'T909';
-    const initialTab = getTabFromHash();
-    if (initialTab) switchTab(initialTab);
-    startLiveUpdates();
+    saveCredentials();
+    showMainApp();
   } else {
     btn.disabled = false;
     btn.textContent = 'LOG IN';
     msg.style.display = 'none';
+    clearCredentials();
     alert('Login failed. Check your email and password.');
   }
 }
 
+function showMainApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'block';
+  document.getElementById('header-id').textContent = credentials.assetName || credentials.vid || 'T909';
+  const initialTab = getTabFromHash();
+  if (initialTab) switchTab(initialTab);
+  if (updateInterval) clearInterval(updateInterval);
+  startLiveUpdates();
+}
+
 // Send a request through CORS proxy to bypass browser restrictions
-function proxiedFetch(targetUrl, options = {}) {
-  // Reuse the proxy that worked during login
+async function proxiedFetch(targetUrl, options = {}) {
+  let res;
   if (credentials._workingProxyFn) {
-    return fetchWithTimeout(credentials._workingProxyFn(targetUrl), {
+    res = await fetchWithTimeout(credentials._workingProxyFn(targetUrl), {
       method: options.method || 'GET',
       headers: options.headers || {},
       body: options.body || undefined,
     }, 10000);
+  } else {
+    res = await fetchWithProxyFallback(targetUrl, options);
   }
-  return fetchWithProxyFallback(targetUrl, options);
+  // Auto-reauth on 401 (token expired or password changed)
+  if (res.status === 401 && !options._retried) {
+    const reauthed = await silentReauth();
+    if (reauthed) {
+      const newHeaders = { ...options.headers, 'Authorization': 'Bearer ' + credentials.token };
+      return proxiedFetch(targetUrl, { ...options, headers: newHeaders, _retried: true });
+    } else {
+      // Password changed or account issue — show login screen
+      clearCredentials();
+      document.getElementById('main-app').style.display = 'none';
+      document.getElementById('login-screen').style.display = 'block';
+      if (updateInterval) { clearInterval(updateInterval); updateInterval = null; }
+      alert('Session expired. Please log in with your current password.');
+    }
+  }
+  return res;
+}
+
+// Silently re-authenticate using saved credentials
+async function silentReauth() {
+  if (!credentials.user || !credentials.pass) return false;
+  try {
+    const success = await attemptLogin(true);
+    if (success) {
+      saveCredentials();
+      return true;
+    }
+  } catch(e) {}
+  return false;
 }
 
 function fetchWithTimeout(url, options, ms = 6000) {
@@ -976,7 +1041,7 @@ async function fetchWithProxyFallback(targetUrl, options) {
   throw new Error('All proxies failed');
 }
 
-async function attemptLogin() {
+async function attemptLogin(silent) {
   // Fire ALL instances x ALL proxies at once — first success wins
   const body = 'username=' + encodeURIComponent(credentials.user) + '&password=' + encodeURIComponent(credentials.pass) + '&grant_type=password';
   const proxies = getProxyList();
@@ -1013,9 +1078,11 @@ async function attemptLogin() {
       return true;
     }
   } catch(e) {
-    const reasons = e.errors ? e.errors.map(err => err.message).slice(0, 5).join('\n') : e.message;
-    console.log('All login attempts failed:', e);
-    alert('Login failed.\n\nDebug info:\n' + reasons + '\n\nFix: Deploy to Vercel (free) where the built-in proxy works automatically.\n\n1. Go to vercel.com → Import Git Repository\n2. Select jaystruckin/TKLINK → Deploy\n3. Use your-app.vercel.app instead of GitHub Pages');
+    console.log('All login attempts failed');
+    if (!silent) {
+      const reasons = e.errors ? e.errors.map(err => (err.message || '').replace(/https?:\/\/[^\s]*/gi, '[proxy]')).slice(0, 5).join('\n') : (e.message || '');
+      alert('Login failed.\n\nDebug info:\n' + reasons + '\n\nFix: Deploy your own CORS proxy (free).\n\nCloudflare Workers (recommended):\n1. workers.cloudflare.com → Create Worker\n2. Paste code from proxy/worker.js → Deploy\n3. Enter your worker URL in the Proxy URL field');
+    }
   }
   return false;
 }
@@ -1031,8 +1098,8 @@ async function tryAuth(url, body, apiBase, extraHeaders, proxyFn) {
     const data = await res.json();
     const token = data.access_token || data.AccessToken || data.token || data.Token;
     if (!token) throw new Error('No token');
-    console.log('LOGIN SUCCESS via', url);
-    return { token, apiBase, proxyFn };
+    console.log('LOGIN SUCCESS via proxy');
+    return { token: token, apiBase, proxyFn };
   } catch(e) {
     clearTimeout(timer);
     throw e;
@@ -1533,12 +1600,45 @@ document.getElementById('btn-dismiss').addEventListener('click', () => {
   localStorage.setItem('tklink-install-dismissed', '1');
 });
 
-// --- Auto-start demo mode via ?demo URL parameter ---
-if (location.search.indexOf('demo') !== -1) {
-  startTrialMode();
-  const initialTab = getTabFromHash();
-  if (initialTab) switchTab(initialTab);
-}
+// --- Auto-login from saved credentials ---
+(async function autoLogin() {
+  if (location.search.indexOf('demo') !== -1) {
+    startTrialMode();
+    const initialTab = getTabFromHash();
+    if (initialTab) switchTab(initialTab);
+    return;
+  }
+
+  const saved = loadCredentials();
+  if (!saved) return;
+
+  // Pre-fill form fields
+  document.getElementById('username').value = saved.user || '';
+  document.getElementById('password').value = saved.pass || '';
+  document.getElementById('vehicle-id').value = saved.vid || '';
+  document.getElementById('proxy-url').value = saved.proxy || '';
+
+  credentials = { user: saved.user, pass: saved.pass, vid: saved.vid, proxy: saved.proxy ? saved.proxy.replace(/\/$/, '') : '' };
+
+  const btn = document.getElementById('connect-btn');
+  const msg = document.getElementById('connecting-msg');
+  btn.disabled = true;
+  btn.textContent = 'LOGGING IN...';
+  msg.style.display = 'block';
+
+  const success = await attemptLogin();
+  if (success) {
+    saveCredentials();
+    showMainApp();
+  } else {
+    // Saved credentials no longer work (password changed) — show login
+    btn.disabled = false;
+    btn.textContent = 'LOG IN';
+    msg.style.display = 'none';
+    clearCredentials();
+    document.getElementById('password').value = '';
+  }
+})();
 </script>
 </body>
 </html>
