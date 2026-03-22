@@ -1,5 +1,7 @@
 # TKLINK 🚛
 
+[![Deploy](https://github.com/jaystruckin/TKLINK/actions/workflows/static.yml/badge.svg)](https://github.com/jaystruckin/TKLINK/actions/workflows/static.yml)
+
 > Live truck telematics for drivers. Built by a driver, for drivers.
 
 **TKLINK** is a lightweight web app that gives truck drivers direct access to live engine telematics, ECU data, fault codes and GPS — straight from their phone browser. No installs, no fleet manager needed, just the data you need to keep your truck safe on the road.
@@ -146,7 +148,7 @@ No app store. No install. Just open and go.
 - [ ] Push notifications for critical alerts
 - [ ] Trip history & logging
 - [ ] Multiple truck support
-- [ ] Android home screen app (PWA)
+- [x] Android home screen app (PWA)
 - [ ] Offline fault code database
 - [ ] J1939 direct Bluetooth connection (future)
 

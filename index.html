@@ -12,8 +12,9 @@
 <meta name="apple-mobile-web-app-title" content="TKLINK">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap"></noscript>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
 
   :root {
     --bg: #080c10;
@@ -686,35 +687,37 @@
 <!-- LOGIN -->
 <div id="login-screen">
   <div class="truck-icon">🚛</div>
-  <div class="login-logo">Kenworth T909</div>
-  <div class="login-title">LIVE TELEM</div>
-  <div class="login-sub">READ ONLY • SECURE</div>
+  <div class="login-logo">TKLINK</div>
+  <div class="login-title">WORKSHOP LOGIN</div>
+  <div class="login-sub">MACTRACK TELEMATICS</div>
 
   <div class="input-group">
-    <label class="input-label">MacTrack Portal URL</label>
-    <input class="input-field" id="portal-url" type="url" placeholder="https://fleet.mactrack.com.au" autocomplete="off" autocorrect="off" spellcheck="false">
-  </div>
-
-  <div class="input-group">
-    <label class="input-label">Username / Email</label>
-    <input class="input-field" id="username" type="text" placeholder="your@email.com" autocomplete="off" autocorrect="off" spellcheck="false">
+    <label class="input-label">Email</label>
+    <input class="input-field" id="username" type="text" placeholder="workshop@email.com" autocomplete="email" spellcheck="false">
   </div>
 
   <div class="input-group">
     <label class="input-label">Password</label>
-    <input class="input-field" id="password" type="password" placeholder="••••••••" autocomplete="off">
+    <input class="input-field" id="password" type="password" placeholder="••••••••" autocomplete="current-password">
   </div>
 
   <div class="input-group">
-    <label class="input-label">Vehicle ID / Asset Name</label>
-    <input class="input-field" id="vehicle-id" type="text" placeholder="T909 or truck number" autocomplete="off">
+    <label class="input-label">Truck Number</label>
+    <input class="input-field" id="vehicle-id" type="text" placeholder="T909" autocomplete="off">
   </div>
 
-  <p class="portal-note">Read-only access. No changes made. Data refreshes every 5 seconds. Credentials stored locally on this device only.</p>
+  <details style="margin-top:8px;text-align:left">
+    <summary style="color:#999;font-size:12px;cursor:pointer">Advanced: Custom Proxy URL</summary>
+    <input class="input-field" id="proxy-url" type="url" placeholder="https://your-worker.workers.dev" autocomplete="off" spellcheck="false" style="margin-top:6px">
+  </details>
 
-  <button class="btn-connect" id="connect-btn" onclick="connectToMactrack()">CONNECT</button>
-  <div class="connecting-msg" id="connecting-msg"><span class="spinner"></span>CONNECTING TO MACTRACK...</div>
+  <p class="portal-note">Read-only access. Data refreshes every 5 seconds.</p>
+
+  <button class="btn-connect" id="connect-btn" onclick="connectToMactrack()">LOG IN</button>
+  <div class="connecting-msg" id="connecting-msg"><span class="spinner"></span>CONNECTING...</div>
   <div class="trial-link">No account? <a onclick="startTrialMode()">Try Demo</a></div>
+
+  <input type="hidden" id="portal-url" value="https://mactrack.telematics.guru">
 </div>
 
 <!-- MAIN APP -->
@@ -761,13 +764,13 @@
           <div class="gauge-label">OIL PRESSURE</div>
           <div class="gauge-value" id="val-oil-press">—</div>
           <div class="gauge-unit">kPa</div>
-          <div class="gauge-bar"><div class="gauge-fill" id="bar-oil" style="width:0%"></div></div>
+          <div class="gauge-bar"><div class="gauge-fill" id="bar-oilpress" style="width:0%"></div></div>
         </div>
         <div class="gauge-card" id="card-oil-temp">
           <div class="gauge-label">OIL TEMP</div>
           <div class="gauge-value" id="val-oil-temp">—</div>
           <div class="gauge-unit">°C</div>
-          <div class="gauge-bar"><div class="gauge-fill" id="bar-oilt" style="width:0%"></div></div>
+          <div class="gauge-bar"><div class="gauge-fill" id="bar-oiltemp" style="width:0%"></div></div>
         </div>
         <div class="gauge-card" id="card-boost">
           <div class="gauge-label">TURBO BOOST</div>
@@ -791,7 +794,7 @@
           <div class="gauge-label">FUEL RATE</div>
           <div class="gauge-value" id="val-fuel-rate">—</div>
           <div class="gauge-unit">L/HR</div>
-          <div class="gauge-bar"><div class="gauge-fill" id="bar-fuel" style="width:0%"></div></div>
+          <div class="gauge-bar"><div class="gauge-fill" id="bar-fuelrate" style="width:0%"></div></div>
         </div>
       </div>
 
@@ -818,7 +821,7 @@
           <div class="gauge-label">FUEL LEVEL</div>
           <div class="gauge-value" id="val-fuel">—</div>
           <div class="gauge-unit">%</div>
-          <div class="gauge-bar"><div class="gauge-fill good" id="bar-fuellvl" style="width:0%"></div></div>
+          <div class="gauge-bar"><div class="gauge-fill" id="bar-fuel" style="width:0%"></div></div>
         </div>
       </div>
 
@@ -950,153 +953,334 @@ window.addEventListener('hashchange', () => {
   if (tab) switchTab(tab, false);
 });
 
+// Telematics Guru API instances to try (MacTrack is hosted on TG)
+const TG_INSTANCES = ['api-apac03', 'api-apac02', 'api-apac01'];
+
 async function connectToMactrack() {
-  const url = document.getElementById('portal-url').value.trim();
   const user = document.getElementById('username').value.trim();
   const pass = document.getElementById('password').value.trim();
   const vid = document.getElementById('vehicle-id').value.trim();
+  const proxy = document.getElementById('proxy-url').value.trim();
 
-  if (!url || !user || !pass) {
-    alert('Please fill in portal URL, username and password.');
+  if (!user || !pass) {
+    alert('Please enter your email and password.');
     return;
   }
 
-  credentials = { url, user, pass, vid };
+  credentials = { user, pass, vid, proxy: proxy ? proxy.replace(/\/$/, '') : '' };
 
   const btn = document.getElementById('connect-btn');
   const msg = document.getElementById('connecting-msg');
   btn.disabled = true;
-  btn.textContent = 'CONNECTING...';
+  btn.textContent = 'LOGGING IN...';
   msg.style.display = 'block';
 
-  // Attempt connection
   const success = await attemptLogin();
 
   if (success) {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('main-app').style.display = 'block';
-    document.getElementById('header-id').textContent = vid || 'T909';
+    document.getElementById('header-id').textContent = credentials.assetName || vid || 'T909';
     const initialTab = getTabFromHash();
     if (initialTab) switchTab(initialTab);
     startLiveUpdates();
   } else {
     btn.disabled = false;
-    btn.textContent = 'CONNECT';
+    btn.textContent = 'LOG IN';
     msg.style.display = 'none';
-    alert('Could not connect to MacTrack. Check your portal URL and credentials.');
+    alert('Login failed. Check your email and password.');
   }
 }
 
+// Send a request through CORS proxy to bypass browser restrictions
+function proxiedFetch(targetUrl, options = {}) {
+  // Reuse the proxy that worked during login
+  if (credentials._workingProxy) {
+    const wp = credentials._workingProxy;
+    // Extract the proxy base from the working URL
+    let proxyBase = '';
+    if (wp.includes('corsfix.com')) proxyBase = 'https://proxy.corsfix.com/?';
+    else if (wp.includes('corsproxy.io')) proxyBase = 'https://corsproxy.io/?';
+    else if (wp.includes('cors.lol')) proxyBase = 'https://api.cors.lol/?url=';
+    else proxyBase = wp.split('?')[0] + '?url=';
+
+    if (proxyBase) {
+      return fetchWithTimeout(proxyBase + encodeURIComponent(targetUrl), {
+        method: options.method || 'GET',
+        headers: options.headers || {},
+        body: options.body || undefined,
+      }, 10000);
+    }
+  }
+  return fetchWithProxyFallback(targetUrl, options);
+}
+
+function fetchWithTimeout(url, options, ms = 6000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
+async function fetchWithProxyFallback(targetUrl, options) {
+  const proxies = [
+    (url) => 'https://thingproxy.freeboard.io/fetch/' + url,
+    (url) => 'https://proxy.corsfix.com/?' + url,
+    (url) => 'https://corsproxy.io/?url=' + encodeURIComponent(url),
+    (url) => 'https://proxy.cors.sh/' + url,
+  ];
+
+  for (const makeUrl of proxies) {
+    try {
+      const res = await fetchWithTimeout(makeUrl(targetUrl), {
+        method: options.method || 'GET',
+        headers: options.headers || {},
+        body: options.body || undefined,
+      }, 6000);
+      if (res.ok || res.status === 401 || res.status === 403) return res;
+    } catch(e) { continue; }
+  }
+  throw new Error('All proxies failed');
+}
+
 async function attemptLogin() {
-  // Try to reach the MacTrack portal
-  // MacTrack uses a REST API behind their portal
-  // We attempt to authenticate and pull vehicle data
-  try {
-    const baseUrl = credentials.url.replace(/\/$/, '');
+  // Fire ALL instances x ALL proxies at once — first success wins
+  const body = 'username=' + encodeURIComponent(credentials.user) + '&password=' + encodeURIComponent(credentials.pass) + '&grant_type=password';
+  const proxies = [
+    (url) => 'https://thingproxy.freeboard.io/fetch/' + url,
+    (url) => 'https://proxy.corsfix.com/?' + url,
+    (url) => 'https://corsproxy.io/?url=' + encodeURIComponent(url),
+    (url) => 'https://proxy.cors.sh/' + url,
+  ];
+  const customProxy = credentials.proxy;
 
-    // Common MacTrack API endpoints
-    const endpoints = [
-      baseUrl + '/api/v1/auth/login',
-      baseUrl + '/api/auth',
-      baseUrl + '/api/login',
-      baseUrl + '/v1/login',
-    ];
+  const attempts = [];
+  for (const instance of TG_INSTANCES) {
+    const apiBase = 'https://' + instance + '.telematics.guru';
+    const authUrl = apiBase + '/user/authenticate';
 
-    for (const endpoint of endpoints) {
-      try {
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: credentials.user,
-            email: credentials.user,
-            password: credentials.pass
-          })
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data.token || data.access_token || data.sessionId || data.session) {
-            credentials.token = data.token || data.access_token || data.sessionId || data.session;
-            credentials.baseUrl = baseUrl;
-            return true;
-          }
-        }
-      } catch(e) { continue; }
+    if (customProxy) {
+      // Custom proxy — try both formats
+      attempts.push(tryAuth(customProxy + '/?url=' + encodeURIComponent(authUrl), body, apiBase));
+      attempts.push(tryAuth(customProxy + '/proxy', body, apiBase, { 'X-Target-URL': authUrl }));
     }
 
-    // If direct API fails, note that CORS may block browser requests
-    // Store credentials for display purposes and show demo mode
-    credentials.baseUrl = baseUrl;
-    credentials.demoMode = true;
-    return true;
+    for (const makeUrl of proxies) {
+      attempts.push(tryAuth(makeUrl(authUrl), body, apiBase));
+    }
 
+    // Also try direct (some APIs allow CORS)
+    attempts.push(tryAuth(authUrl, body, apiBase));
+  }
+
+  try {
+    const result = await Promise.any(attempts);
+    if (result) {
+      credentials.token = result.token;
+      credentials.apiBase = result.apiBase;
+      // Store working proxy for future requests
+      if (result.workingProxy) credentials._workingProxy = result.workingProxy;
+      await fetchOrgAndAsset();
+      return true;
+    }
   } catch(e) {
-    credentials.demoMode = true;
-    return true;
+    const reasons = e.errors ? e.errors.map(err => err.message).slice(0, 5).join('\n') : e.message;
+    console.log('All login attempts failed:', e);
+    alert('Login failed.\n\nDebug info:\n' + reasons + '\n\nFix: Deploy your own proxy on Vercel (free). Repo already has /api/proxy.js ready.');
+  }
+  return false;
+}
+
+async function tryAuth(url, body, apiBase, extraHeaders) {
+  const headers = { 'Content-Type': 'application/x-www-form-urlencoded', ...extraHeaders };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(url, { method: 'POST', headers, body, signal: controller.signal });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const token = data.access_token || data.AccessToken || data.token || data.Token;
+    if (!token) throw new Error('No token');
+    console.log('LOGIN SUCCESS via', url);
+    return { token, apiBase, workingProxy: url };
+  } catch(e) {
+    clearTimeout(timer);
+    throw e;
+  }
+}
+
+async function fetchOrgAndAsset() {
+  const headers = {
+    'Authorization': 'Bearer ' + credentials.token,
+    'Content-Type': 'application/json'
+  };
+
+  // Step 1: Get organisations
+  try {
+    const orgRes = await proxiedFetch(credentials.apiBase + '/v2/user/organisations', { headers });
+    if (orgRes.ok) {
+      const orgs = await orgRes.json();
+      if (orgs && orgs.length > 0) {
+        credentials.orgId = orgs[0].Id || orgs[0].id || orgs[0].OrganisationId;
+        console.log('Organisation ID:', credentials.orgId);
+      }
+    }
+  } catch(e) { console.log('Org fetch error:', e); }
+
+  // Step 2: Get assets to find the vehicle serial ID
+  if (credentials.orgId) {
+    try {
+      const assetRes = await proxiedFetch(
+        credentials.apiBase + '/v3/assets/' + credentials.orgId, { headers }
+      );
+      if (assetRes.ok) {
+        const assets = await assetRes.json();
+        if (assets && assets.length > 0) {
+          // Find matching vehicle by name/ID, or use first asset
+          const vid = credentials.vid.toLowerCase();
+          const match = vid
+            ? assets.find(a => {
+                const name = (a.Name || a.name || '').toLowerCase();
+                const id = String(a.Id || a.id || '').toLowerCase();
+                const serial = String(a.Serial || a.serial || '').toLowerCase();
+                return name.includes(vid) || id === vid || serial === vid;
+              })
+            : null;
+
+          const asset = match || assets[0];
+          credentials.assetSerial = asset.Serial || asset.serial || asset.Id || asset.id;
+          credentials.assetName = asset.Name || asset.name || credentials.vid;
+          console.log('Asset:', credentials.assetName, 'Serial:', credentials.assetSerial);
+        }
+      }
+    } catch(e) { console.log('Asset fetch error:', e); }
   }
 }
 
 async function fetchTelematicsData() {
-  if (credentials.demoMode || !credentials.token) {
-    // Show that we're connected but data requires direct API access
-    // Display a note to user and show what fields will populate
+  if (!credentials.token || !credentials.apiBase) {
     showConnectionNote();
     return;
   }
 
-  try {
-    const baseUrl = credentials.baseUrl;
-    const headers = {
-      'Authorization': 'Bearer ' + credentials.token,
-      'Content-Type': 'application/json'
-    };
+  const headers = {
+    'Authorization': 'Bearer ' + credentials.token,
+    'Content-Type': 'application/json'
+  };
 
-    // Fetch live vehicle data
-    const res = await fetch(`${baseUrl}/api/v1/vehicles/live`, { headers });
-    if (res.ok) {
-      const data = await res.json();
-      updateDisplay(data);
+  try {
+    // Get latest telemetry for the asset
+    if (credentials.orgId && credentials.assetSerial) {
+      const now = new Date();
+      const from = new Date(now.getTime() - 60000).toISOString(); // last 60 seconds
+      const to = now.toISOString();
+
+      const telUrl = `${credentials.apiBase}/v2/${credentials.orgId}/asset/${credentials.assetSerial}/rawtelemetry?from=${from}&to=${to}&limit=1`;
+      const res = await proxiedFetch(telUrl, { headers });
+
+      if (res.ok) {
+        const records = await res.json();
+        if (records && records.length > 0) {
+          const latest = records[records.length - 1];
+          mapTGDataToDisplay(latest);
+          return;
+        }
+      }
+    }
+
+    // Fallback: try getting asset list for latest positions
+    if (credentials.orgId) {
+      const assetRes = await proxiedFetch(
+        credentials.apiBase + '/v3/assets/' + credentials.orgId, { headers }
+      );
+      if (assetRes.ok) {
+        const assets = await assetRes.json();
+        const asset = credentials.assetSerial
+          ? assets.find(a => (a.Serial || a.serial) == credentials.assetSerial) || assets[0]
+          : assets[0];
+        if (asset) {
+          mapAssetDataToDisplay(asset);
+          return;
+        }
+      }
     }
   } catch(e) {
     console.log('Fetch error:', e);
   }
 }
 
+// Map Telematics Guru raw telemetry to our display format
+function mapTGDataToDisplay(record) {
+  const data = {};
+
+  // GPS data from raw telemetry
+  if (record.Latitude || record.latitude) data.lat = record.Latitude || record.latitude;
+  if (record.Longitude || record.longitude) data.lng = record.Longitude || record.longitude;
+  if (record.Speed || record.speed) data.gpsSpeed = record.Speed || record.speed;
+  if (record.Heading || record.heading) data.heading = (record.Heading || record.heading) + '°';
+
+  // J1939/CAN bus fields (if available via TG custom fields)
+  const fields = record.Fields || record.fields || record.FieldData || {};
+  if (fields.EngineRPM || fields.engineRpm) data.rpm = fields.EngineRPM || fields.engineRpm;
+  if (fields.CoolantTemperature || fields.coolantTemp) data.coolantTemp = fields.CoolantTemperature || fields.coolantTemp;
+  if (fields.OilPressure || fields.oilPressure) data.oilPressure = fields.OilPressure || fields.oilPressure;
+  if (fields.OilTemperature || fields.oilTemp) data.oilTemp = fields.OilTemperature || fields.oilTemp;
+  if (fields.BoostPressure || fields.boostPressure) data.boostPressure = fields.BoostPressure || fields.boostPressure;
+  if (fields.ExhaustTemperature || fields.exhaustTemp) data.exhaustTemp = fields.ExhaustTemperature || fields.exhaustTemp;
+  if (fields.EngineLoad || fields.engineLoad) data.engineLoad = fields.EngineLoad || fields.engineLoad;
+  if (fields.FuelRate || fields.fuelRate) data.fuelRate = fields.FuelRate || fields.fuelRate;
+  if (fields.FuelLevel || fields.fuelLevel) data.fuelLevel = fields.FuelLevel || fields.fuelLevel;
+  if (fields.DEFLevel || fields.defLevel) data.defLevel = fields.DEFLevel || fields.defLevel;
+  if (fields.DPFSootLoad || fields.dpfSoot) data.dpfSoot = fields.DPFSootLoad || fields.dpfSoot;
+  if (fields.BatteryVoltage || fields.batteryVoltage) data.battVoltage = fields.BatteryVoltage || fields.batteryVoltage;
+  if (fields.AmbientTemperature || fields.ambientTemp) data.ambientTemp = fields.AmbientTemperature || fields.ambientTemp;
+  if (fields.TransmissionTemperature || fields.transTemp) data.transTemp = fields.TransmissionTemperature || fields.transTemp;
+  if (fields.Gear || fields.gear) data.gear = fields.Gear || fields.gear;
+
+  data.ignition = (record.DIn1 || record.Ignition) ? 'ON' : 'OFF';
+  data.speed = record.Speed || record.speed;
+  data.gpsSignal = 'LOCKED';
+  data.faults = [];
+
+  updateDisplay(data);
+}
+
+// Map TG asset data (from /v3/assets) to display format
+function mapAssetDataToDisplay(asset) {
+  const data = {};
+
+  if (asset.Latitude) data.lat = asset.Latitude;
+  if (asset.Longitude) data.lng = asset.Longitude;
+  if (asset.Speed) data.gpsSpeed = asset.Speed;
+  if (asset.Heading) data.heading = asset.Heading + '°';
+  data.speed = asset.Speed || 0;
+  data.ignition = asset.Ignition ? 'ON' : 'OFF';
+  data.gpsSignal = asset.GpsValid ? 'LOCKED' : 'NO FIX';
+
+  // Asset-level fields
+  const fields = asset.Fields || asset.FieldData || {};
+  if (fields.EngineRPM) data.rpm = fields.EngineRPM;
+  if (fields.CoolantTemperature) data.coolantTemp = fields.CoolantTemperature;
+  if (fields.FuelLevel) data.fuelLevel = fields.FuelLevel;
+  if (fields.BatteryVoltage) data.battVoltage = fields.BatteryVoltage;
+  if (fields.OilPressure) data.oilPressure = fields.OilPressure;
+
+  data.faults = [];
+  updateDisplay(data);
+}
+
 function showConnectionNote() {
-  // Show the app is ready and waiting for data
-  // MacTrack's portal runs on a backend that requires
-  // their specific API credentials and endpoints
-  // which vary per installation
+  document.getElementById('update-time').textContent = 'NO DATA YET';
 
-  document.getElementById('update-time').textContent = 'AWAITING DATA';
-
-  // Show what the app is ready to display
-  const fields = {
-    'val-rpm': 'CONNECTING',
-    'val-coolant': '—',
-    'val-oil-press': '—',
-    'val-oil-temp': '—',
-    'val-boost': '—',
-    'val-exhaust': '—',
-    'val-load': '—',
-    'val-fuel-rate': '—',
-    'val-def': '—',
-    'val-dpf': '—',
-    'val-regen': '—',
-    'val-fuel': '—',
-  };
-
-  // Display a note in fault tab explaining connection status
   const faultList = document.getElementById('fault-list');
   faultList.innerHTML = `
     <div class="note-box" style="margin-top:0">
-      <strong style="color:var(--accent2)">CONNECTION STATUS</strong><br><br>
-      App connected to: <span style="color:var(--text); font-family:monospace">${credentials.baseUrl}</span><br><br>
-      MacTrack portals use server-side authentication that blocks direct browser requests due to CORS security policy.<br><br>
-      <strong style="color:var(--text)">To get full live data you have two options:</strong><br><br>
-      1. Ask MacTrack to provide you API access credentials (separate from portal login)<br><br>
-      2. Contact MacTrack support on <strong style="color:var(--accent)">1300 622 872</strong> — they can enable driver app access for your vehicle specifically
+      <strong style="color:var(--accent2)">WAITING FOR DATA</strong><br><br>
+      Connected to Telematics Guru API<br>
+      Instance: <span style="color:var(--text); font-family:monospace">${credentials.apiBase || '—'}</span><br>
+      Organisation: <span style="color:var(--text)">${credentials.orgId || '—'}</span><br>
+      Asset: <span style="color:var(--text)">${credentials.assetName || '—'}</span><br><br>
+      Waiting for telemetry data from truck. Data appears when the vehicle ignition is on and the MacTrack device is reporting.
     </div>
   `;
 }
@@ -1418,6 +1602,13 @@ document.getElementById('btn-dismiss').addEventListener('click', () => {
   document.getElementById('install-banner').classList.remove('show');
   localStorage.setItem('tklink-install-dismissed', '1');
 });
+
+// --- Auto-start demo mode via ?demo URL parameter ---
+if (location.search.indexOf('demo') !== -1) {
+  startTrialMode();
+  const initialTab = getTabFromHash();
+  if (initialTab) switchTab(initialTab);
+}
 </script>
 </body>
 </html>
