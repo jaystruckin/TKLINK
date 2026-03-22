@@ -182,9 +182,10 @@
   #main-app { display: none; }
 
   .header {
-    background: var(--panel);
+    background: linear-gradient(135deg, var(--panel) 0%, #111820 100%);
     border-bottom: 1px solid var(--border);
-    padding: 12px 16px;
+    padding: 14px 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.4);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -194,7 +195,7 @@
   }
 
   .header-left { display: flex; flex-direction: column; }
-  .header-truck { font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: 1px; }
+  .header-truck { font-size: 20px; font-weight: 700; color: var(--accent); letter-spacing: 1px; text-shadow: 0 0 20px rgba(232,93,0,0.3); }
   .header-id { font-size: 11px; color: var(--dim); letter-spacing: 2px; font-family: 'Share Tech Mono', monospace; }
 
   .live-badge {
@@ -204,6 +205,7 @@
     font-size: 11px;
     letter-spacing: 2px;
     color: var(--green);
+    text-shadow: 0 0 10px rgba(0,230,118,0.5);
   }
 
   .live-dot {
@@ -212,6 +214,7 @@
     background: var(--green);
     animation: pulse 1.5s infinite;
     will-change: opacity, transform;
+    box-shadow: 0 0 6px var(--green);
   }
 
   @keyframes pulse {
@@ -224,6 +227,7 @@
     color: var(--dim);
     font-family: 'Share Tech Mono', monospace;
     text-align: right;
+    margin-top: 4px;
   }
   .update-time.stale { color: #ff6b35; }
 
@@ -240,10 +244,10 @@
   .tab {
     flex: 1;
     min-width: 70px;
-    padding: 12px 8px;
+    padding: 13px 8px 11px;
     text-align: center;
     font-size: 11px;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
     color: var(--dim);
     cursor: pointer;
     border-bottom: 2px solid transparent;
@@ -254,18 +258,21 @@
   .tab.active {
     color: var(--accent);
     border-bottom-color: var(--accent);
+    text-shadow: 0 0 12px rgba(232,93,0,0.5);
   }
+  .tab:active { opacity: 0.7; }
 
   /* CONTENT */
-  .content { padding: 16px; padding-bottom: 32px; }
+  .content { padding: 16px; padding-bottom: 32px; background: radial-gradient(ellipse at 50% 30%, rgba(232,93,0,0.03) 0%, transparent 70%); }
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
   /* ALERT BAR */
   .alert-bar {
-    background: rgba(255, 23, 68, 0.1);
+    background: rgba(255, 23, 68, 0.08);
     border: 1px solid rgba(255, 23, 68, 0.3);
-    border-radius: 4px;
+    border-radius: 6px;
+    box-shadow: 0 0 20px rgba(255,23,68,0.05);
     padding: 12px 16px;
     margin-bottom: 16px;
     display: flex;
@@ -289,11 +296,12 @@
   .gauge-card {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 8px;
     padding: 14px;
     position: relative;
     overflow: hidden;
     contain: layout style paint;
+    transition: border-color 0.3s, box-shadow 0.3s;
   }
 
   .gauge-card::before {
@@ -308,6 +316,8 @@
   .gauge-card.warning::before { background: var(--yellow); opacity: 1; }
   .gauge-card.critical::before { background: var(--red); opacity: 1; }
   .gauge-card.good::before { background: var(--green); opacity: 1; }
+  .gauge-card.warning { box-shadow: 0 0 12px rgba(255,214,0,0.1); }
+  .gauge-card.critical { box-shadow: 0 0 12px rgba(255,23,68,0.15); }
 
   .gauge-label {
     font-size: 10px;
@@ -327,7 +337,7 @@
   }
 
   .gauge-value.warning { color: var(--yellow); }
-  .gauge-value.critical { color: var(--red); }
+  .gauge-value.critical { color: var(--red); text-shadow: 0 0 12px rgba(255,23,68,0.5); }
   .gauge-value.good { color: var(--green); }
 
   .gauge-unit {
@@ -352,20 +362,21 @@
     will-change: width;
   }
 
-  .gauge-fill.warning { background: var(--yellow); }
-  .gauge-fill.critical { background: var(--red); }
-  .gauge-fill.good { background: var(--green); }
+  .gauge-fill.warning { background: linear-gradient(90deg, var(--yellow), #ff8c00); }
+  .gauge-fill.critical { background: linear-gradient(90deg, var(--red), #ff6b35); }
+  .gauge-fill.good { background: linear-gradient(90deg, var(--green), #00b0ff); }
 
   /* SECTION HEADER */
   .section-header {
-    font-size: 11px;
+    font-size: 10px;
     letter-spacing: 3px;
-    color: var(--dim);
+    color: var(--accent);
     text-transform: uppercase;
     margin-bottom: 10px;
-    margin-top: 20px;
+    margin-top: 24px;
     padding-bottom: 8px;
     border-bottom: 1px solid var(--border);
+    opacity: 0.8;
   }
 
   /* DATA ROWS */
@@ -373,9 +384,10 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 11px 0;
+    padding: 12px 0;
     border-bottom: 1px solid rgba(26,37,48,0.5);
     font-size: 14px;
+    transition: background 0.15s;
   }
 
   .data-key { color: var(--dim); font-size: 13px; }
@@ -394,16 +406,18 @@
     background: var(--panel);
     border: 1px solid rgba(255,23,68,0.3);
     border-left: 3px solid var(--red);
-    border-radius: 4px;
+    border-radius: 6px;
     padding: 14px;
     margin-bottom: 10px;
     contain: layout style;
+    box-shadow: 0 2px 8px rgba(255,23,68,0.05);
   }
 
   .fault-card.inactive {
     border-color: rgba(26,37,48,0.8);
     border-left-color: var(--dim);
     opacity: 0.6;
+    box-shadow: none;
   }
 
   .fault-code {
@@ -446,15 +460,16 @@
 
   /* ECU INFO */
   .ecu-header {
-    background: var(--panel);
+    background: linear-gradient(135deg, var(--panel) 0%, rgba(232,93,0,0.05) 100%);
     border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 16px;
+    border-radius: 8px;
+    padding: 20px 16px;
     margin-bottom: 16px;
     text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
   }
 
-  .ecu-engine { font-size: 22px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+  .ecu-engine { font-size: 24px; font-weight: 700; color: var(--accent); margin-bottom: 4px; text-shadow: 0 0 20px rgba(232,93,0,0.3); }
   .ecu-cpl { font-family: 'Share Tech Mono', monospace; font-size: 13px; color: var(--dim); }
 
   .hp-torque {
@@ -467,9 +482,19 @@
   .ht-card {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 8px;
     padding: 16px;
     text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .ht-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    opacity: 0.4;
   }
 
   .ht-value {
@@ -478,17 +503,19 @@
     color: var(--accent);
     line-height: 1;
     margin-bottom: 4px;
+    text-shadow: 0 0 16px rgba(232,93,0,0.3);
   }
 
-  .ht-label { font-size: 11px; color: var(--dim); letter-spacing: 2px; }
+  .ht-label { font-size: 10px; color: var(--dim); letter-spacing: 2px; }
 
   /* GPS */
   .gps-card {
     background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 6px;
+    border: 1px solid rgba(0,176,255,0.2);
+    border-radius: 8px;
     padding: 16px;
     margin-bottom: 16px;
+    box-shadow: 0 2px 12px rgba(0,176,255,0.05);
   }
 
   .gps-coords {
@@ -496,7 +523,8 @@
     font-size: 14px;
     color: var(--blue);
     margin-bottom: 12px;
-    line-height: 1.8;
+    line-height: 2;
+    text-shadow: 0 0 12px rgba(0,176,255,0.3);
   }
 
   .map-btn {
@@ -504,8 +532,8 @@
     width: 100%;
     background: rgba(0,176,255,0.1);
     border: 1px solid rgba(0,176,255,0.3);
-    border-radius: 4px;
-    padding: 12px;
+    border-radius: 6px;
+    padding: 13px;
     color: var(--blue);
     font-family: 'Rajdhani', sans-serif;
     font-size: 14px;
@@ -515,15 +543,17 @@
     cursor: pointer;
     text-decoration: none;
     margin-bottom: 10px;
+    transition: all 0.2s;
   }
+  .map-btn:active { opacity: 0.7; transform: scale(0.98); }
 
   /* SHARE */
   .share-btn {
     width: 100%;
     background: rgba(0,230,118,0.1);
     border: 1px solid rgba(0,230,118,0.3);
-    border-radius: 4px;
-    padding: 14px;
+    border-radius: 6px;
+    padding: 15px;
     color: var(--green);
     font-family: 'Rajdhani', sans-serif;
     font-size: 15px;
@@ -531,8 +561,10 @@
     letter-spacing: 2px;
     text-align: center;
     cursor: pointer;
-    margin-top: 20px;
+    margin-top: 24px;
+    transition: all 0.2s;
   }
+  .share-btn:active { opacity: 0.7; transform: scale(0.98); }
 
   .no-faults {
     text-align: center;
