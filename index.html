@@ -10,10 +10,15 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="TKLINK">
+<link rel="dns-prefetch" href="https://fonts.googleapis.com">
+<link rel="dns-prefetch" href="https://fonts.gstatic.com">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap"></noscript>
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
 
   :root {
     --bg: #080c10;
@@ -210,6 +215,7 @@
     border-radius: 50%;
     background: var(--green);
     animation: pulse 1.5s infinite;
+    will-change: opacity, transform;
   }
 
   @keyframes pulse {
@@ -290,6 +296,7 @@
     padding: 14px;
     position: relative;
     overflow: hidden;
+    contain: layout style paint;
   }
 
   .gauge-card::before {
@@ -344,7 +351,8 @@
     height: 100%;
     border-radius: 2px;
     background: var(--accent);
-    transition: width 0.5s ease;
+    transition: width 0.3s ease;
+    will-change: width;
   }
 
   .gauge-fill.warning { background: var(--yellow); }
@@ -392,6 +400,7 @@
     border-radius: 4px;
     padding: 14px;
     margin-bottom: 10px;
+    contain: layout style;
   }
 
   .fault-card.inactive {
@@ -636,7 +645,7 @@
     <input class="input-field" id="vehicle-id" type="text" placeholder="T909 or truck number" autocomplete="off">
   </div>
 
-  <p class="portal-note">Read-only access. No changes made. Data refreshes every 5 seconds. Credentials stored locally on this device only.</p>
+  <p class="portal-note">Read-only access. No changes made. Data refreshes every 2 seconds. Credentials stored locally on this device only.</p>
 
   <button class="btn-connect" id="connect-btn" onclick="connectToMactrack()">CONNECT</button>
   <div class="connecting-msg" id="connecting-msg"><span class="spinner"></span>CONNECTING TO MACTRACK...</div>
@@ -850,6 +859,7 @@
 let updateInterval = null;
 let credentials = {};
 let lastData = {};
+const REFRESH_MS = 2000;
 
 const validTabs = ['engine','drivetrain','faults','ecu','gps'];
 
@@ -920,7 +930,7 @@ async function attemptLogin() {
   try {
     const baseUrl = credentials.url.replace(/\/$/, '');
 
-    // Common MacTrack API endpoints
+    // Common MacTrack API endpoints — try all in parallel for speed
     const endpoints = [
       baseUrl + '/api/v1/auth/login',
       baseUrl + '/api/auth',
@@ -928,34 +938,40 @@ async function attemptLogin() {
       baseUrl + '/v1/login',
     ];
 
-    for (const endpoint of endpoints) {
-      try {
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: credentials.user,
-            email: credentials.user,
-            password: credentials.pass
-          })
-        });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
 
-        if (res.ok) {
-          const data = await res.json();
-          if (data.token || data.access_token || data.sessionId || data.session) {
-            credentials.token = data.token || data.access_token || data.sessionId || data.session;
-            credentials.baseUrl = baseUrl;
-            return true;
-          }
-        }
-      } catch(e) { continue; }
+    const attempts = endpoints.map(endpoint =>
+      fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: credentials.user,
+          email: credentials.user,
+          password: credentials.pass
+        }),
+        signal: controller.signal
+      }).then(res => res.ok ? res.json() : Promise.reject())
+        .then(data => {
+          const token = data.token || data.access_token || data.sessionId || data.session;
+          if (token) return token;
+          return Promise.reject();
+        })
+    );
+
+    try {
+      credentials.token = await Promise.any(attempts);
+      clearTimeout(timeout);
+      credentials.baseUrl = baseUrl;
+      return true;
+    } catch(e) {
+      clearTimeout(timeout);
+      // If direct API fails, note that CORS may block browser requests
+      // Store credentials for display purposes and show demo mode
+      credentials.baseUrl = baseUrl;
+      credentials.demoMode = true;
+      return true;
     }
-
-    // If direct API fails, note that CORS may block browser requests
-    // Store credentials for display purposes and show demo mode
-    credentials.baseUrl = baseUrl;
-    credentials.demoMode = true;
-    return true;
 
   } catch(e) {
     credentials.demoMode = true;
@@ -978,8 +994,15 @@ async function fetchTelematicsData() {
       'Content-Type': 'application/json'
     };
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000);
+
     // Fetch live vehicle data
-    const res = await fetch(`${baseUrl}/api/v1/vehicles/live`, { headers });
+    const res = await fetch(`${baseUrl}/api/v1/vehicles/live`, {
+      headers,
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
     if (res.ok) {
       const data = await res.json();
       updateDisplay(data);
@@ -1159,14 +1182,19 @@ function renderFaults(faults) {
     return;
   }
 
-  list.innerHTML = faults.map(f => `
-    <div class="fault-card ${f.active ? '' : 'inactive'}">
-      <div class="fault-code">${f.code || '—'}</div>
-      <div class="fault-desc">${f.description || '—'}</div>
-      <div class="fault-meta">SPN: ${f.spn || '—'} · FMI: ${f.fmi || '—'} · Count: ${f.count || '—'}</div>
-      <div class="fault-status">${f.active ? 'ACTIVE' : 'INACTIVE'}</div>
-    </div>
-  `).join('');
+  const fragment = document.createDocumentFragment();
+  faults.forEach(f => {
+    const card = document.createElement('div');
+    card.className = 'fault-card' + (f.active ? '' : ' inactive');
+    card.innerHTML =
+      '<div class="fault-code">' + (f.code || '—') + '</div>' +
+      '<div class="fault-desc">' + (f.description || '—') + '</div>' +
+      '<div class="fault-meta">SPN: ' + (f.spn || '—') + ' · FMI: ' + (f.fmi || '—') + ' · Count: ' + (f.count || '—') + '</div>' +
+      '<div class="fault-status">' + (f.active ? 'ACTIVE' : 'INACTIVE') + '</div>';
+    fragment.appendChild(card);
+  });
+  list.textContent = '';
+  list.appendChild(fragment);
 }
 
 function checkAlerts(data) {
@@ -1188,7 +1216,7 @@ function checkAlerts(data) {
 
 function startLiveUpdates() {
   fetchTelematicsData();
-  updateInterval = setInterval(fetchTelematicsData, 5000);
+  updateInterval = setInterval(fetchTelematicsData, REFRESH_MS);
 }
 
 function generateDemoData() {
@@ -1261,7 +1289,7 @@ function startTrialMode() {
   updateInterval = setInterval(function() {
     const data = generateDemoData();
     updateDisplay(data);
-  }, 5000);
+  }, REFRESH_MS);
 }
 
 function shareReport() {
