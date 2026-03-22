@@ -4,6 +4,16 @@ All notable changes to TKLINK will be documented here.
 
 ---
 
+## [0.1.2] - 2026-03-22
+
+### Improved
+
+- Added GitHub Pages deployment status badge to README
+- Service worker now pre-caches all PWA icon assets (icon.svg, icon-192.png, icon-512.png) for full offline support
+- Bumped service worker cache to v2
+
+---
+
 ## [0.1.1] - 2026-03-21
 
 ### Added
