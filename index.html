@@ -633,13 +633,13 @@
   </div>
 
   <p class="portal-note">Read-only access. Data refreshes every 5 seconds.</p>
+  <input type="hidden" id="proxy-url" value="">
 
   <button class="btn-connect" id="connect-btn" onclick="connectToMactrack()">LOG IN</button>
   <div class="connecting-msg" id="connecting-msg"><span class="spinner"></span>CONNECTING...</div>
   <div class="trial-link">No account? <a onclick="startTrialMode()">Try Demo</a></div>
 
   <input type="hidden" id="portal-url" value="https://mactrack.telematics.guru">
-  <input type="hidden" id="proxy-url" value="">
 </div>
 
 <!-- MAIN APP -->
@@ -914,28 +914,26 @@ async function connectToMactrack() {
     btn.disabled = false;
     btn.textContent = 'LOG IN';
     msg.style.display = 'none';
-    if (!credentials.proxy) {
-      alert('Login failed. A proxy server is required to connect. Deploy the TKLINK proxy and enter the URL.');
-    } else {
-      alert('Login failed. Check your email and password.');
-    }
+    alert('Login failed. Check your email and password.');
   }
 }
 
-// Send a request through the proxy server to bypass CORS
+// Send a request through CORS proxy to bypass browser restrictions
 function proxiedFetch(targetUrl, options = {}) {
-  const proxy = credentials.proxy;
-  if (!proxy) return fetch(targetUrl, options);
-
-  const headers = { 'X-Target-URL': targetUrl };
-  if (options.headers) {
-    if (options.headers['Content-Type']) headers['Content-Type'] = options.headers['Content-Type'];
-    if (options.headers['Authorization']) headers['Authorization'] = options.headers['Authorization'];
+  const customProxy = credentials.proxy;
+  if (customProxy) {
+    const headers = { 'X-Target-URL': targetUrl };
+    if (options.headers) {
+      if (options.headers['Content-Type']) headers['Content-Type'] = options.headers['Content-Type'];
+      if (options.headers['Authorization']) headers['Authorization'] = options.headers['Authorization'];
+    }
+    return fetch(customProxy + '/proxy', { method: options.method || 'GET', headers, body: options.body || undefined });
   }
-
-  return fetch(proxy + '/proxy', {
+  // Use free public CORS proxy
+  const proxiedUrl = 'https://corsproxy.io/?' + encodeURIComponent(targetUrl);
+  return fetch(proxiedUrl, {
     method: options.method || 'GET',
-    headers,
+    headers: options.headers || {},
     body: options.body || undefined,
   });
 }
