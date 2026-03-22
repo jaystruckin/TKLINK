@@ -1253,8 +1253,8 @@ function escOr(val, fallback) {
 
 function getDemoAgents() {
   return [
-    { id: 'T909-01', name: 'T909 Kenworth', status: 'online' },
-    { id: 'T909-02', name: 'T909 Kenworth #2', status: 'offline' },
+    { id: 'T409-01', name: 'T409 Kenworth', status: 'online' },
+    { id: 'T409-02', name: 'T409 Kenworth #2', status: 'offline' },
     { id: 'T610-01', name: 'T610 Kenworth', status: 'online' },
     { id: 'C509-01', name: 'C509 Kenworth', status: 'online' },
     { id: 'T410-01', name: 'T410 SAR', status: 'offline' },
@@ -1413,7 +1413,7 @@ function showAgentList(agents) {
 function selectAgent(id) {
   document.getElementById('vehicle-id').value = id;
   document.querySelectorAll('.agent-item').forEach(function(el) {
-    var agentIdEl = el.querySelector('.agent-id');
+    const agentIdEl = el.querySelector('.agent-id');
     el.classList.toggle('selected', !!agentIdEl && agentIdEl.textContent === id);
   });
 }
@@ -1873,7 +1873,7 @@ function updateSpeedTab(data) {
   const speedLim  = data.speedLim || 100;
 
   // Use ECU speed as primary, fall back to GPS
-  const primary = ecuSpeed !== null ? ecuSpeed : gpsSpeed;
+  const displaySpeed = ecuSpeed !== null ? ecuSpeed : gpsSpeed;
 
   const bigEl   = document.getElementById('speed-big');
   const fillEl  = document.getElementById('spd-limit-fill');
@@ -1882,17 +1882,17 @@ function updateSpeedTab(data) {
   const ecuBadge = document.getElementById('spdbadge-ecu');
   const gpsBadge = document.getElementById('spdbadge-gps');
 
-  if (primary !== null) {
-    bigEl.textContent = primary;
-    const pct = Math.min(100, Math.round((primary / speedLim) * 100));
+  if (displaySpeed !== null) {
+    bigEl.textContent = displaySpeed;
+    const pct = Math.min(100, Math.round((displaySpeed / speedLim) * 100));
     let state = 'good';
-    if (primary >= speedLim)            state = 'critical';
-    else if (primary >= speedLim * 0.9) state = 'warning';
+    if (displaySpeed >= speedLim)            state = 'critical';
+    else if (displaySpeed >= speedLim * 0.9) state = 'warning';
 
     bigEl.className   = 'speed-number ' + state;
     fillEl.className  = 'speed-limit-fill ' + (state === 'good' ? '' : state);
     fillEl.style.width = pct + '%';
-    nowEl.textContent  = primary + ' km/h';
+    nowEl.textContent  = displaySpeed + ' km/h';
     maxEl.textContent  = 'LIMIT: ' + speedLim + ' km/h';
 
     ecuBadge.className = 'speed-src-badge' + (ecuSpeed !== null ? ' active-src' : '');
