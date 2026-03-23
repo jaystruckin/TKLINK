@@ -1,7 +1,5 @@
 # TKLINK 🚛
 
-[![Deploy](https://github.com/jaystruckin/TKLINK/actions/workflows/static.yml/badge.svg)](https://github.com/jaystruckin/TKLINK/actions/workflows/static.yml)
-
 > Live truck telematics for drivers. Built by a driver, for drivers.
 
 **TKLINK** is a lightweight web app that gives truck drivers direct access to live engine telematics, ECU data, fault codes and GPS — straight from their phone browser. No installs, no fleet manager needed, just the data you need to keep your truck safe on the road.
@@ -90,25 +88,23 @@ Refreshes every 5 seconds
 
 ## Open TKLINK
 
-👉 **[Open TKLINK](https://jaystruckin.github.io/TKLINK/index.html)**
+Open your deployed TKLINK URL (GitHub Pages or Cloudflare Pages).
 
 ### Direct Page Links
 
-Jump straight to a specific tab by adding a hash to the URL:
+Add a hash to the URL to jump to a tab:
 
-| Page | Link |
-|------|------|
-| Engine | [Open Engine](https://jaystruckin.github.io/TKLINK/index.html#engine) |
-| Drivetrain | [Open Drivetrain](https://jaystruckin.github.io/TKLINK/index.html#drivetrain) |
-| Faults | [Open Faults](https://jaystruckin.github.io/TKLINK/index.html#faults) |
-| ECU | [Open ECU](https://jaystruckin.github.io/TKLINK/index.html#ecu) |
-| GPS | [Open GPS](https://jaystruckin.github.io/TKLINK/index.html#gps) |
+| Page | URL Hash |
+|------|----------|
+| Engine | `#engine` |
+| Drivetrain | `#drivetrain` |
+| Faults | `#faults` |
+| ECU | `#ecu` |
+| GPS | `#gps` |
 
 ### Demo Mode
 
-Try TKLINK without logging in:
-
-👉 **[Open Demo](https://jaystruckin.github.io/TKLINK/index.html?demo)**
+Try without logging in — add `?demo` to the URL.
 
 ---
 
