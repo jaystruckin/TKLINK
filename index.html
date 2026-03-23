@@ -1183,6 +1183,7 @@ function loadCredentials() {
 
 function clearCredentials() {
   localStorage.removeItem(CRED_KEY);
+  localStorage.removeItem(CRYPTO_KEY_NAME);
 }
 let lastData = {};
 
@@ -1969,7 +1970,7 @@ document.getElementById('btn-dismiss').addEventListener('click', () => {
     return;
   }
 
-  const saved = loadCredentials();
+  const saved = await loadCredentials();
   if (!saved) return;
 
   // Pre-fill form fields
@@ -2049,14 +2050,21 @@ const CRYPTO_KEY_NAME = 'tklink-crypto-key';
 
 async function getCryptoKey() {
   try {
-    const stored = sessionStorage.getItem(CRYPTO_KEY_NAME);
+    // Use localStorage so the key persists across browser sessions (login once)
+    // Migrate from sessionStorage if present (one-time upgrade)
+    const legacy = sessionStorage.getItem(CRYPTO_KEY_NAME);
+    if (legacy && !localStorage.getItem(CRYPTO_KEY_NAME)) {
+      localStorage.setItem(CRYPTO_KEY_NAME, legacy);
+      sessionStorage.removeItem(CRYPTO_KEY_NAME);
+    }
+    const stored = localStorage.getItem(CRYPTO_KEY_NAME);
     if (stored) {
       const raw = Uint8Array.from(atob(stored), c => c.charCodeAt(0));
       return crypto.subtle.importKey('raw', raw, 'AES-GCM', true, ['encrypt', 'decrypt']);
     }
     const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
     const exported = await crypto.subtle.exportKey('raw', key);
-    sessionStorage.setItem(CRYPTO_KEY_NAME, btoa(String.fromCharCode(...new Uint8Array(exported))));
+    localStorage.setItem(CRYPTO_KEY_NAME, btoa(String.fromCharCode(...new Uint8Array(exported))));
     return key;
   } catch(e) {
     return null; // Fallback to base64 if crypto unavailable
