@@ -1155,13 +1155,7 @@
 let updateInterval = null;
 let credentials = {};
 
-// Show proxy warning on GitHub Pages (no self-hosted proxy available)
-if (location.hostname.endsWith('.github.io')) {
-  const w = document.getElementById('proxy-warning');
-  if (w) w.style.display = 'block';
-  const d = document.getElementById('proxy-details');
-  if (d) d.open = true;
-}
+// Proxy is now handled automatically via public CORS fallbacks — no warning needed
 
 // --- Persistent Login ---
 const CRED_KEY = 'tklink-creds';
@@ -1240,6 +1234,9 @@ function getProxyList() {
   if (location.hostname.endsWith('.github.io')) {
     list.push((url) => CF_PAGES_PROXY + '/api/proxy?url=' + encodeURIComponent(url));
   }
+  // Public CORS proxies as last-resort fallback (works without any setup)
+  list.push((url) => 'https://corsproxy.io/?' + encodeURIComponent(url));
+  list.push((url) => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url));
   return list;
 }
 
@@ -1424,19 +1421,7 @@ async function attemptLogin(silent) {
     void 0; // login failed
     if (!silent) {
       let msg;
-      if (!IS_SELF_HOSTED && !credentials.proxy) {
-        msg = 'Login failed — no CORS proxy configured.\n\n'
-          + 'GitHub Pages cannot make API calls directly.\n'
-          + 'You need a proxy URL to connect.\n\n'
-          + 'Quick fix (free, 2 min):\n'
-          + '1. Go to workers.cloudflare.com\n'
-          + '2. Create Worker → paste code from proxy/worker.js\n'
-          + '3. Deploy → copy the URL\n'
-          + '4. Paste it in the Proxy URL field on the login page';
-        // Auto-open proxy details for convenience
-        const d = document.getElementById('proxy-details');
-        if (d) d.open = true;
-      } else if (credentials.proxy) {
+      if (credentials.proxy) {
         msg = 'Login failed — proxy not responding.\n\n'
           + 'Check your proxy URL is correct and deployed.\n'
           + 'Test it: open ' + credentials.proxy + '/health in your browser.\n\n'
