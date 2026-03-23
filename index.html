@@ -929,6 +929,10 @@ const IS_NETLIFY = location.hostname.endsWith('.netlify.app');
 const IS_SELF_HOSTED = IS_VERCEL || IS_CF_PAGES || IS_NETLIFY;
 const IS_LOCALHOST = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 
+// Companion Cloudflare Pages proxy — auto-tried when on GitHub Pages
+// Deploy via: GitHub Actions → deploy-pages.yml (adds CF_API_TOKEN + CF_ACCOUNT_ID secrets)
+const CF_PAGES_PROXY = 'https://tklink.pages.dev';
+
 // Build proxy list — self-hosted first if available
 function getProxyList() {
   const list = [];
@@ -939,9 +943,10 @@ function getProxyList() {
   if (IS_LOCALHOST) {
     list.push((url) => location.origin + '/api/proxy?url=' + encodeURIComponent(url));
   }
-  // NOTE: Public CORS proxies are unreliable and frequently go offline.
-  // For reliable access, deploy to Cloudflare Pages, Vercel, or Netlify (free).
-  // Or deploy your own Cloudflare Worker using proxy/worker.js.
+  // On GitHub Pages, try the companion Cloudflare Pages proxy automatically
+  if (location.hostname.endsWith('.github.io')) {
+    list.push((url) => CF_PAGES_PROXY + '/api/proxy?url=' + encodeURIComponent(url));
+  }
   return list;
 }
 

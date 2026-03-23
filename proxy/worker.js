@@ -5,6 +5,7 @@
 // Allowed origins — add your domains here
 const ALLOWED_ORIGINS = [
   'https://jaystruckin.github.io',
+  'https://tklink.pages.dev',
   'http://localhost:3000',
   'http://localhost:5500',
   'http://127.0.0.1:5500',
@@ -83,7 +84,8 @@ export default {
 };
 
 function corsHeaders(origin) {
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const isAllowed = ALLOWED_ORIGINS.includes(origin) || /^https:\/\/[a-z0-9-]+\.pages\.dev$/.test(origin);
+  const allowedOrigin = isAllowed ? origin : ALLOWED_ORIGINS[0];
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',

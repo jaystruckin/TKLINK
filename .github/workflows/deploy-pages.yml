@@ -1,0 +1,29 @@
+name: Deploy to Cloudflare Pages
+
+# Deploys the full TKLINK app to Cloudflare Pages with automatic proxy support.
+# The functions/api/proxy.js becomes available at /api/proxy automatically.
+#
+# Setup:
+#   1. Cloudflare dashboard → My Profile → API Tokens → Create Token
+#   2. Use "Cloudflare Pages" or custom token with Pages permissions
+#   3. GitHub repo → Settings → Secrets → add CF_API_TOKEN and CF_ACCOUNT_ID
+#   4. First run creates the project; subsequent runs update it
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          command: pages deploy . --project-name=tklink
