@@ -140,13 +140,17 @@ No app store. No install. Just open and go.
 
 ## Roadmap
 
-- [ ] MacTrack API integration (full live data)
-- [ ] Push notifications for critical alerts
-- [ ] Trip history & logging
-- [ ] Multiple truck support
+- [x] Push notifications for critical alerts
+- [x] Trip history & logging
+- [x] Multiple truck support
 - [x] Android home screen app (PWA)
-- [ ] Offline fault code database
-- [ ] J1939 direct Bluetooth connection (future)
+- [x] Offline fault code database (J1939 SPN/FMI)
+- [x] J1939 direct Bluetooth connection
+- [x] ECM file reader
+- [x] Silent mode (no console noise)
+- [x] Encrypted credential storage
+- [x] Input validation
+- [x] Error recovery UI
 
 ---
 
