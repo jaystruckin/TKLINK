@@ -57,10 +57,18 @@ function json(data, status, request) {
   });
 }
 
+const ALLOWED_ORIGINS = [
+  'https://jaystruckin.github.io',
+  'https://tklink.pages.dev',
+];
+
 function corsHeaders(request) {
-  const origin = request.headers.get('Origin') || '*';
+  const origin = request.headers.get('Origin') || '';
+  const isAllowed = ALLOWED_ORIGINS.includes(origin)
+    || /^https:\/\/[a-z0-9-]+\.pages\.dev$/.test(origin)
+    || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
   return {
-    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Origin': isAllowed ? origin : ALLOWED_ORIGINS[0],
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Max-Age': '86400',
