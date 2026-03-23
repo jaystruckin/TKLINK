@@ -1,0 +1,30 @@
+name: Deploy CORS Proxy to Cloudflare Workers
+
+# Deploys the CORS proxy worker so the GitHub Pages app can reach the API.
+# Setup: Add CF_API_TOKEN and CF_ACCOUNT_ID as repository secrets.
+#   1. Cloudflare dashboard → My Profile → API Tokens → Create Token
+#   2. Use the "Edit Cloudflare Workers" template
+#   3. Copy the token → GitHub repo Settings → Secrets → New repository secret
+#   4. Also add CF_ACCOUNT_ID (found on your Cloudflare dashboard right sidebar)
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "proxy/worker.js"
+      - "wrangler.toml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ vars.CF_DEPLOY_PROXY != 'false' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
