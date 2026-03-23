@@ -1,1 +1,155 @@
-<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='#080c10'/><text x='50' y='62' font-size='50' text-anchor='middle' fill='#e85d00' font-family='sans-serif' font-weight='bold'>TK</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <!-- Background gradient for depth -->
+    <radialGradient id="bgGrad" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#0f1520"/>
+      <stop offset="100%" stop-color="#080c10"/>
+    </radialGradient>
+
+    <!-- Orange gauge arc gradient -->
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF8C33"/>
+      <stop offset="100%" stop-color="#FF6A00"/>
+    </linearGradient>
+
+    <!-- Cyan accent gradient -->
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00D4FF"/>
+      <stop offset="100%" stop-color="#00A8CC"/>
+    </linearGradient>
+
+    <!-- Orange outer glow -->
+    <filter id="glowOrange" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur"/>
+      <feColorMatrix in="blur" type="matrix"
+        values="1 0 0 0 0
+                0 0.4 0 0 0
+                0 0 0 0 0
+                0 0 0 0.5 0" result="orangeBlur"/>
+      <feMerge>
+        <feMergeNode in="orangeBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Cyan glow -->
+    <filter id="glowCyan" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+      <feColorMatrix in="blur" type="matrix"
+        values="0 0 0 0 0
+                0 0.8 0 0 0
+                0 0 1 0 0
+                0 0 0 0.6 0" result="cyanBlur"/>
+      <feMerge>
+        <feMergeNode in="cyanBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Subtle inner glow for background -->
+    <radialGradient id="innerGlow" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#FF6A00" stop-opacity="0.03"/>
+      <stop offset="60%" stop-color="#00D4FF" stop-opacity="0.02"/>
+      <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Needle gradient -->
+    <linearGradient id="needleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00D4FF"/>
+      <stop offset="100%" stop-color="#00EAFF"/>
+    </linearGradient>
+
+    <!-- Tick mark fading -->
+    <linearGradient id="tickFade" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FF6A00" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#FF6A00" stop-opacity="0.15"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded rectangle background -->
+  <rect width="512" height="512" rx="108" ry="108" fill="url(#bgGrad)"/>
+
+  <!-- Subtle inner glow overlay -->
+  <rect width="512" height="512" rx="108" ry="108" fill="url(#innerGlow)"/>
+
+  <!-- Fine border for definition -->
+  <rect x="1.5" y="1.5" width="509" height="509" rx="107" ry="107"
+        fill="none" stroke="#FF6A00" stroke-opacity="0.08" stroke-width="1"/>
+
+  <!-- Gauge group centered at 256,270 (slightly below center for visual balance) -->
+  <g transform="translate(256,270)">
+
+    <!-- Outer gauge track (subtle dark ring) -->
+    <circle r="148" fill="none" stroke="#1a2030" stroke-width="18" stroke-opacity="0.5"
+            stroke-dasharray="698 233"
+            transform="rotate(135)"/>
+
+    <!-- Main orange gauge arc — 270 degree sweep from 135deg to 45deg -->
+    <path d="M -104.65,-104.65 A 148,148 0 1,1 104.65,-104.65"
+          fill="none" stroke="url(#orangeGrad)" stroke-width="14"
+          stroke-linecap="round" filter="url(#glowOrange)"/>
+
+    <!-- Thinner inner arc for depth (slightly smaller, more transparent) -->
+    <path d="M -88.39,-88.39 A 125,125 0 1,1 88.39,-88.39"
+          fill="none" stroke="#FF6A00" stroke-width="3" stroke-opacity="0.2"
+          stroke-linecap="round"/>
+
+    <!-- Gauge tick marks -->
+    <!-- Major ticks every 45 degrees across the 270 degree arc -->
+    <g stroke="#FF6A00" stroke-width="2.5" stroke-linecap="round" opacity="0.5">
+      <!-- 135 deg -->
+      <line x1="-113.14" y1="113.14" x2="-123.74" y2="123.74"/>
+      <!-- 157.5 deg -->
+      <line x1="-133.3" y1="71.4" x2="-145.5" y2="77.9" stroke-opacity="0.3" stroke-width="1.5"/>
+      <!-- 180 deg -->
+      <line x1="-138" y1="0" x2="-155" y2="0"/>
+      <!-- 202.5 deg -->
+      <line x1="-133.3" y1="-71.4" x2="-145.5" y2="-77.9" stroke-opacity="0.3" stroke-width="1.5"/>
+      <!-- 225 deg -->
+      <line x1="-113.14" y1="-113.14" x2="-123.74" y2="-123.74"/>
+      <!-- 247.5 deg -->
+      <line x1="-71.4" y1="-133.3" x2="-77.9" y2="-145.5" stroke-opacity="0.3" stroke-width="1.5"/>
+      <!-- 270 deg (top) -->
+      <line x1="0" y1="-138" x2="0" y2="-155"/>
+      <!-- 292.5 deg -->
+      <line x1="71.4" y1="-133.3" x2="77.9" y2="-145.5" stroke-opacity="0.3" stroke-width="1.5"/>
+      <!-- 315 deg -->
+      <line x1="113.14" y1="-113.14" x2="123.74" y2="-123.74"/>
+      <!-- 337.5 deg -->
+      <line x1="133.3" y1="-71.4" x2="145.5" y2="-77.9" stroke-opacity="0.3" stroke-width="1.5"/>
+      <!-- 360/0 deg -->
+      <line x1="138" y1="0" x2="155" y2="0"/>
+      <!-- 22.5 deg -->
+      <line x1="133.3" y1="71.4" x2="145.5" y2="77.9" stroke-opacity="0.3" stroke-width="1.5"/>
+      <!-- 45 deg -->
+      <line x1="113.14" y1="113.14" x2="123.74" y2="123.74"/>
+    </g>
+
+    <!-- Needle — pointing at ~75% of gauge (about 337.5 deg = roughly upper right) -->
+    <g transform="rotate(-22.5)" filter="url(#glowCyan)">
+      <!-- Needle body -->
+      <line x1="0" y1="0" x2="0" y2="-128"
+            stroke="url(#needleGrad)" stroke-width="3.5" stroke-linecap="round"/>
+      <!-- Needle tip dot -->
+      <circle cx="0" cy="-132" r="5.5" fill="#00D4FF"/>
+    </g>
+
+    <!-- Center hub -->
+    <circle r="10" fill="#0f1520" stroke="#00D4FF" stroke-width="2" opacity="0.9"/>
+    <circle r="4" fill="#00D4FF" opacity="0.7"/>
+
+  </g>
+
+  <!-- "TK" text below gauge -->
+  <text x="256" y="410" text-anchor="middle"
+        font-family="'SF Pro Display', 'Helvetica Neue', Arial, sans-serif"
+        font-size="48" font-weight="700" letter-spacing="8"
+        fill="#FF6A00" opacity="0.55">TK</text>
+
+  <!-- Subtle "LINK" under TK -->
+  <text x="260" y="438" text-anchor="middle"
+        font-family="'SF Pro Display', 'Helvetica Neue', Arial, sans-serif"
+        font-size="18" font-weight="400" letter-spacing="12"
+        fill="#00D4FF" opacity="0.3">LINK</text>
+
+</svg>
