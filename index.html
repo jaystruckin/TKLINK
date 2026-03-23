@@ -12,6 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="WORKSHOP">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
+<script src="j1939-faults.js"></script>
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap"></noscript>
 <style>
@@ -561,6 +562,230 @@
     margin-bottom: 16px;
   }
 
+  /* VEHICLE PICKER */
+  .vehicle-picker {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 300;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .vehicle-picker.show { display: flex; }
+  .vehicle-list {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: 100%;
+    max-width: 380px;
+    max-height: 70vh;
+    overflow-y: auto;
+    padding: 16px;
+  }
+  .vehicle-list-title {
+    font-size: 14px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .vehicle-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 12px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .vehicle-item:hover, .vehicle-item.active {
+    border-color: var(--accent);
+    background: rgba(232,93,0,0.08);
+  }
+  .vehicle-item.active { box-shadow: inset 3px 0 0 var(--accent); }
+  .vehicle-item-name { font-size: 15px; font-weight: 600; color: var(--text); }
+  .vehicle-item-id { font-size: 11px; color: var(--dim); font-family: 'Share Tech Mono', monospace; }
+  .vehicle-picker-close {
+    display: block;
+    margin: 12px auto 0;
+    background: none;
+    border: 1px solid var(--dim);
+    border-radius: 4px;
+    padding: 10px 24px;
+    color: var(--dim);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    letter-spacing: 2px;
+    cursor: pointer;
+  }
+  .header-truck { cursor: pointer; }
+  .header-truck::after {
+    content: ' ▾';
+    font-size: 12px;
+    color: var(--dim);
+  }
+
+  /* TRIP HISTORY */
+  .trip-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+  .trip-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .trip-date { font-size: 13px; color: var(--accent); font-weight: 600; }
+  .trip-duration { font-size: 12px; color: var(--dim); font-family: 'Share Tech Mono', monospace; }
+  .trip-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .trip-stat { text-align: center; }
+  .trip-stat-val { font-family: 'Share Tech Mono', monospace; font-size: 16px; color: var(--text); }
+  .trip-stat-label { font-size: 10px; color: var(--dim); letter-spacing: 1px; }
+  .trip-empty { text-align: center; padding: 40px 20px; color: var(--dim); font-size: 14px; }
+  .trip-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .trip-btn {
+    flex: 1;
+    background: rgba(232,93,0,0.1);
+    border: 1px solid rgba(232,93,0,0.3);
+    border-radius: 4px;
+    padding: 12px;
+    color: var(--accent);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    text-align: center;
+  }
+  .trip-btn.recording { background: rgba(255,23,68,0.15); border-color: rgba(255,23,68,0.4); color: var(--red); }
+
+  /* BLUETOOTH */
+  .bt-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .bt-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .bt-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--dim);
+  }
+  .bt-dot.connected { background: var(--green); animation: pulse 1.5s infinite; }
+  .bt-dot.searching { background: var(--yellow); animation: pulse 0.8s infinite; }
+  .bt-status-text { font-size: 13px; color: var(--dim); letter-spacing: 1px; }
+  .bt-btn {
+    width: 100%;
+    background: rgba(0,176,255,0.1);
+    border: 1px solid rgba(0,176,255,0.3);
+    border-radius: 4px;
+    padding: 14px;
+    color: var(--blue);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    cursor: pointer;
+  }
+  .bt-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .bt-data-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  /* ECM FILE READER */
+  .ecm-upload {
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 32px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 16px;
+  }
+  .ecm-upload:hover { border-color: var(--accent); background: rgba(232,93,0,0.05); }
+  .ecm-upload-icon { font-size: 36px; margin-bottom: 8px; }
+  .ecm-upload-text { font-size: 13px; color: var(--dim); letter-spacing: 1px; }
+  .ecm-upload input[type="file"] { display: none; }
+  .ecm-results { display: none; }
+  .ecm-results.show { display: block; }
+
+  /* ERROR RECOVERY */
+  .error-banner {
+    display: none;
+    position: fixed;
+    bottom: 60px;
+    left: 16px;
+    right: 16px;
+    background: var(--panel);
+    border: 1px solid rgba(255,23,68,0.4);
+    border-radius: 8px;
+    padding: 14px 16px;
+    z-index: 250;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  }
+  .error-banner.show { display: block; }
+  .error-banner-msg { font-size: 13px; color: var(--text); margin-bottom: 10px; }
+  .error-banner-actions { display: flex; gap: 8px; }
+  .error-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 4px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    text-align: center;
+    border: none;
+  }
+  .error-btn-retry { background: var(--accent); color: white; }
+  .error-btn-dismiss { background: rgba(74,96,112,0.3); color: var(--dim); }
+
+  /* NOTIFICATION TOAST */
+  .notif-toast {
+    position: fixed;
+    top: -60px;
+    left: 16px;
+    right: 16px;
+    background: var(--panel);
+    border: 1px solid rgba(255,23,68,0.5);
+    border-radius: 8px;
+    padding: 12px 16px;
+    z-index: 400;
+    transition: top 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+  }
+  .notif-toast.show { top: 16px; }
+  .notif-toast.warn { border-color: rgba(255,214,0,0.5); }
+  .notif-toast-text { font-size: 13px; color: var(--text); }
+
   /* INSTALL BANNER */
   .install-banner {
     display: none;
@@ -660,7 +885,7 @@
 <div id="main-app">
   <div class="header">
     <div class="header-left">
-      <div class="header-truck">T909 KENWORTH</div>
+      <div class="header-truck" id="header-truck" onclick="openVehiclePicker()">T909 KENWORTH</div>
       <div class="header-id" id="header-id">—</div>
     </div>
     <div style="text-align:right">
@@ -675,6 +900,9 @@
     <div class="tab" onclick="switchTab('faults')">FAULTS</div>
     <div class="tab" onclick="switchTab('ecu')">ECU</div>
     <div class="tab" onclick="switchTab('gps')">GPS</div>
+    <div class="tab" onclick="switchTab('trips')">TRIPS</div>
+    <div class="tab" onclick="switchTab('bluetooth')">BT</div>
+    <div class="tab" onclick="switchTab('ecm')">ECM</div>
   </div>
 
   <div class="content">
@@ -849,7 +1077,71 @@
       <div class="data-row"><span class="data-key">Last Update</span><span class="data-val" id="gps-updated">—</span></div>
     </div>
 
+    <!-- TRIPS TAB -->
+    <div class="tab-panel" id="tab-trips">
+      <div class="trip-controls">
+        <button class="trip-btn" id="trip-record-btn" onclick="toggleTripRecording()">● START RECORDING</button>
+        <button class="trip-btn" onclick="clearTripHistory()">CLEAR HISTORY</button>
+      </div>
+      <div id="trip-list">
+        <div class="trip-empty">No trips recorded yet. Tap START RECORDING to begin logging.</div>
+      </div>
+    </div>
+
+    <!-- BLUETOOTH TAB -->
+    <div class="tab-panel" id="tab-bluetooth">
+      <div class="bt-panel">
+        <div class="bt-status">
+          <div class="bt-dot" id="bt-dot"></div>
+          <span class="bt-status-text" id="bt-status">DISCONNECTED</span>
+        </div>
+        <button class="bt-btn" id="bt-connect-btn" onclick="connectBluetooth()">SCAN FOR J1939 ADAPTER</button>
+      </div>
+      <div class="note-box">Connect to a J1939/CAN bus Bluetooth adapter (ELM327, OBDLink MX+, or similar) for direct ECU data without cloud dependency.</div>
+      <div id="bt-data" style="display:none">
+        <div class="section-header">LIVE J1939 DATA</div>
+        <div class="bt-data-grid" id="bt-data-grid"></div>
+      </div>
+    </div>
+
+    <!-- ECM FILE READER -->
+    <div class="tab-panel" id="tab-ecm">
+      <div class="ecm-upload" id="ecm-dropzone" onclick="document.getElementById('ecm-file-input').click()">
+        <div class="ecm-upload-icon">📁</div>
+        <div class="ecm-upload-text">TAP TO LOAD ECM / CALIBRATION FILE</div>
+        <div style="font-size:11px;color:var(--dim);margin-top:6px">.ecm · .cal · .ecfg · .json · .csv</div>
+        <input type="file" id="ecm-file-input" accept=".ecm,.cal,.ecfg,.json,.csv,.txt,.xml" onchange="handleECMFile(event)">
+      </div>
+      <div class="ecm-results" id="ecm-results">
+        <div class="section-header">ECM FILE DATA</div>
+        <div id="ecm-data-list"></div>
+      </div>
+    </div>
+
   </div>
+</div>
+
+<!-- VEHICLE PICKER -->
+<div class="vehicle-picker" id="vehicle-picker">
+  <div class="vehicle-list">
+    <div class="vehicle-list-title">SELECT VEHICLE</div>
+    <div id="vehicle-list-items"></div>
+    <button class="vehicle-picker-close" onclick="closeVehiclePicker()">CLOSE</button>
+  </div>
+</div>
+
+<!-- ERROR RECOVERY -->
+<div class="error-banner" id="error-banner">
+  <div class="error-banner-msg" id="error-msg">Connection lost. Retrying...</div>
+  <div class="error-banner-actions">
+    <button class="error-btn error-btn-retry" onclick="retryConnection()">RETRY NOW</button>
+    <button class="error-btn error-btn-dismiss" onclick="dismissError()">DISMISS</button>
+  </div>
+</div>
+
+<!-- NOTIFICATION TOAST -->
+<div class="notif-toast" id="notif-toast">
+  <div class="notif-toast-text" id="notif-text"></div>
 </div>
 
 <!-- INSTALL BANNER -->
@@ -894,7 +1186,7 @@ function clearCredentials() {
 }
 let lastData = {};
 
-const validTabs = ['engine','drivetrain','faults','ecu','gps'];
+const validTabs = ['engine','drivetrain','faults','ecu','gps','trips','bluetooth','ecm'];
 
 function switchTab(name, updateHash) {
   if (!validTabs.includes(name)) name = 'engine';
@@ -1128,7 +1420,7 @@ async function attemptLogin(silent) {
       return true;
     }
   } catch(e) {
-    console.log('All login attempts failed');
+    void 0; // login failed
     if (!silent) {
       let msg;
       if (!IS_SELF_HOSTED && !credentials.proxy) {
@@ -1168,7 +1460,7 @@ async function tryAuth(url, body, apiBase, extraHeaders, proxyFn) {
     const data = await res.json();
     const token = data.access_token || data.AccessToken || data.token || data.Token;
     if (!token) throw new Error('No token');
-    console.log('LOGIN SUCCESS via proxy');
+    void 0; // auth ok
     return { token: token, apiBase, proxyFn };
   } catch(e) {
     clearTimeout(timer);
@@ -1189,10 +1481,10 @@ async function fetchOrgAndAsset() {
       const orgs = await orgRes.json();
       if (orgs && orgs.length > 0) {
         credentials.orgId = orgs[0].Id || orgs[0].id || orgs[0].OrganisationId;
-        console.log('Organisation ID:', credentials.orgId);
+        void 0; // org found
       }
     }
-  } catch(e) { console.log('Org fetch error:', e); }
+  } catch(e) { void 0; }
 
   // Step 2: Get assets to find the vehicle serial ID
   if (credentials.orgId) {
@@ -1217,10 +1509,10 @@ async function fetchOrgAndAsset() {
           const asset = match || assets[0];
           credentials.assetSerial = asset.Serial || asset.serial || asset.Id || asset.id;
           credentials.assetName = asset.Name || asset.name || credentials.vid;
-          console.log('Asset:', credentials.assetName, 'Serial:', credentials.assetSerial);
+          void 0; // asset found
         }
       }
-    } catch(e) { console.log('Asset fetch error:', e); }
+    } catch(e) { void 0; }
   }
 }
 
@@ -1272,7 +1564,7 @@ async function fetchTelematicsData() {
       }
     }
   } catch(e) {
-    console.log('Fetch error:', e);
+    void 0; // fetch error
   }
 }
 
@@ -1639,9 +1931,7 @@ Speed Limiter: ${d.speedLim || '—'} km/h`;
 // --- PWA: Service Worker Registration ---
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(err => {
-      console.log('SW registration failed:', err);
-    });
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
   });
 }
 
@@ -1707,6 +1997,772 @@ document.getElementById('btn-dismiss').addEventListener('click', () => {
     msg.style.display = 'none';
   }
 })();
+
+// ========================================
+// SILENT MODE — suppress all console noise
+// ========================================
+(function() {
+  const noop = function() {};
+  if (typeof window !== 'undefined' && !location.search.includes('debug')) {
+    console.log = noop;
+    console.warn = noop;
+    console.info = noop;
+    // Keep console.error for genuine errors
+  }
+})();
+
+// ========================================
+// INPUT VALIDATION
+// ========================================
+function validateEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function validateLoginForm() {
+  const user = document.getElementById('username').value.trim();
+  const pass = document.getElementById('password').value.trim();
+  const vid = document.getElementById('vehicle-id').value.trim();
+  const errors = [];
+  if (!user) errors.push('Email is required');
+  else if (!validateEmail(user)) errors.push('Invalid email format');
+  if (!pass) errors.push('Password is required');
+  else if (pass.length < 3) errors.push('Password too short');
+  if (!vid) errors.push('Truck number is required');
+  return errors;
+}
+
+// Override connectToMactrack with validation
+const _origConnect = connectToMactrack;
+connectToMactrack = async function() {
+  const errors = validateLoginForm();
+  if (errors.length > 0) {
+    alert(errors.join('\n'));
+    return;
+  }
+  return _origConnect();
+};
+
+// ========================================
+// ENCRYPTED CREDENTIALS (AES-GCM)
+// ========================================
+const CRYPTO_KEY_NAME = 'tklink-crypto-key';
+
+async function getCryptoKey() {
+  try {
+    const stored = sessionStorage.getItem(CRYPTO_KEY_NAME);
+    if (stored) {
+      const raw = Uint8Array.from(atob(stored), c => c.charCodeAt(0));
+      return crypto.subtle.importKey('raw', raw, 'AES-GCM', true, ['encrypt', 'decrypt']);
+    }
+    const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+    const exported = await crypto.subtle.exportKey('raw', key);
+    sessionStorage.setItem(CRYPTO_KEY_NAME, btoa(String.fromCharCode(...new Uint8Array(exported))));
+    return key;
+  } catch(e) {
+    return null; // Fallback to base64 if crypto unavailable
+  }
+}
+
+async function encryptData(data) {
+  try {
+    const key = await getCryptoKey();
+    if (!key) return btoa(JSON.stringify(data));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const encoded = new TextEncoder().encode(JSON.stringify(data));
+    const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded);
+    const combined = new Uint8Array(iv.length + encrypted.byteLength);
+    combined.set(iv);
+    combined.set(new Uint8Array(encrypted), iv.length);
+    return 'ENC:' + btoa(String.fromCharCode(...combined));
+  } catch(e) {
+    return btoa(JSON.stringify(data));
+  }
+}
+
+async function decryptData(str) {
+  try {
+    if (!str.startsWith('ENC:')) return JSON.parse(atob(str));
+    const key = await getCryptoKey();
+    if (!key) throw new Error('No key');
+    const combined = Uint8Array.from(atob(str.slice(4)), c => c.charCodeAt(0));
+    const iv = combined.slice(0, 12);
+    const data = combined.slice(12);
+    const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
+    return JSON.parse(new TextDecoder().decode(decrypted));
+  } catch(e) {
+    // Fallback: try old base64 format
+    try { return JSON.parse(atob(str)); } catch(e2) { return null; }
+  }
+}
+
+// Replace save/load with encrypted versions
+const _origSave = saveCredentials;
+saveCredentials = async function() {
+  try {
+    const save = { user: credentials.user, pass: credentials.pass, vid: credentials.vid, proxy: credentials.proxy };
+    const encrypted = await encryptData(save);
+    localStorage.setItem(CRED_KEY, encrypted);
+  } catch(e) {
+    _origSave(); // Fallback
+  }
+};
+
+const _origLoad = loadCredentials;
+loadCredentials = async function() {
+  try {
+    const raw = localStorage.getItem(CRED_KEY);
+    if (!raw) return null;
+    return await decryptData(raw);
+  } catch(e) {
+    localStorage.removeItem(CRED_KEY);
+    return null;
+  }
+};
+
+// ========================================
+// API RESPONSE VALIDATION
+// ========================================
+function validateApiResponse(data, requiredShape) {
+  if (data === null || data === undefined) return false;
+  if (requiredShape === 'array') return Array.isArray(data);
+  if (requiredShape === 'object') return typeof data === 'object' && !Array.isArray(data);
+  return true;
+}
+
+function safeNumber(val, fallback) {
+  const n = Number(val);
+  return isFinite(n) ? n : (fallback !== undefined ? fallback : null);
+}
+
+function safeString(val, fallback) {
+  return (val !== null && val !== undefined && val !== '') ? String(val) : (fallback || '—');
+}
+
+// ========================================
+// ERROR RECOVERY UI
+// ========================================
+let consecutiveErrors = 0;
+const MAX_ERRORS_BEFORE_BANNER = 3;
+
+function showErrorBanner(msg) {
+  const banner = document.getElementById('error-banner');
+  document.getElementById('error-msg').textContent = msg;
+  banner.classList.add('show');
+}
+
+function dismissError() {
+  document.getElementById('error-banner').classList.remove('show');
+}
+
+function retryConnection() {
+  dismissError();
+  consecutiveErrors = 0;
+  if (!updateInterval) startLiveUpdates();
+  else fetchTelematicsData();
+}
+
+// Wrap fetchTelematicsData with error recovery
+const _origFetchTelemetry = fetchTelematicsData;
+fetchTelematicsData = async function() {
+  try {
+    await _origFetchTelemetry();
+    consecutiveErrors = 0;
+    dismissError();
+  } catch(e) {
+    consecutiveErrors++;
+    if (consecutiveErrors >= MAX_ERRORS_BEFORE_BANNER) {
+      showErrorBanner('Connection issues — ' + consecutiveErrors + ' failed attempts. Check your network.');
+      if (consecutiveErrors >= 10 && updateInterval) {
+        clearInterval(updateInterval);
+        updateInterval = null;
+        showErrorBanner('Connection lost after 10 retries. Tap RETRY to reconnect.');
+      }
+    }
+  }
+};
+
+// ========================================
+// NOTIFICATION TOAST
+// ========================================
+let notifTimeout = null;
+
+function showNotifToast(msg, type) {
+  const toast = document.getElementById('notif-toast');
+  document.getElementById('notif-text').textContent = msg;
+  toast.className = 'notif-toast show' + (type === 'warn' ? ' warn' : '');
+  clearTimeout(notifTimeout);
+  notifTimeout = setTimeout(() => { toast.classList.remove('show'); }, 4000);
+}
+
+// ========================================
+// PUSH NOTIFICATIONS (Browser Notification API)
+// ========================================
+let notificationsEnabled = false;
+let lastNotifTime = 0;
+const NOTIF_COOLDOWN = 60000; // 1 minute between notifications
+
+async function requestNotificationPermission() {
+  if (!('Notification' in window)) return false;
+  if (Notification.permission === 'granted') { notificationsEnabled = true; return true; }
+  if (Notification.permission === 'denied') return false;
+  const result = await Notification.requestPermission();
+  notificationsEnabled = (result === 'granted');
+  return notificationsEnabled;
+}
+
+function sendPushNotification(title, body) {
+  const now = Date.now();
+  if (now - lastNotifTime < NOTIF_COOLDOWN) return;
+  lastNotifTime = now;
+  if (notificationsEnabled && Notification.permission === 'granted') {
+    try { new Notification(title, { body, icon: 'icon-192.png', badge: 'icon-192.png', tag: 'tklink-alert', renotify: true }); } catch(e) {}
+  }
+  showNotifToast(body, 'warn');
+}
+
+// Enhance checkAlerts to send push notifications
+const _origCheckAlerts = checkAlerts;
+checkAlerts = function(data) {
+  _origCheckAlerts(data);
+  const criticals = [];
+  if (data.coolantTemp >= 108) criticals.push('CRITICAL: Coolant ' + data.coolantTemp + '°C');
+  if (data.oilPressure !== undefined && data.oilPressure < 100) criticals.push('CRITICAL: Oil pressure ' + data.oilPressure + ' kPa');
+  if (data.defLevel !== undefined && data.defLevel < 10) criticals.push('DEF critically low: ' + data.defLevel + '%');
+  if (data.dpfSoot > 95) criticals.push('DPF soot critical: ' + data.dpfSoot + '%');
+  if (data.fuelLevel !== undefined && data.fuelLevel < 10) criticals.push('Fuel critically low: ' + data.fuelLevel + '%');
+  if (data.battVoltage !== undefined && data.battVoltage < 11.0) criticals.push('Battery low: ' + data.battVoltage + 'V');
+  if (criticals.length > 0) {
+    sendPushNotification('WORKSHOP ALERT', criticals.join(' | '));
+  }
+};
+
+// Request permission silently on app start
+requestNotificationPermission();
+
+// ========================================
+// MULTI-VEHICLE SUPPORT
+// ========================================
+let allAssets = [];
+let currentAssetIndex = 0;
+
+function openVehiclePicker() {
+  if (allAssets.length === 0) {
+    showNotifToast('No vehicles loaded yet', 'warn');
+    return;
+  }
+  renderVehicleList();
+  document.getElementById('vehicle-picker').classList.add('show');
+}
+
+function closeVehiclePicker() {
+  document.getElementById('vehicle-picker').classList.remove('show');
+}
+
+function renderVehicleList() {
+  const container = document.getElementById('vehicle-list-items');
+  container.innerHTML = allAssets.map((a, i) => {
+    const name = a.Name || a.name || 'Vehicle ' + (i + 1);
+    const serial = a.Serial || a.serial || a.Id || a.id || '';
+    const isActive = i === currentAssetIndex;
+    return '<div class="vehicle-item' + (isActive ? ' active' : '') + '" onclick="selectVehicle(' + i + ')">' +
+      '<div><div class="vehicle-item-name">' + name + '</div>' +
+      '<div class="vehicle-item-id">' + serial + '</div></div>' +
+      (isActive ? '<span style="color:var(--green)">●</span>' : '') + '</div>';
+  }).join('');
+}
+
+function selectVehicle(index) {
+  currentAssetIndex = index;
+  const asset = allAssets[index];
+  credentials.assetSerial = asset.Serial || asset.serial || asset.Id || asset.id;
+  credentials.assetName = asset.Name || asset.name || 'Vehicle';
+  document.getElementById('header-truck').textContent = credentials.assetName;
+  document.getElementById('header-id').textContent = credentials.assetSerial || credentials.vid;
+  closeVehiclePicker();
+  fetchTelematicsData();
+  showNotifToast('Switched to ' + credentials.assetName);
+}
+
+// Enhance fetchOrgAndAsset to store all assets
+const _origFetchOrg = fetchOrgAndAsset;
+fetchOrgAndAsset = async function() {
+  await _origFetchOrg();
+  // After original fetch, also store full asset list for multi-vehicle
+  if (credentials.orgId) {
+    try {
+      const headers = { 'Authorization': 'Bearer ' + credentials.token, 'Content-Type': 'application/json' };
+      const assetRes = await proxiedFetch(credentials.apiBase + '/v3/assets/' + credentials.orgId, { headers });
+      if (assetRes.ok) {
+        const assets = await assetRes.json();
+        if (Array.isArray(assets) && assets.length > 0) {
+          allAssets = assets;
+          // Find current asset index
+          currentAssetIndex = assets.findIndex(a =>
+            (a.Serial || a.serial) === credentials.assetSerial
+          );
+          if (currentAssetIndex < 0) currentAssetIndex = 0;
+        }
+      }
+    } catch(e) {}
+  }
+};
+
+// ========================================
+// TRIP HISTORY & LOGGING (IndexedDB)
+// ========================================
+let tripDB = null;
+let tripRecording = false;
+let currentTrip = null;
+let tripSnapshots = [];
+
+function openTripDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('tklink-trips', 1);
+    req.onupgradeneeded = function(e) {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('trips')) {
+        db.createObjectStore('trips', { keyPath: 'id', autoIncrement: true });
+      }
+    };
+    req.onsuccess = function(e) { tripDB = e.target.result; resolve(tripDB); };
+    req.onerror = function() { reject(req.error); };
+  });
+}
+
+function toggleTripRecording() {
+  if (tripRecording) {
+    stopTripRecording();
+  } else {
+    startTripRecording();
+  }
+}
+
+function startTripRecording() {
+  tripRecording = true;
+  currentTrip = {
+    startTime: new Date().toISOString(),
+    vehicle: credentials.assetName || credentials.vid || 'Unknown',
+    snapshots: []
+  };
+  tripSnapshots = [];
+  const btn = document.getElementById('trip-record-btn');
+  btn.textContent = '■ STOP RECORDING';
+  btn.classList.add('recording');
+  showNotifToast('Trip recording started');
+}
+
+async function stopTripRecording() {
+  tripRecording = false;
+  const btn = document.getElementById('trip-record-btn');
+  btn.textContent = '● START RECORDING';
+  btn.classList.remove('recording');
+
+  if (currentTrip && tripSnapshots.length > 0) {
+    currentTrip.endTime = new Date().toISOString();
+    currentTrip.snapshots = tripSnapshots;
+    // Calculate trip stats
+    const speeds = tripSnapshots.map(s => s.speed || 0).filter(s => s > 0);
+    const fuels = tripSnapshots.map(s => s.fuelRate || 0).filter(f => f > 0);
+    currentTrip.avgSpeed = speeds.length ? Math.round(speeds.reduce((a, b) => a + b, 0) / speeds.length) : 0;
+    currentTrip.maxSpeed = speeds.length ? Math.round(Math.max(...speeds)) : 0;
+    currentTrip.avgFuelRate = fuels.length ? (fuels.reduce((a, b) => a + b, 0) / fuels.length).toFixed(1) : 0;
+    currentTrip.distance = currentTrip.avgSpeed * ((new Date(currentTrip.endTime) - new Date(currentTrip.startTime)) / 3600000);
+    currentTrip.distance = Math.round(currentTrip.distance * 10) / 10;
+
+    try {
+      const db = tripDB || await openTripDB();
+      const tx = db.transaction('trips', 'readwrite');
+      tx.objectStore('trips').add(currentTrip);
+    } catch(e) {}
+    showNotifToast('Trip saved — ' + currentTrip.distance + ' km');
+  }
+  currentTrip = null;
+  tripSnapshots = [];
+  renderTripHistory();
+}
+
+// Capture snapshots during trip recording
+const _origUpdateDisplay = updateDisplay;
+updateDisplay = function(data) {
+  _origUpdateDisplay(data);
+  if (tripRecording && data) {
+    tripSnapshots.push({
+      time: new Date().toISOString(),
+      speed: safeNumber(data.speed),
+      rpm: safeNumber(data.rpm),
+      fuelRate: safeNumber(data.fuelRate),
+      coolantTemp: safeNumber(data.coolantTemp),
+      lat: data.lat,
+      lng: data.lng
+    });
+  }
+};
+
+async function renderTripHistory() {
+  const container = document.getElementById('trip-list');
+  try {
+    const db = tripDB || await openTripDB();
+    const tx = db.transaction('trips', 'readonly');
+    const store = tx.objectStore('trips');
+    const req = store.getAll();
+    req.onsuccess = function() {
+      const trips = req.result || [];
+      if (trips.length === 0) {
+        container.innerHTML = '<div class="trip-empty">No trips recorded yet. Tap START RECORDING to begin logging.</div>';
+        return;
+      }
+      container.innerHTML = trips.reverse().map(t => {
+        const start = new Date(t.startTime);
+        const end = t.endTime ? new Date(t.endTime) : new Date();
+        const dur = Math.round((end - start) / 60000);
+        return '<div class="trip-card">' +
+          '<div class="trip-header">' +
+            '<span class="trip-date">' + start.toLocaleDateString('en-AU') + ' ' + start.toLocaleTimeString('en-AU', {hour:'2-digit',minute:'2-digit'}) + '</span>' +
+            '<span class="trip-duration">' + dur + ' min</span>' +
+          '</div>' +
+          '<div style="font-size:12px;color:var(--dim);margin-bottom:6px">' + (t.vehicle || '') + '</div>' +
+          '<div class="trip-stats">' +
+            '<div class="trip-stat"><div class="trip-stat-val">' + (t.distance || 0) + '</div><div class="trip-stat-label">KM</div></div>' +
+            '<div class="trip-stat"><div class="trip-stat-val">' + (t.avgSpeed || 0) + '</div><div class="trip-stat-label">AVG KM/H</div></div>' +
+            '<div class="trip-stat"><div class="trip-stat-val">' + (t.avgFuelRate || 0) + '</div><div class="trip-stat-label">L/HR AVG</div></div>' +
+          '</div></div>';
+      }).join('');
+    };
+  } catch(e) {
+    container.innerHTML = '<div class="trip-empty">Trip storage unavailable</div>';
+  }
+}
+
+async function clearTripHistory() {
+  if (!confirm('Clear all trip history?')) return;
+  try {
+    const db = tripDB || await openTripDB();
+    const tx = db.transaction('trips', 'readwrite');
+    tx.objectStore('trips').clear();
+    renderTripHistory();
+    showNotifToast('Trip history cleared');
+  } catch(e) {}
+}
+
+// Init trip DB
+openTripDB().then(() => renderTripHistory());
+
+// ========================================
+// OFFLINE J1939 FAULT CODE DATABASE
+// ========================================
+function lookupJ1939(spn, fmi) {
+  if (typeof J1939_DB !== 'undefined') {
+    return J1939_DB.lookup(spn, fmi);
+  }
+  return { spn, fmi, spnDesc: 'Unknown', fmiDesc: 'Unknown', fullDesc: 'SPN ' + spn + ' FMI ' + fmi };
+}
+
+// Enhance renderFaults to use offline J1939 database
+const _origRenderFaults = renderFaults;
+renderFaults = function(faults) {
+  if (!faults || faults.length === 0) {
+    document.getElementById('fault-list').innerHTML = '<div class="no-faults">✅ NO ACTIVE FAULT CODES</div>';
+    return;
+  }
+  const enriched = faults.map(f => {
+    const lookup = lookupJ1939(f.spn, f.fmi);
+    return {
+      ...f,
+      description: f.description || lookup.fullDesc,
+      spnDesc: lookup.spnDesc,
+      fmiDesc: lookup.fmiDesc
+    };
+  });
+  const list = document.getElementById('fault-list');
+  list.innerHTML = enriched.map(f =>
+    '<div class="fault-card ' + (f.active ? '' : 'inactive') + '">' +
+      '<div class="fault-code">' + (f.code || 'SPN ' + (f.spn || '—')) + '</div>' +
+      '<div class="fault-desc">' + (f.description || '—') + '</div>' +
+      '<div class="fault-meta">SPN: ' + (f.spn || '—') + ' (' + (f.spnDesc || '') + ') · FMI: ' + (f.fmi || '—') + ' (' + (f.fmiDesc || '') + ') · Count: ' + (f.count || '—') + '</div>' +
+      '<div class="fault-status">' + (f.active ? 'ACTIVE' : 'INACTIVE') + '</div>' +
+    '</div>'
+  ).join('');
+};
+
+// ========================================
+// J1939 BLUETOOTH CONNECTION (Web Bluetooth API)
+// ========================================
+let btDevice = null;
+let btCharacteristic = null;
+let btConnected = false;
+
+async function connectBluetooth() {
+  if (!navigator.bluetooth) {
+    showNotifToast('Bluetooth not supported on this browser', 'warn');
+    return;
+  }
+  const btn = document.getElementById('bt-connect-btn');
+  const dot = document.getElementById('bt-dot');
+  const status = document.getElementById('bt-status');
+
+  if (btConnected) {
+    disconnectBluetooth();
+    return;
+  }
+
+  try {
+    btn.disabled = true;
+    btn.textContent = 'SCANNING...';
+    dot.classList.add('searching');
+    status.textContent = 'SCANNING...';
+
+    btDevice = await navigator.bluetooth.requestDevice({
+      filters: [
+        { services: ['0000fff0-0000-1000-8000-00805f9b34fb'] },
+        { namePrefix: 'OBD' },
+        { namePrefix: 'ELM' },
+        { namePrefix: 'VLink' },
+        { namePrefix: 'iOBD' }
+      ],
+      optionalServices: ['0000fff0-0000-1000-8000-00805f9b34fb', '0000ffe0-0000-1000-8000-00805f9b34fb']
+    });
+
+    status.textContent = 'CONNECTING...';
+    const server = await btDevice.gatt.connect();
+
+    // Try common OBD/ELM327 service UUIDs
+    let service;
+    try { service = await server.getPrimaryService('0000fff0-0000-1000-8000-00805f9b34fb'); }
+    catch(e) { service = await server.getPrimaryService('0000ffe0-0000-1000-8000-00805f9b34fb'); }
+
+    const chars = await service.getCharacteristics();
+    // Find writable and notifiable characteristics
+    for (const c of chars) {
+      if (c.properties.notify || c.properties.indicate) {
+        btCharacteristic = c;
+        await c.startNotifications();
+        c.addEventListener('characteristicvaluechanged', handleBTData);
+      }
+    }
+
+    btConnected = true;
+    dot.className = 'bt-dot connected';
+    status.textContent = 'CONNECTED — ' + (btDevice.name || 'Unknown Device');
+    btn.textContent = 'DISCONNECT';
+    btn.disabled = false;
+    document.getElementById('bt-data').style.display = 'block';
+    showNotifToast('Bluetooth connected: ' + (btDevice.name || 'adapter'));
+
+    // Send J1939 init commands (ELM327 protocol)
+    await sendBTCommand('ATZ');    // Reset
+    await sendBTCommand('ATE0');   // Echo off
+    await sendBTCommand('ATSP6');  // Set protocol to ISO 15765-4 CAN
+    await sendBTCommand('ATH1');   // Headers on
+
+    btDevice.addEventListener('gattserverdisconnected', () => {
+      btConnected = false;
+      dot.className = 'bt-dot';
+      status.textContent = 'DISCONNECTED';
+      btn.textContent = 'SCAN FOR J1939 ADAPTER';
+      document.getElementById('bt-data').style.display = 'none';
+      showNotifToast('Bluetooth disconnected', 'warn');
+    });
+  } catch(e) {
+    dot.className = 'bt-dot';
+    status.textContent = 'SCAN FAILED';
+    btn.textContent = 'SCAN FOR J1939 ADAPTER';
+    btn.disabled = false;
+    if (e.name !== 'NotFoundError') {
+      showNotifToast('Bluetooth: ' + (e.message || 'connection failed'), 'warn');
+    }
+  }
+}
+
+function disconnectBluetooth() {
+  if (btDevice && btDevice.gatt.connected) {
+    btDevice.gatt.disconnect();
+  }
+  btConnected = false;
+}
+
+async function sendBTCommand(cmd) {
+  if (!btCharacteristic) return;
+  try {
+    const chars = await btCharacteristic.service.getCharacteristics();
+    for (const c of chars) {
+      if (c.properties.write || c.properties.writeWithoutResponse) {
+        const encoded = new TextEncoder().encode(cmd + '\r');
+        await c.writeValue(encoded);
+        return;
+      }
+    }
+  } catch(e) {}
+}
+
+function handleBTData(event) {
+  const value = event.target.value;
+  const text = new TextDecoder().decode(value);
+  parseBTResponse(text);
+}
+
+let btBuffer = '';
+function parseBTResponse(text) {
+  btBuffer += text;
+  if (!btBuffer.includes('>') && !btBuffer.includes('\r')) return;
+  const lines = btBuffer.split(/[\r\n>]+/).filter(l => l.trim());
+  btBuffer = '';
+
+  const grid = document.getElementById('bt-data-grid');
+  lines.forEach(line => {
+    line = line.trim();
+    if (!line || line.startsWith('AT') || line === 'OK' || line === '?') return;
+    // Parse hex J1939 PGN responses
+    const hex = line.replace(/\s/g, '');
+    if (/^[0-9A-Fa-f]+$/.test(hex) && hex.length >= 4) {
+      const div = document.createElement('div');
+      div.className = 'gauge-card';
+      div.innerHTML = '<div class="gauge-label">RAW DATA</div><div class="gauge-value" style="font-size:14px;word-break:break-all">' + hex + '</div>';
+      grid.appendChild(div);
+      // Keep only last 20 entries
+      while (grid.children.length > 20) grid.removeChild(grid.firstChild);
+    }
+  });
+}
+
+// ========================================
+// ECM FILE READER
+// ========================================
+function handleECMFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  const ext = file.name.split('.').pop().toLowerCase();
+
+  reader.onload = function(e) {
+    const content = e.target.result;
+    let parsed = null;
+
+    try {
+      if (ext === 'json') {
+        parsed = parseECMJSON(content);
+      } else if (ext === 'csv') {
+        parsed = parseECMCSV(content);
+      } else if (ext === 'xml') {
+        parsed = parseECMXML(content);
+      } else {
+        parsed = parseECMText(content, file.name);
+      }
+    } catch(err) {
+      parsed = parseECMText(content, file.name);
+    }
+
+    if (parsed && parsed.length > 0) {
+      displayECMData(parsed, file.name);
+    } else {
+      showNotifToast('Could not parse file: ' + file.name, 'warn');
+    }
+  };
+
+  reader.readAsText(file);
+}
+
+function parseECMJSON(content) {
+  const data = JSON.parse(content);
+  const entries = [];
+  function flatten(obj, prefix) {
+    for (const [key, val] of Object.entries(obj)) {
+      const label = prefix ? prefix + ' > ' + key : key;
+      if (val && typeof val === 'object' && !Array.isArray(val)) {
+        flatten(val, label);
+      } else {
+        entries.push({ key: label, value: String(val) });
+      }
+    }
+  }
+  flatten(data, '');
+  return entries;
+}
+
+function parseECMCSV(content) {
+  const lines = content.split('\n').filter(l => l.trim());
+  const entries = [];
+  lines.forEach(line => {
+    const parts = line.split(/[,\t]/).map(p => p.trim().replace(/^"|"$/g, ''));
+    if (parts.length >= 2) {
+      entries.push({ key: parts[0], value: parts.slice(1).join(' | ') });
+    }
+  });
+  return entries;
+}
+
+function parseECMXML(content) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(content, 'text/xml');
+  const entries = [];
+  function walkNodes(node, prefix) {
+    if (node.children.length === 0) {
+      const label = prefix ? prefix + ' > ' + node.tagName : node.tagName;
+      entries.push({ key: label, value: node.textContent.trim() });
+    } else {
+      for (const child of node.children) {
+        walkNodes(child, prefix ? prefix + ' > ' + node.tagName : node.tagName);
+      }
+    }
+  }
+  if (doc.documentElement) walkNodes(doc.documentElement, '');
+  return entries;
+}
+
+function parseECMText(content, filename) {
+  const entries = [];
+  const lines = content.split('\n').filter(l => l.trim());
+
+  // Try key:value or key=value pairs
+  lines.forEach(line => {
+    line = line.trim();
+    let match = line.match(/^(.+?)\s*[:=]\s*(.+)$/);
+    if (match) {
+      entries.push({ key: match[1].trim(), value: match[2].trim() });
+    } else if (line.length > 0 && line.length < 200) {
+      entries.push({ key: 'Line', value: line });
+    }
+  });
+
+  // If we found patterns that look like ECM data, flag them
+  const ecmPatterns = /(?:serial|part\s*no|calibration|software|version|model|cpl|hp|torque|rpm|emission)/i;
+  entries.forEach(e => {
+    if (ecmPatterns.test(e.key) || ecmPatterns.test(e.value)) {
+      e.highlight = true;
+    }
+  });
+
+  return entries;
+}
+
+function displayECMData(entries, filename) {
+  const results = document.getElementById('ecm-results');
+  const list = document.getElementById('ecm-data-list');
+
+  list.innerHTML = '<div class="note-box" style="margin-bottom:12px"><strong style="color:var(--accent2)">' + filename + '</strong> — ' + entries.length + ' fields loaded</div>' +
+    entries.map(e =>
+      '<div class="data-row"><span class="data-key" style="' + (e.highlight ? 'color:var(--accent)' : '') + '">' + e.key + '</span>' +
+      '<span class="data-val" style="max-width:55%;text-align:right;word-break:break-all">' + e.value + '</span></div>'
+    ).join('');
+
+  results.classList.add('show');
+  showNotifToast('ECM file loaded: ' + entries.length + ' fields');
+}
+
+// Drag & drop for ECM
+document.addEventListener('DOMContentLoaded', function() {
+  const dz = document.getElementById('ecm-dropzone');
+  if (!dz) return;
+  dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.style.borderColor = 'var(--accent)'; });
+  dz.addEventListener('dragleave', function() { dz.style.borderColor = 'var(--border)'; });
+  dz.addEventListener('drop', function(e) {
+    e.preventDefault();
+    dz.style.borderColor = 'var(--border)';
+    if (e.dataTransfer.files.length > 0) {
+      handleECMFile({ target: { files: e.dataTransfer.files } });
+    }
+  });
+});
 </script>
 </body>
 </html>
