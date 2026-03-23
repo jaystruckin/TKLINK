@@ -57,18 +57,17 @@ function json(data, status, request) {
   });
 }
 
-const ALLOWED_ORIGINS = [
-  'https://jaystruckin.github.io',
-  'https://tklink.pages.dev',
+const ALLOWED_ORIGIN_PATTERNS = [
+  /^https:\/\/[a-z0-9-]+\.github\.io$/,
+  /^https:\/\/[a-z0-9-]+\.pages\.dev$/,
+  /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/,
 ];
 
 function corsHeaders(request) {
   const origin = request.headers.get('Origin') || '';
-  const isAllowed = ALLOWED_ORIGINS.includes(origin)
-    || /^https:\/\/[a-z0-9-]+\.pages\.dev$/.test(origin)
-    || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+  const isAllowed = ALLOWED_ORIGIN_PATTERNS.some((p) => p.test(origin));
   return {
-    'Access-Control-Allow-Origin': isAllowed ? origin : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Origin': isAllowed ? origin : 'null',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Max-Age': '86400',

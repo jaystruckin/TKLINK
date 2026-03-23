@@ -2,13 +2,11 @@
 // Deploy at: https://workers.cloudflare.com
 // 1. Sign up free → 2. Create Worker → 3. Paste this code → 4. Deploy
 
-// Allowed origins — add your domains here
-const ALLOWED_ORIGINS = [
-  'https://jaystruckin.github.io',
-  'https://tklink.pages.dev',
-  'http://localhost:3000',
-  'http://localhost:5500',
-  'http://127.0.0.1:5500',
+// Allowed origin patterns — any GitHub Pages, Cloudflare Pages, or localhost
+const ALLOWED_ORIGIN_PATTERNS = [
+  /^https:\/\/[a-z0-9-]+\.github\.io$/,
+  /^https:\/\/[a-z0-9-]+\.pages\.dev$/,
+  /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/,
 ];
 
 export default {
@@ -84,10 +82,9 @@ export default {
 };
 
 function corsHeaders(origin) {
-  const isAllowed = ALLOWED_ORIGINS.includes(origin) || /^https:\/\/[a-z0-9-]+\.pages\.dev$/.test(origin);
-  const allowedOrigin = isAllowed ? origin : ALLOWED_ORIGINS[0];
+  const isAllowed = ALLOWED_ORIGIN_PATTERNS.some((p) => p.test(origin));
   return {
-    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Origin': isAllowed ? origin : 'null',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Max-Age': '86400',

@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>TKLINK — Live Truck Telematics</title>
+<title>WORKSHOP — Live Truck Telematics</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#080c10">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="TKLINK">
+<meta name="apple-mobile-web-app-title" content="WORKSHOP">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -613,7 +613,7 @@
 <!-- LOGIN -->
 <div id="login-screen">
   <div class="truck-icon">🚛</div>
-  <div class="login-logo">TKLINK</div>
+  <div class="login-logo">WORKSHOP</div>
   <div class="login-title">WORKSHOP LOGIN</div>
   <div class="login-sub">MACTRACK TELEMATICS</div>
 
@@ -854,7 +854,7 @@
 
 <!-- INSTALL BANNER -->
 <div class="install-banner" id="install-banner">
-  <div class="install-banner-text"><strong>TKLINK</strong> — Add to home screen for instant access. No app store needed.</div>
+  <div class="install-banner-text"><strong>WORKSHOP</strong> — Add to home screen for instant access. No app store needed.</div>
   <button class="btn-install" id="btn-install">INSTALL</button>
   <button class="btn-dismiss" id="btn-dismiss">✕</button>
 </div>
@@ -978,9 +978,32 @@ async function connectToMactrack() {
     btn.disabled = false;
     btn.textContent = 'LOG IN';
     msg.style.display = 'none';
-    clearCredentials();
-    alert('Login failed. Check your email and password.');
   }
+}
+
+// Show a non-blocking banner when password needs updating
+function showPasswordUpdateBanner() {
+  if (document.getElementById('pw-update-banner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'pw-update-banner';
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#3a2200;border-bottom:2px solid #ff9800;padding:12px 16px;text-align:center;font-size:14px;color:#ffcc80;';
+  banner.innerHTML = '<b>Password changed</b> — <a href="#" id="pw-update-link" style="color:#4fc3f7;text-decoration:underline">tap here to update</a>';
+  document.body.appendChild(banner);
+  document.getElementById('pw-update-link').addEventListener('click', async (e) => {
+    e.preventDefault();
+    const newPass = prompt('Enter your new password:');
+    if (newPass) {
+      credentials.pass = newPass;
+      const ok = await silentReauth();
+      if (ok) {
+        saveCredentials();
+        banner.remove();
+        startLiveUpdates();
+      } else {
+        alert('Password incorrect. Try again.');
+      }
+    }
+  });
 }
 
 function showMainApp() {
@@ -1012,12 +1035,19 @@ async function proxiedFetch(targetUrl, options = {}) {
       const newHeaders = { ...options.headers, 'Authorization': 'Bearer ' + credentials.token };
       return proxiedFetch(targetUrl, { ...options, headers: newHeaders, _retried: true });
     } else {
-      // Password changed or account issue — show login screen
-      clearCredentials();
-      document.getElementById('main-app').style.display = 'none';
-      document.getElementById('login-screen').style.display = 'block';
+      // Password changed — prompt for new password without booting
+      const newPass = prompt('Your password has changed. Enter new password:');
+      if (newPass) {
+        credentials.pass = newPass;
+        const retried = await silentReauth();
+        if (retried) {
+          saveCredentials();
+          const newHeaders = { ...options.headers, 'Authorization': 'Bearer ' + credentials.token };
+          return proxiedFetch(targetUrl, { ...options, headers: newHeaders, _retried: true });
+        }
+      }
       if (updateInterval) { clearInterval(updateInterval); updateInterval = null; }
-      alert('Session expired. Please log in with your current password.');
+      showPasswordUpdateBanner();
     }
   }
   return res;
@@ -1666,17 +1696,15 @@ document.getElementById('btn-dismiss').addEventListener('click', () => {
   btn.textContent = 'LOGGING IN...';
   msg.style.display = 'block';
 
-  const success = await attemptLogin();
+  const success = await attemptLogin(true);
   if (success) {
     saveCredentials();
     showMainApp();
   } else {
-    // Saved credentials no longer work (password changed) — show login
+    // Keep saved creds, just show login so user can update password
     btn.disabled = false;
     btn.textContent = 'LOG IN';
     msg.style.display = 'none';
-    clearCredentials();
-    document.getElementById('password').value = '';
   }
 })();
 </script>
