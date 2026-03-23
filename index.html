@@ -632,7 +632,7 @@
     <input class="input-field" id="vehicle-id" type="text" placeholder="T909" autocomplete="off">
   </div>
 
-  <details style="margin-top:8px;text-align:left">
+  <details id="proxy-details" style="margin-top:8px;text-align:left">
     <summary style="color:#999;font-size:12px;cursor:pointer">Advanced: Custom Proxy URL</summary>
     <input class="input-field" id="proxy-url" type="url" placeholder="https://your-worker.workers.dev" autocomplete="off" spellcheck="false" style="margin-top:6px">
   </details>
@@ -640,9 +640,13 @@
   <p class="portal-note">Read-only access. Data refreshes every 5 seconds.</p>
 
   <div id="proxy-warning" style="display:none;background:#3a2200;border:1px solid #ff9800;border-radius:8px;padding:10px 14px;margin:8px 0;text-align:left;font-size:12px;color:#ffcc80;">
-    <b style="color:#ff9800;">Proxy Required</b><br>
-    GitHub Pages can't proxy API calls. Enter your Cloudflare Worker URL above, or
-    <a href="https://pages.cloudflare.com" target="_blank" style="color:#4fc3f7;text-decoration:underline">deploy to Cloudflare Pages</a> for auto-proxy.
+    <b style="color:#ff9800;">⚠ Proxy Required</b><br>
+    GitHub Pages can't proxy API calls directly.<br><br>
+    <b>Quick setup (free, 2 min):</b><br>
+    1. Go to <a href="https://workers.cloudflare.com" target="_blank" style="color:#4fc3f7;text-decoration:underline">workers.cloudflare.com</a> and sign up<br>
+    2. Create a new Worker, paste code from <code style="background:#2a2a2a;padding:1px 4px;border-radius:3px">proxy/worker.js</code><br>
+    3. Deploy and paste the URL above<br><br>
+    <b>OR</b> deploy this repo to <a href="https://pages.cloudflare.com" target="_blank" style="color:#4fc3f7;text-decoration:underline">Cloudflare Pages</a> for automatic proxy support.
   </div>
 
   <button class="btn-connect" id="connect-btn" onclick="connectToMactrack()">LOG IN</button>
@@ -863,6 +867,8 @@ let credentials = {};
 if (location.hostname.endsWith('.github.io')) {
   const w = document.getElementById('proxy-warning');
   if (w) w.style.display = 'block';
+  const d = document.getElementById('proxy-details');
+  if (d) d.open = true;
 }
 
 // --- Persistent Login ---
@@ -1089,25 +1095,26 @@ async function attemptLogin(silent) {
   } catch(e) {
     console.log('All login attempts failed');
     if (!silent) {
-      const reasons = e.errors ? e.errors.map(err => (err.message || '').replace(/https?:\/\/[^\s]*/gi, '[proxy]')).slice(0, 5).join('\n') : (e.message || '');
-      let msg = 'Login failed.\n\nDebug info:\n' + reasons + '\n\n';
+      let msg;
       if (!IS_SELF_HOSTED && !credentials.proxy) {
-        msg += 'CAUSE: No CORS proxy available.\n'
-          + 'GitHub Pages cannot proxy API calls.\n\n'
-          + 'EASIEST FIX (2 min, free):\n'
-          + '→ Deploy this app to Cloudflare Pages:\n'
-          + '  pages.cloudflare.com → Connect GitHub repo → Deploy\n'
-          + '  The proxy works automatically!\n\n'
-          + 'OR: Deploy a Cloudflare Worker:\n'
-          + '  1. workers.cloudflare.com → Create Worker\n'
-          + '  2. Paste code from proxy/worker.js → Deploy\n'
-          + '  3. Enter your worker URL below in Proxy URL';
+        msg = 'Login failed — no CORS proxy configured.\n\n'
+          + 'GitHub Pages cannot make API calls directly.\n'
+          + 'You need a proxy URL to connect.\n\n'
+          + 'Quick fix (free, 2 min):\n'
+          + '1. Go to workers.cloudflare.com\n'
+          + '2. Create Worker → paste code from proxy/worker.js\n'
+          + '3. Deploy → copy the URL\n'
+          + '4. Paste it in the Proxy URL field on the login page';
+        // Auto-open proxy details for convenience
+        const d = document.getElementById('proxy-details');
+        if (d) d.open = true;
       } else if (credentials.proxy) {
-        msg += 'Your custom proxy did not work.\n'
-          + 'Check the URL is correct and the worker is deployed.\n'
-          + 'Test it: open your-worker-url/health in browser.';
+        msg = 'Login failed — proxy not responding.\n\n'
+          + 'Check your proxy URL is correct and deployed.\n'
+          + 'Test it: open ' + credentials.proxy + '/health in your browser.\n\n'
+          + 'Also verify your email and password are correct.';
       } else {
-        msg += 'Check your email and password are correct.';
+        msg = 'Login failed.\n\nCheck your email and password are correct.';
       }
       alert(msg);
     }
