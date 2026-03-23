@@ -4,23 +4,18 @@ All notable changes to TKLINK will be documented here.
 
 ---
 
-## [0.1.2] - 2026-03-22
+## [0.2.0] - 2026-03-23
 
-### Improved
+### Complete Redesign
 
-- Added GitHub Pages deployment status badge to README
-- Service worker now pre-caches all PWA icon assets (icon.svg, icon-192.png, icon-512.png) for full offline support
-- Bumped service worker cache to v2
-
----
-
-## [0.1.1] - 2026-03-21
-
-### Added
-
-- Trial link on login screen — "No account? Try Demo" lets users explore the app with simulated T909 telemetry data
-- Demo data covers all tabs: engine gauges, drivetrain, faults, ECU, and GPS
-- Demo data refreshes every 5 seconds with realistic value variation
+- Tesla/Rivian/McLaren-grade cinematic UI
+- Glassmorphism design system with volumetric lighting
+- Animated circular gauges and radial indicators
+- Premium login screen with cinematic background
+- Persistent session (login once, auto-restore)
+- Proxy fully preconfigured and hidden
+- Responsive adaptive layout for all devices
+- Progressive Web App support
 
 ---
 
@@ -28,26 +23,14 @@ All notable changes to TKLINK will be documented here.
 
 ### Initial Release
 
-- Login screen with MacTrack portal URL, username, password and vehicle ID
-- ENGINE tab: RPM, coolant temp, oil pressure, oil temp, turbo boost, exhaust temp, engine load, fuel rate
+- Login screen with portal URL, username, password and vehicle ID
+- ENGINE tab: RPM, coolant temp, oil pressure, turbo boost, exhaust temp, engine load, fuel rate
 - AFTERTREATMENT tab: DEF level, DPF soot %, regen status, fuel level
-- DRIVETRAIN tab: gear, transmission temp, shaft RPM, air pressures, diff temp, speed, odometer, battery, alternator, ambient temp
-- ECU tab: engine model, CPL group, rated HP, torque, part numbers, software version, calibration date, serial numbers, emission cert, all programmed parameters
-- FAULTS tab: all active and inactive fault codes with SPN, FMI, description and count
-- GPS tab: live coordinates, Google Maps link, speed, heading, ignition status
-- Colour coded gauges: green / yellow / red warning states
-- Alert bar for critical conditions
-- Share engine report to mechanic via SMS/WhatsApp/email
-- Share ECU report to mechanic
+- DRIVETRAIN tab: gear, transmission temp, shaft RPM, air pressures, speed, odometer, battery
+- ECU tab: engine model, CPL group, rated HP, torque, part numbers, software version
+- FAULTS tab: all active and inactive fault codes with SPN, FMI, description
+- GPS tab: live coordinates, map link, speed, heading, ignition status
+- Colour coded gauges with warning states
+- Share engine/ECU reports to mechanic
 - 5 second live refresh
-- Dark industrial UI theme
 - Single file — no install required
-- Mobile first design
-
----
-
-## Upcoming
-
-- Full MacTrack API integration
-- Push notifications for critical alerts
-- Offline fault code database

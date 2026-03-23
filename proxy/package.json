@@ -1,7 +1,7 @@
 {
   "name": "tklink-proxy",
   "version": "1.0.0",
-  "description": "CORS proxy for TKLINK MacTrack API access",
+  "description": "CORS proxy for TKLINK telematics API access",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

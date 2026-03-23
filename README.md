@@ -1,131 +1,63 @@
-# TKLINK 🚛
+# TKLINK
 
-> Live truck telematics for drivers. Built by a driver, for drivers.
+> Production-grade vehicle telemetry dashboard for heavy vehicles.
 
-**TKLINK** is a lightweight web app that gives truck drivers direct access to live engine telematics, ECU data, fault codes and GPS — straight from their phone browser. No installs, no fleet manager needed, just the data you need to keep your truck safe on the road.
+**TKLINK** is a cinematic, ultra-premium telematics platform that displays live engine data, ECU parameters, fault codes and GPS — designed to match or exceed Tesla, Rivian, and McLaren UI systems.
 
 ---
 
 ## Features
 
-### 🔴 ENGINE
-- Live RPM
-- Coolant temperature
-- Oil pressure & temperature
-- Turbo boost pressure
-- Exhaust temperature
-- Engine load %
-- Fuel consumption rate (L/hr)
+### ENGINE
+- Live RPM, coolant temperature, oil pressure & temperature
+- Turbo boost pressure, exhaust temperature
+- Engine load %, fuel consumption rate
 
-### 🟡 AFTERTREATMENT
+### AFTERTREATMENT
 - DEF (AdBlue) level %
 - DPF soot load %
-- Regen status
-- Fuel level %
+- Regen status, fuel level %
 
-### ⚙️ DRIVETRAIN
-- Current gear
-- Transmission temperature
-- Input/output shaft RPM
-- Retarder status
-- Front & rear air pressures
-- Diff temperature
-- Vehicle speed & odometer
-- Battery voltage & alternator output
-- Ambient temperature
+### DRIVETRAIN
+- Current gear, transmission temperature
+- Input/output shaft RPM, retarder status
+- Front & rear air pressures, diff temperature
+- Vehicle speed, odometer, battery voltage
 
-### 🔧 ECU DATA
+### ECU DATA
 - Engine model & CPL group
-- Rated HP & torque (Nm)
+- Rated HP & torque
 - ECU part number & serial
 - Software version & calibration date
-- Engine serial number
-- Emission certification
-- Governed RPM (road & cruise)
-- Speed limiter setting
-- Idle shutdown parameters
-- Engine brake & PTO settings
 
-### ⚠️ FAULT CODES
+### FAULT CODES
 - All active & inactive fault codes
-- Full SPN & FMI codes
-- Fault descriptions
-- Occurrence count
+- Full SPN & FMI codes with descriptions
 - Read only — no clearing
 
-### 📍 GPS
-- Live coordinates
-- Direct Google Maps link
+### GPS
+- Live coordinates with map link
 - GPS speed & heading
 - Ignition status
 
-### 📤 MECHANIC REPORTS
-- One tap engine report
-- One tap ECU report
-- Share via SMS, WhatsApp, email
+---
+
+## Design System
+
+- Dark cinematic theme with glassmorphism
+- Volumetric lighting and glow layers
+- Animated circular gauges and radial indicators
+- Smooth easing micro-animations
+- Responsive adaptive layout for all devices
 
 ---
 
-## How It Works
+## Platform Support
 
-```
-MacTrack device (installed in truck)
-        ↓
-Cellular → MacTrack cloud
-        ↓
-TKLINK logs in with your credentials
-        ↓
-Pulls only your truck's data
-        ↓
-Displays clean on your phone
-        ↓
-Refreshes every 5 seconds
-```
-
-**Read only.** TKLINK never writes, edits or sends commands to the vehicle. It only reads.
-
----
-
-## Open TKLINK
-
-Open your deployed TKLINK URL (GitHub Pages or Cloudflare Pages).
-
-### Direct Page Links
-
-Add a hash to the URL to jump to a tab:
-
-| Page | URL Hash |
-|------|----------|
-| Engine | `#engine` |
-| Drivetrain | `#drivetrain` |
-| Faults | `#faults` |
-| ECU | `#ecu` |
-| GPS | `#gps` |
-
-### Demo Mode
-
-Try without logging in — add `?demo` to the URL.
-
----
-
-## Setup
-
-1. Open the link above in your phone browser
-2. Enter your MacTrack portal URL
-3. Enter your MacTrack username & password
-4. Enter your vehicle ID or truck number
-5. Tap **CONNECT**
-
-No app store. No install. Just open and go.
-
----
-
-## Requirements
-
-- MacTrack account with access to your vehicle
-- Any modern phone browser (Chrome, Safari)
-- MacTrack telematics hardware installed in truck
-- Internet connection (4G/5G)
+- Android (Samsung S25), iOS (Safari), iPad
+- Desktop (Windows + Mac), Laptops
+- Chrome, Safari, Edge, Firefox
+- Progressive Web App (installable)
 
 ---
 
@@ -134,32 +66,7 @@ No app store. No install. Just open and go.
 - Pure HTML / CSS / JavaScript
 - No frameworks, no dependencies
 - Single file — runs anywhere
-- Mobile first design
-
----
-
-## Roadmap
-
-- [x] Push notifications for critical alerts
-- [x] Trip history & logging
-- [x] Multiple truck support
-- [x] Android home screen app (PWA)
-- [x] Offline fault code database (J1939 SPN/FMI)
-- [x] J1939 direct Bluetooth connection
-- [x] ECM file reader
-- [x] Silent mode (no console noise)
-- [x] Encrypted credential storage
-- [x] Input validation
-- [x] Error recovery UI
-
----
-
-## Security
-
-- Credentials stored locally on device only
-- No data sent anywhere except MacTrack servers
-- Read only access — zero write permissions
-- No tracking, no analytics, no ads
+- Mobile first, touch + mouse support
 
 ---
 

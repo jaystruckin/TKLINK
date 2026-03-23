@@ -1,6 +1,6 @@
 # TKLINK Proxy
 
-CORS proxy for MacTrack Telematics API.
+CORS proxy for Telematics API.
 
 ## Deploy to Render (Free)
 

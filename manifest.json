@@ -1,7 +1,7 @@
 {
-  "name": "WORKSHOP \u2014 Live Truck Telematics",
-  "short_name": "WORKSHOP",
-  "description": "Live engine telematics for truck drivers. Read only. Secure.",
+  "name": "TKLINK \u2014 Vehicle Telematics",
+  "short_name": "TKLINK",
+  "description": "Production-grade vehicle telemetry dashboard.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

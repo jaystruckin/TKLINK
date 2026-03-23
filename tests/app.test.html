@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WORKSHOP Test Suite</title>
+<title>TKLINK Test Suite</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { background: #080c10; color: #c8d8e8; font-family: 'Segoe UI', sans-serif; padding: 24px; }
@@ -21,7 +21,7 @@
 </style>
 </head>
 <body>
-<h1>WORKSHOP TEST SUITE</h1>
+<h1>TKLINK TEST SUITE</h1>
 <div class="summary" id="summary">Running...</div>
 <div id="results"></div>
 
@@ -107,7 +107,7 @@ describe('Input Validation', () => {
   });
 
   it('should accept email with subdomain', () => {
-    expect(validateEmail('driver@fleet.mactrack.com')).toBe(true);
+    expect(validateEmail('driver@fleet.telemetry.com')).toBe(true);
   });
 });
 
