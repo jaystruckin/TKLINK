@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WORKSHOP Test Suite</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #080c10; color: #c8d8e8; font-family: 'Segoe UI', sans-serif; padding: 24px; }
+  h1 { color: #e85d00; font-size: 20px; letter-spacing: 2px; margin-bottom: 4px; }
+  .summary { font-size: 14px; color: #4a6070; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid #1a2530; }
+  .summary .pass { color: #00e676; font-weight: bold; }
+  .summary .fail { color: #ff1744; font-weight: bold; }
+  .suite { margin-bottom: 20px; }
+  .suite-name { font-size: 14px; color: #ff8c00; letter-spacing: 1px; margin-bottom: 8px; }
+  .test { padding: 6px 12px; font-size: 13px; border-left: 3px solid #1a2530; margin-bottom: 4px; }
+  .test.pass { border-left-color: #00e676; }
+  .test.fail { border-left-color: #ff1744; color: #ff1744; }
+  .test .icon { margin-right: 8px; }
+  .error-detail { font-size: 11px; color: #ff6b6b; margin-left: 24px; font-family: monospace; }
+</style>
+</head>
+<body>
+<h1>WORKSHOP TEST SUITE</h1>
+<div class="summary" id="summary">Running...</div>
+<div id="results"></div>
+
+<script src="../j1939-faults.js"></script>
+<script>
+// Mini test framework
+let suites = [];
+let currentSuite = null;
+let totalPass = 0, totalFail = 0;
+
+function describe(name, fn) {
+  currentSuite = { name, tests: [] };
+  suites.push(currentSuite);
+  fn();
+}
+
+function it(name, fn) {
+  try {
+    fn();
+    currentSuite.tests.push({ name, passed: true });
+    totalPass++;
+  } catch(e) {
+    currentSuite.tests.push({ name, passed: false, error: e.message });
+    totalFail++;
+  }
+}
+
+function expect(val) {
+  return {
+    toBe(expected) {
+      if (val !== expected) throw new Error(`Expected ${JSON.stringify(expected)}, got ${JSON.stringify(val)}`);
+    },
+    toEqual(expected) {
+      if (JSON.stringify(val) !== JSON.stringify(expected)) throw new Error(`Expected ${JSON.stringify(expected)}, got ${JSON.stringify(val)}`);
+    },
+    toBeTruthy() {
+      if (!val) throw new Error(`Expected truthy, got ${JSON.stringify(val)}`);
+    },
+    toBeFalsy() {
+      if (val) throw new Error(`Expected falsy, got ${JSON.stringify(val)}`);
+    },
+    toBeGreaterThan(n) {
+      if (!(val > n)) throw new Error(`Expected ${val} > ${n}`);
+    },
+    toContain(str) {
+      if (typeof val === 'string' && !val.includes(str)) throw new Error(`Expected "${val}" to contain "${str}"`);
+      if (Array.isArray(val) && !val.includes(str)) throw new Error(`Expected array to contain ${str}`);
+    },
+    toBeNull() {
+      if (val !== null) throw new Error(`Expected null, got ${JSON.stringify(val)}`);
+    },
+    toBeDefined() {
+      if (val === undefined) throw new Error(`Expected defined value`);
+    },
+    toBeInstanceOf(cls) {
+      if (!(val instanceof cls)) throw new Error(`Expected instance of ${cls.name}`);
+    }
+  };
+}
+
+// ========== TESTS ==========
+
+describe('Input Validation', () => {
+  // Email validation
+  function validateEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  it('should accept valid email', () => {
+    expect(validateEmail('user@example.com')).toBe(true);
+  });
+
+  it('should reject email without @', () => {
+    expect(validateEmail('userexample.com')).toBe(false);
+  });
+
+  it('should reject email without domain', () => {
+    expect(validateEmail('user@')).toBe(false);
+  });
+
+  it('should reject empty email', () => {
+    expect(validateEmail('')).toBe(false);
+  });
+
+  it('should accept email with subdomain', () => {
+    expect(validateEmail('driver@fleet.mactrack.com')).toBe(true);
+  });
+});
+
+describe('Credential Encryption', () => {
+  it('should encode data as base64 fallback', () => {
+    const data = { user: 'test', pass: 'secret' };
+    const encoded = btoa(JSON.stringify(data));
+    const decoded = JSON.parse(atob(encoded));
+    expect(decoded.user).toBe('test');
+    expect(decoded.pass).toBe('secret');
+  });
+
+  it('should handle empty objects', () => {
+    const encoded = btoa(JSON.stringify({}));
+    const decoded = JSON.parse(atob(encoded));
+    expect(JSON.stringify(decoded)).toBe('{}');
+  });
+
+  it('should handle special characters in password', () => {
+    const data = { pass: 'p@$$w0rd!#&' };
+    const encoded = btoa(JSON.stringify(data));
+    const decoded = JSON.parse(atob(encoded));
+    expect(decoded.pass).toBe('p@$$w0rd!#&');
+  });
+
+  it('should reject invalid base64', () => {
+    let result = null;
+    try { JSON.parse(atob('not-valid-base64!!')); } catch(e) { result = 'error'; }
+    expect(result).toBe('error');
+  });
+});
+
+describe('Gauge Display Logic', () => {
+  function getGaugeState(value, warnLevels, invertWarn) {
+    if (value === undefined || value === null) return 'none';
+    if (!warnLevels) return 'normal';
+    if (invertWarn) {
+      if (value <= warnLevels[1]) return 'critical';
+      if (value <= warnLevels[0]) return 'warning';
+      return 'good';
+    }
+    if (value >= warnLevels[1]) return 'critical';
+    if (value >= warnLevels[0]) return 'warning';
+    return 'good';
+  }
+
+  it('should show good for normal RPM', () => {
+    expect(getGaugeState(1200, [1600, 1900])).toBe('good');
+  });
+
+  it('should show warning for high RPM', () => {
+    expect(getGaugeState(1650, [1600, 1900])).toBe('warning');
+  });
+
+  it('should show critical for very high RPM', () => {
+    expect(getGaugeState(2000, [1600, 1900])).toBe('critical');
+  });
+
+  it('should show good for normal DEF (inverted)', () => {
+    expect(getGaugeState(75, [20, 10], true)).toBe('good');
+  });
+
+  it('should show warning for low DEF (inverted)', () => {
+    expect(getGaugeState(15, [20, 10], true)).toBe('warning');
+  });
+
+  it('should show critical for very low DEF (inverted)', () => {
+    expect(getGaugeState(5, [20, 10], true)).toBe('critical');
+  });
+
+  it('should return none for undefined value', () => {
+    expect(getGaugeState(undefined, [100, 200])).toBe('none');
+  });
+
+  it('should return none for null value', () => {
+    expect(getGaugeState(null, [100, 200])).toBe('none');
+  });
+});
+
+describe('Safe Value Helpers', () => {
+  function safeNumber(val, fallback) {
+    const n = Number(val);
+    return isFinite(n) ? n : (fallback !== undefined ? fallback : null);
+  }
+
+  function safeString(val, fallback) {
+    return (val !== null && val !== undefined && val !== '') ? String(val) : (fallback || '—');
+  }
+
+  it('should return number for valid input', () => {
+    expect(safeNumber(42)).toBe(42);
+  });
+
+  it('should return number for string input', () => {
+    expect(safeNumber('123')).toBe(123);
+  });
+
+  it('should return fallback for NaN', () => {
+    expect(safeNumber('abc', 0)).toBe(0);
+  });
+
+  it('should return null for NaN without fallback', () => {
+    expect(safeNumber('abc')).toBeNull();
+  });
+
+  it('should return fallback for Infinity', () => {
+    expect(safeNumber(Infinity, 0)).toBe(0);
+  });
+
+  it('should return string for valid value', () => {
+    expect(safeString('hello')).toBe('hello');
+  });
+
+  it('should return dash for null', () => {
+    expect(safeString(null)).toBe('—');
+  });
+
+  it('should return dash for empty string', () => {
+    expect(safeString('')).toBe('—');
+  });
+
+  it('should return custom fallback', () => {
+    expect(safeString(undefined, 'N/A')).toBe('N/A');
+  });
+});
+
+describe('J1939 Fault Code Database', () => {
+  it('should have J1939_DB defined', () => {
+    expect(typeof J1939_DB).toBe('object');
+  });
+
+  it('should have SPN entries', () => {
+    expect(Object.keys(J1939_DB.spn).length).toBeGreaterThan(100);
+  });
+
+  it('should have all 32 FMI codes', () => {
+    for (let i = 0; i <= 31; i++) {
+      expect(J1939_DB.fmi[i]).toBeDefined();
+    }
+  });
+
+  it('should lookup SPN 110 (Coolant Temp)', () => {
+    const result = J1939_DB.lookup(110, 0);
+    expect(result.spnDesc).toContain('oolant');
+  });
+
+  it('should lookup SPN 100 (Oil Pressure)', () => {
+    const result = J1939_DB.lookup(100, 0);
+    expect(result.spnDesc).toContain('il');
+  });
+
+  it('should lookup SPN 190 (Engine RPM)', () => {
+    const result = J1939_DB.lookup(190, 0);
+    expect(result.spnDesc).toContain('ngine');
+  });
+
+  it('should lookup FMI 0 (Data Valid But Above Normal)', () => {
+    const result = J1939_DB.lookup(1, 0);
+    expect(result.fmiDesc.length).toBeGreaterThan(3);
+  });
+
+  it('should handle unknown SPN', () => {
+    const result = J1939_DB.lookup(99999, 0);
+    expect(result.spnDesc).toContain('nknown');
+  });
+
+  it('should generate full description', () => {
+    const result = J1939_DB.lookup(110, 3);
+    expect(result.fullDesc.length).toBeGreaterThan(10);
+  });
+
+  it('should lookup SPN 3719 (SCR Operator Inducement)', () => {
+    const result = J1939_DB.lookup(3719, 16);
+    expect(result.spnDesc.length).toBeGreaterThan(5);
+  });
+});
+
+describe('Alert System', () => {
+  function checkAlerts(data) {
+    const alerts = [];
+    if (data.coolantTemp >= 105) alerts.push('HIGH COOLANT TEMP');
+    if (data.oilPressure !== undefined && data.oilPressure < 150) alerts.push('LOW OIL PRESSURE');
+    if (data.defLevel !== undefined && data.defLevel < 15) alerts.push('LOW DEF LEVEL');
+    if (data.dpfSoot > 85) alerts.push('DPF SOOT HIGH');
+    if (data.fuelLevel !== undefined && data.fuelLevel < 15) alerts.push('LOW FUEL');
+    return alerts;
+  }
+
+  it('should alert on high coolant temp', () => {
+    const alerts = checkAlerts({ coolantTemp: 110 });
+    expect(alerts.length).toBe(1);
+    expect(alerts[0]).toContain('COOLANT');
+  });
+
+  it('should alert on low oil pressure', () => {
+    const alerts = checkAlerts({ oilPressure: 80 });
+    expect(alerts.length).toBe(1);
+    expect(alerts[0]).toContain('OIL');
+  });
+
+  it('should show multiple alerts', () => {
+    const alerts = checkAlerts({ coolantTemp: 110, oilPressure: 80, fuelLevel: 5 });
+    expect(alerts.length).toBe(3);
+  });
+
+  it('should show no alerts for normal values', () => {
+    const alerts = checkAlerts({ coolantTemp: 85, oilPressure: 350, defLevel: 70, dpfSoot: 20, fuelLevel: 60 });
+    expect(alerts.length).toBe(0);
+  });
+
+  it('should not alert on undefined values', () => {
+    const alerts = checkAlerts({});
+    expect(alerts.length).toBe(0);
+  });
+
+  it('should alert at exact threshold', () => {
+    const alerts = checkAlerts({ coolantTemp: 105 });
+    expect(alerts.length).toBe(1);
+  });
+});
+
+describe('Tab Navigation', () => {
+  const validTabs = ['engine','drivetrain','faults','ecu','gps','trips','bluetooth','ecm'];
+
+  function resolveTab(name) {
+    return validTabs.includes(name) ? name : 'engine';
+  }
+
+  it('should resolve valid tab', () => {
+    expect(resolveTab('engine')).toBe('engine');
+  });
+
+  it('should resolve gps tab', () => {
+    expect(resolveTab('gps')).toBe('gps');
+  });
+
+  it('should resolve trips tab', () => {
+    expect(resolveTab('trips')).toBe('trips');
+  });
+
+  it('should resolve bluetooth tab', () => {
+    expect(resolveTab('bluetooth')).toBe('bluetooth');
+  });
+
+  it('should resolve ecm tab', () => {
+    expect(resolveTab('ecm')).toBe('ecm');
+  });
+
+  it('should default invalid tab to engine', () => {
+    expect(resolveTab('invalid')).toBe('engine');
+  });
+
+  it('should default empty string to engine', () => {
+    expect(resolveTab('')).toBe('engine');
+  });
+
+  it('should have 8 total tabs', () => {
+    expect(validTabs.length).toBe(8);
+  });
+});
+
+describe('Trip Data Validation', () => {
+  it('should calculate trip duration', () => {
+    const start = new Date('2026-03-23T08:00:00');
+    const end = new Date('2026-03-23T09:30:00');
+    const durMin = Math.round((end - start) / 60000);
+    expect(durMin).toBe(90);
+  });
+
+  it('should calculate average speed', () => {
+    const speeds = [80, 90, 100, 95, 85];
+    const avg = Math.round(speeds.reduce((a, b) => a + b, 0) / speeds.length);
+    expect(avg).toBe(90);
+  });
+
+  it('should calculate trip distance', () => {
+    const avgSpeed = 90;
+    const hours = 1.5;
+    const distance = Math.round(avgSpeed * hours * 10) / 10;
+    expect(distance).toBe(135);
+  });
+
+  it('should handle empty snapshot array', () => {
+    const speeds = [];
+    const avg = speeds.length ? speeds.reduce((a, b) => a + b, 0) / speeds.length : 0;
+    expect(avg).toBe(0);
+  });
+});
+
+describe('ECM File Parsing', () => {
+  function parseKeyValue(content) {
+    const entries = [];
+    content.split('\n').filter(l => l.trim()).forEach(line => {
+      const match = line.trim().match(/^(.+?)\s*[:=]\s*(.+)$/);
+      if (match) entries.push({ key: match[1].trim(), value: match[2].trim() });
+    });
+    return entries;
+  }
+
+  it('should parse key:value format', () => {
+    const result = parseKeyValue('Engine Model: Cummins X15\nRated HP: 550');
+    expect(result.length).toBe(2);
+    expect(result[0].key).toBe('Engine Model');
+    expect(result[0].value).toBe('Cummins X15');
+  });
+
+  it('should parse key=value format', () => {
+    const result = parseKeyValue('serial=ABC123\nversion=3.2.1');
+    expect(result.length).toBe(2);
+    expect(result[0].value).toBe('ABC123');
+  });
+
+  it('should handle empty content', () => {
+    const result = parseKeyValue('');
+    expect(result.length).toBe(0);
+  });
+
+  it('should skip lines without separator', () => {
+    const result = parseKeyValue('header line\nkey: value\nplain text');
+    expect(result.length).toBe(1);
+  });
+});
+
+describe('API Response Validation', () => {
+  function validateApiResponse(data, shape) {
+    if (data === null || data === undefined) return false;
+    if (shape === 'array') return Array.isArray(data);
+    if (shape === 'object') return typeof data === 'object' && !Array.isArray(data);
+    return true;
+  }
+
+  it('should validate array response', () => {
+    expect(validateApiResponse([1, 2, 3], 'array')).toBe(true);
+  });
+
+  it('should reject object when array expected', () => {
+    expect(validateApiResponse({}, 'array')).toBe(false);
+  });
+
+  it('should validate object response', () => {
+    expect(validateApiResponse({ id: 1 }, 'object')).toBe(true);
+  });
+
+  it('should reject array when object expected', () => {
+    expect(validateApiResponse([1], 'object')).toBe(false);
+  });
+
+  it('should reject null', () => {
+    expect(validateApiResponse(null, 'array')).toBe(false);
+  });
+
+  it('should reject undefined', () => {
+    expect(validateApiResponse(undefined, 'object')).toBe(false);
+  });
+});
+
+// ========== RENDER RESULTS ==========
+function renderResults() {
+  const container = document.getElementById('results');
+  const summary = document.getElementById('summary');
+
+  summary.innerHTML = `<span class="pass">${totalPass} passed</span> · <span class="fail">${totalFail} failed</span> · ${totalPass + totalFail} total`;
+
+  container.innerHTML = suites.map(s => {
+    return `<div class="suite">
+      <div class="suite-name">${s.name}</div>
+      ${s.tests.map(t => `
+        <div class="test ${t.passed ? 'pass' : 'fail'}">
+          <span class="icon">${t.passed ? '✓' : '✗'}</span>${t.name}
+          ${t.error ? `<div class="error-detail">${t.error}</div>` : ''}
+        </div>
+      `).join('')}
+    </div>`;
+  }).join('');
+}
+
+renderResults();
+</script>
+</body>
+</html>
