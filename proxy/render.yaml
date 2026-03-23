@@ -7,6 +7,6 @@ services:
     startCommand: node server.js
     envVars:
       - key: ALLOWED_ORIGINS
-        value: https://jaystruckin.github.io
+        value: "*"
       - key: PORT
         value: "10000"

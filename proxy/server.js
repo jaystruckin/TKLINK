@@ -3,7 +3,7 @@ const https = require('https');
 const url = require('url');
 
 const PORT = process.env.PORT || 3000;
-const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS || 'https://jaystruckin.github.io';
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS || '*';
 
 function proxyRequest(targetUrl, options, body) {
   return new Promise((resolve, reject) => {

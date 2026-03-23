@@ -1,6 +1,6 @@
 {
-  "name": "TKLINK — Live Truck Telematics",
-  "short_name": "TKLINK",
+  "name": "WORKSHOP \u2014 Live Truck Telematics",
+  "short_name": "WORKSHOP",
   "description": "Live engine telematics for truck drivers. Read only. Secure.",
   "start_url": "./index.html",
   "scope": "./",
@@ -28,5 +28,8 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["utilities", "transportation"]
+  "categories": [
+    "utilities",
+    "transportation"
+  ]
 }
