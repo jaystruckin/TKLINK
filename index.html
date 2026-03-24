@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>WORKSHOP — Live Truck Telematics</title>
+<title>TKLINK — Live Truck Telematics</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#080c10">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="WORKSHOP">
+<meta name="apple-mobile-web-app-title" content="TKLINK">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <script src="j1939-faults.js"></script>
@@ -838,8 +838,8 @@
 <!-- LOGIN -->
 <div id="login-screen">
   <div class="truck-icon">🚛</div>
-  <div class="login-logo">WORKSHOP</div>
-  <div class="login-title">WORKSHOP LOGIN</div>
+  <div class="login-logo">TKLINK</div>
+  <div class="login-title">TKLINK LOGIN</div>
   <div class="login-sub">MACTRACK TELEMATICS</div>
 
   <div class="input-group">
@@ -1146,7 +1146,7 @@
 
 <!-- INSTALL BANNER -->
 <div class="install-banner" id="install-banner">
-  <div class="install-banner-text"><strong>WORKSHOP</strong> — Add to home screen for instant access. No app store needed.</div>
+  <div class="install-banner-text"><strong>TKLINK</strong> — Add to home screen for instant access. No app store needed.</div>
   <button class="btn-install" id="btn-install">INSTALL</button>
   <button class="btn-dismiss" id="btn-dismiss">✕</button>
 </div>
@@ -2225,7 +2225,7 @@ checkAlerts = function(data) {
   if (data.fuelLevel !== undefined && data.fuelLevel < 10) criticals.push('Fuel critically low: ' + data.fuelLevel + '%');
   if (data.battVoltage !== undefined && data.battVoltage < 11.0) criticals.push('Battery low: ' + data.battVoltage + 'V');
   if (criticals.length > 0) {
-    sendPushNotification('WORKSHOP ALERT', criticals.join(' | '));
+    sendPushNotification('TKLINK ALERT', criticals.join(' | '));
   }
 };
 
