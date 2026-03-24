@@ -1,4 +1,4 @@
-const CACHE_NAME = 'workshop-v5';
+const CACHE_NAME = 'tklink-v6';
 const ASSETS = ['./', './index.html', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png', './j1939-faults.js'];
 
 self.addEventListener('install', event => {
