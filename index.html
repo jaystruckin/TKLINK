@@ -1868,7 +1868,7 @@
     <div class="tab-panel" id="tab-ecm">
       <div class="note-box" style="margin-bottom:16px">
         <strong style="color:var(--accent)">FULL DATA DUMP</strong><br>
-        Pull everything the MacTrack API has for this vehicle — raw API responses, all fields, every data point from the last 7 days. See exactly what's available.
+        Pull everything the MacTrack API has for this vehicle — raw API responses, all fields, every data point from the last 4 weeks. Weekly breakdown with distance and fuel estimates.
       </div>
       <button class="share-btn" onclick="downloadFullDataDump()" id="dump-btn" style="margin-top:0;margin-bottom:20px;background:rgba(0,176,255,0.1);border-color:rgba(0,176,255,0.3);color:var(--blue)">📥 DOWNLOAD FULL DATA DUMP</button>
       <div id="dump-status" style="display:none;font-size:12px;color:var(--dim);margin-bottom:16px;text-align:center;letter-spacing:1px"></div>
@@ -4045,22 +4045,34 @@ async function downloadFullDataDump() {
     }
   } catch(e) { dump.sections.rawTelemetry24h = { _error: e.message }; }
 
-  // 5. Raw telemetry — last 7 days
-  status.textContent = 'Fetching raw telemetry (last 7 days)...';
-  try {
-    const now = new Date();
-    const from = new Date(now.getTime() - 7 * 86400000).toISOString();
-    const res = await proxiedFetch(
-      `${credentials.apiBase}/v2/${credentials.orgId}/asset/${credentials.assetSerial}/rawtelemetry?from=${from}&to=${now.toISOString()}&limit=500&sort=desc`,
-      { headers }
-    );
-    if (res.ok) {
-      const raw = await res.json();
-      dump.sections.rawTelemetry7days = Array.isArray(raw) ? raw : (raw.Items || raw.items || raw.data || raw);
-    } else {
-      dump.sections.rawTelemetry7days = { _error: 'HTTP ' + res.status };
+  // 5. Raw telemetry — last 4 weeks (fetched week by week to get more data)
+  dump.sections.rawTelemetry4weeks = [];
+  for (let week = 0; week < 4; week++) {
+    const weekLabel = week === 0 ? 'this week' : week + ' week' + (week > 1 ? 's' : '') + ' ago';
+    status.textContent = 'Fetching raw telemetry (' + weekLabel + ')...';
+    try {
+      const now = new Date();
+      const weekEnd = new Date(now.getTime() - week * 7 * 86400000);
+      const weekStart = new Date(now.getTime() - (week + 1) * 7 * 86400000);
+      const res = await proxiedFetch(
+        `${credentials.apiBase}/v2/${credentials.orgId}/asset/${credentials.assetSerial}/rawtelemetry?from=${weekStart.toISOString()}&to=${weekEnd.toISOString()}&limit=500&sort=desc`,
+        { headers }
+      );
+      if (res.ok) {
+        const raw = await res.json();
+        const items = Array.isArray(raw) ? raw : (raw.Items || raw.items || raw.data || []);
+        dump.sections.rawTelemetry4weeks.push({ week: week + 1, label: weekLabel, count: items.length, records: items });
+      } else {
+        dump.sections.rawTelemetry4weeks.push({ week: week + 1, label: weekLabel, _error: 'HTTP ' + res.status });
+      }
+    } catch(e) {
+      dump.sections.rawTelemetry4weeks.push({ week: week + 1, label: weekLabel, _error: e.message });
     }
-  } catch(e) { dump.sections.rawTelemetry7days = { _error: e.message }; }
+  }
+  // Flatten all weeks into one array for backward compat
+  dump.sections.rawTelemetry7days = dump.sections.rawTelemetry4weeks
+    .filter(w => w.records)
+    .flatMap(w => w.records);
 
   // 6. Full asset list (all vehicles in org)
   status.textContent = 'Fetching fleet list...';
@@ -4132,7 +4144,7 @@ async function downloadFullDataDump() {
     ['Live Data', dump.sections.liveData],
     ['Raw Telemetry 10min', dump.sections.rawTelemetry10min],
     ['Raw Telemetry 24h', dump.sections.rawTelemetry24h],
-    ['Raw Telemetry 7 days', dump.sections.rawTelemetry7days]
+    ['Raw Telemetry 4 weeks', dump.sections.rawTelemetry7days]
   ];
 
   for (const [name, data] of sections) {
@@ -4228,30 +4240,88 @@ async function downloadFullDataDump() {
       }
     }
 
-    // Summary of 7-day records
-    const weekData = dump.sections.rawTelemetry7days;
-    if (weekData && Array.isArray(weekData) && weekData.length > 0) {
-      txt += '\n[7-DAY DATA SUMMARY]\n';
-      txt += '  Total records:           ' + weekData.length + '\n';
-      const speeds = weekData.map(r => parseFloat(r.Speed || r.speed || 0)).filter(s => s > 0);
-      if (speeds.length > 0) {
-        txt += '  Max speed:               ' + Math.max(...speeds).toFixed(1) + ' km/h\n';
-        txt += '  Avg speed (moving):      ' + (speeds.reduce((a, b) => a + b, 0) / speeds.length).toFixed(1) + ' km/h\n';
-        txt += '  Moving records:          ' + speeds.length + '\n';
+    // 4-WEEK DATA SUMMARY (week by week breakdown)
+    const allWeekData = dump.sections.rawTelemetry4weeks || [];
+    const allRecords = dump.sections.rawTelemetry7days || [];
+
+    if (allRecords.length > 0) {
+      txt += '\n[4-WEEK DATA SUMMARY]\n';
+      txt += '  Total records (all weeks): ' + allRecords.length + '\n';
+
+      const allSpeeds = allRecords.map(r => parseFloat(r.Speed || r.speed || 0)).filter(s => s > 0);
+      if (allSpeeds.length > 0) {
+        const avgSpd = allSpeeds.reduce((a, b) => a + b, 0) / allSpeeds.length;
+        txt += '  Max speed (4 weeks):     ' + Math.max(...allSpeeds).toFixed(1) + ' km/h\n';
+        txt += '  Avg speed (moving):      ' + avgSpd.toFixed(1) + ' km/h\n';
+        txt += '  Moving records:          ' + allSpeeds.length + ' / ' + allRecords.length + '\n';
       }
-      const first = weekData[weekData.length - 1];
-      const last = weekData[0];
-      txt += '  Earliest record:         ' + (first.Timestamp || first.timestamp || first.DateTime || '?') + '\n';
-      txt += '  Latest record:           ' + (last.Timestamp || last.timestamp || last.DateTime || '?') + '\n';
+
+      if (allRecords.length > 1) {
+        const first = allRecords[allRecords.length - 1];
+        const last = allRecords[0];
+        txt += '  Earliest record:         ' + (first.Timestamp || first.timestamp || first.DateTime || '?') + '\n';
+        txt += '  Latest record:           ' + (last.Timestamp || last.timestamp || last.DateTime || '?') + '\n';
+      }
+
+      // Estimate total distance and fuel for full period
+      if (allSpeeds.length > 1) {
+        const sorted = allRecords
+          .map(r => new Date(r.Timestamp || r.timestamp || r.DateTime || 0).getTime())
+          .filter(t => t > 0).sort((a, b) => a - b);
+        if (sorted.length > 1) {
+          const totalHrs = (sorted[sorted.length - 1] - sorted[0]) / 3600000;
+          const movingFraction = allSpeeds.length / allRecords.length;
+          const avgSpd = allSpeeds.reduce((a, b) => a + b, 0) / allSpeeds.length;
+          const estDist = Math.round(avgSpd * totalHrs * movingFraction);
+          const estFuel = Math.round((estDist / 100) * GPS_ONLY_FUEL_RATE_L100);
+          txt += '\n  ESTIMATED TOTALS (4 WEEKS):\n';
+          txt += '  Distance travelled:      ~' + estDist.toLocaleString() + ' km\n';
+          txt += '  Fuel used (est):         ~' + estFuel.toLocaleString() + ' litres (at ' + GPS_ONLY_FUEL_RATE_L100 + ' L/100km)\n';
+          txt += '  Fuel cost (est @ $1.80): ~$' + Math.round(estFuel * 1.80).toLocaleString() + '\n';
+          txt += '  Time span:               ' + Math.round(totalHrs) + ' hours (' + Math.round(totalHrs / 24) + ' days)\n';
+          txt += '  Moving time:             ~' + Math.round(totalHrs * movingFraction) + ' hours\n';
+        }
+      }
+
+      // Week-by-week breakdown
+      txt += '\n  WEEKLY BREAKDOWN:\n';
+      txt += '  ' + 'Week'.padEnd(20) + 'Records'.padEnd(10) + 'Max km/h'.padEnd(12) + 'Avg km/h'.padEnd(12) + 'Est km'.padEnd(12) + 'Est Fuel L\n';
+      txt += '  ' + '─'.repeat(76) + '\n';
+
+      for (const w of allWeekData) {
+        if (w._error) {
+          txt += '  ' + ('Week ' + w.week + ' (' + w.label + ')').padEnd(20) + 'ERROR: ' + w._error + '\n';
+          continue;
+        }
+        const recs = w.records || [];
+        const wSpeeds = recs.map(r => parseFloat(r.Speed || r.speed || 0)).filter(s => s > 0);
+        const wMax = wSpeeds.length > 0 ? Math.max(...wSpeeds).toFixed(0) : '—';
+        const wAvg = wSpeeds.length > 0 ? (wSpeeds.reduce((a, b) => a + b, 0) / wSpeeds.length).toFixed(0) : '—';
+
+        let wDist = '—';
+        let wFuel = '—';
+        if (wSpeeds.length > 1) {
+          const wTimes = recs.map(r => new Date(r.Timestamp || r.timestamp || r.DateTime || 0).getTime()).filter(t => t > 0).sort((a, b) => a - b);
+          if (wTimes.length > 1) {
+            const wHrs = (wTimes[wTimes.length - 1] - wTimes[0]) / 3600000;
+            const mf = wSpeeds.length / recs.length;
+            const d = Math.round(parseFloat(wAvg) * wHrs * mf);
+            wDist = String(d);
+            wFuel = String(Math.round((d / 100) * GPS_ONLY_FUEL_RATE_L100));
+          }
+        }
+
+        txt += '  ' + ('Week ' + w.week).padEnd(20) + String(recs.length).padEnd(10) + String(wMax).padEnd(12) + String(wAvg).padEnd(12) + String(wDist).padEnd(12) + wFuel + '\n';
+      }
 
       // List all unique field names across all records
       const fieldSet = new Set();
-      weekData.forEach(r => {
+      allRecords.forEach(r => {
         Object.keys(r).forEach(k => fieldSet.add(k));
         const fc = r.Fields || r.fields || r.FieldData || r.Data || {};
         if (fc && typeof fc === 'object') Object.keys(fc).forEach(k => fieldSet.add('Fields.' + k));
       });
-      txt += '  All field names found:\n';
+      txt += '\n  All field names found:\n';
       [...fieldSet].sort().forEach(f => { txt += '    - ' + f + '\n'; });
     }
   }
@@ -4516,22 +4586,26 @@ async function fetchHistoricalData() {
     'Content-Type': 'application/json'
   };
 
-  // Try fetching last 24 hours of raw telemetry for richer data
-  try {
-    const now = new Date();
-    const from24h = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
-    const to = now.toISOString();
-
-    const url = `${credentials.apiBase}/v2/${credentials.orgId}/asset/${credentials.assetSerial}/rawtelemetry?from=${from24h}&to=${to}&limit=100&sort=desc`;
-    const res = await proxiedFetch(url, { headers });
-    if (res.ok) {
-      const records = await res.json();
-      const items = Array.isArray(records) ? records : (records.Items || records.items || records.data || []);
-      if (items.length > 0) {
-        processHistoricalRecords(items);
+  // Fetch last 4 weeks of raw telemetry (week by week for more data points)
+  const allItems = [];
+  const now = new Date();
+  for (let week = 0; week < 4; week++) {
+    try {
+      const weekEnd = new Date(now.getTime() - week * 7 * 86400000);
+      const weekStart = new Date(now.getTime() - (week + 1) * 7 * 86400000);
+      const url = `${credentials.apiBase}/v2/${credentials.orgId}/asset/${credentials.assetSerial}/rawtelemetry?from=${weekStart.toISOString()}&to=${weekEnd.toISOString()}&limit=200&sort=desc`;
+      const res = await proxiedFetch(url, { headers });
+      if (res.ok) {
+        const records = await res.json();
+        const items = Array.isArray(records) ? records : (records.Items || records.items || records.data || []);
+        allItems.push(...items);
       }
-    }
-  } catch(e) { debugLog('Historical fetch error', e.message); }
+    } catch(e) { debugLog('Historical fetch week ' + (week + 1) + ' error', e.message); }
+  }
+
+  if (allItems.length > 0) {
+    processHistoricalRecords(allItems);
+  }
 }
 
 function processHistoricalRecords(records) {
