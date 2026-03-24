@@ -1746,6 +1746,23 @@
         </div>
       </div>
 
+      <!-- Fuel Economy (shown when data available) -->
+      <div class="gauge-grid" id="fuel-economy-section" style="display:none">
+        <div class="gauge-card" id="card-fuel-economy">
+          <div class="gauge-label">FUEL ECONOMY</div>
+          <div class="gauge-value" id="val-fuel-economy" style="font-size:24px">—</div>
+          <div class="gauge-unit">L/100km</div>
+        </div>
+        <div class="gauge-card" id="card-distance-on-fuel">
+          <div class="gauge-label">EST. RANGE</div>
+          <div class="gauge-value" id="val-fuel-range" style="font-size:24px">—</div>
+          <div class="gauge-unit">km</div>
+        </div>
+      </div>
+
+      <!-- Historical stats -->
+      <div id="historical-stats" style="display:none"></div>
+
       <button class="share-btn" onclick="openReportModal()">📥 DOWNLOAD REPORT</button>
     </div>
 
@@ -2349,27 +2366,30 @@ async function fetchTelematicsData() {
         }
       } catch(e) { debugLog('Strategy 1 error', e.message); }
 
-      // Strategy 2: Raw telemetry — wider window (10 minutes)
-      try {
-        const now = new Date();
-        const from = new Date(now.getTime() - 600000).toISOString();
-        const to = now.toISOString();
+      // Strategy 2: Raw telemetry — try progressively wider windows
+      for (const windowMs of [600000, 3600000, 86400000, 604800000]) {
+        try {
+          const now = new Date();
+          const from = new Date(now.getTime() - windowMs).toISOString();
+          const to = now.toISOString();
+          const windowLabel = windowMs < 3600000 ? '10min' : windowMs < 86400000 ? '1hr' : windowMs < 604800000 ? '24hr' : '7day';
 
-        const telUrl = `${credentials.apiBase}/v2/${credentials.orgId}/asset/${credentials.assetSerial}/rawtelemetry?from=${from}&to=${to}&limit=1&sort=desc`;
-        debugLog('Strategy 2 URL', telUrl);
-        const res = await proxiedFetch(telUrl, { headers });
-        debugLog('Strategy 2 status', res.status);
+          const telUrl = `${credentials.apiBase}/v2/${credentials.orgId}/asset/${credentials.assetSerial}/rawtelemetry?from=${from}&to=${to}&limit=1&sort=desc`;
+          debugLog('Strategy 2 (' + windowLabel + ') URL', telUrl);
+          const res = await proxiedFetch(telUrl, { headers });
+          debugLog('Strategy 2 (' + windowLabel + ') status', res.status);
 
-        if (res.ok) {
-          const records = await res.json();
-          debugLog('Strategy 2 data', records);
-          const items = Array.isArray(records) ? records : (records.Items || records.items || records.data || []);
-          if (items.length > 0) {
-            mapTGDataToDisplay(items[0]);
-            return;
+          if (res.ok) {
+            const records = await res.json();
+            debugLog('Strategy 2 (' + windowLabel + ') data', records);
+            const items = Array.isArray(records) ? records : (records.Items || records.items || records.data || []);
+            if (items.length > 0) {
+              mapTGDataToDisplay(items[0]);
+              return;
+            }
           }
-        }
-      } catch(e) { debugLog('Strategy 2 error', e.message); }
+        } catch(e) { debugLog('Strategy 2 error', e.message); }
+      }
 
       // Strategy 3: Asset latest position (always has something if device ever reported)
       try {
@@ -2528,16 +2548,43 @@ function mapTGDataToDisplay(record) {
   const odo = findField(fields, 'Odometer', 'odometer', 'TotalDistance', 'totalDistance', 'Mileage', 'mileage', 'SPN_245', 'spn245', 'TotalVehicleDistance');
   if (odo !== undefined) data.odometer = parseFloat(odo);
 
-  // Ignition — check multiple fields
+  // Ignition — check multiple fields, but override with speed
   const ign = findField(record, 'DIn1', 'Ignition', 'ignition', 'DIn_1', 'DigitalInput1');
   const ignField = findField(fields, 'Ignition', 'ignition', 'IgnitionStatus');
-  data.ignition = (ign || ignField) ? 'ON' : 'OFF';
+  const gpsSpeedVal = parseFloat(data.speed) || 0;
+  // If GPS shows movement, ignition MUST be on regardless of DI wiring
+  if (gpsSpeedVal > 3) {
+    data.ignition = 'ON';
+  } else {
+    data.ignition = (ign || ignField) ? 'ON' : 'OFF';
+  }
+
+  // Filter unrealistic battery voltage (device backup battery vs truck battery)
+  if (data.battVoltage !== undefined && (data.battVoltage < 5 || data.battVoltage > 32)) {
+    delete data.battVoltage;
+  }
 
   // GPS status
   const gpsValid = findField(record, 'GpsValid', 'gpsValid', 'GpsFix', 'gpsFix', 'ValidPosition');
   data.gpsSignal = (gpsValid === false || gpsValid === 0) ? 'NO FIX' : 'LOCKED';
 
+  // Track what data sources are available
+  const engineVals = [data.rpm, data.coolantTemp, data.oilPressure, data.oilTemp,
+    data.boostPressure, data.exhaustTemp, data.engineLoad, data.fuelRate];
+  data._hasEngineData = engineVals.some(v => v !== undefined && v !== null);
+  data._hasGpsData = (data.lat !== undefined && data.lng !== undefined);
+  data._dataSource = data._hasEngineData ? 'canbus' : (data._hasGpsData ? 'gps' : 'none');
+
+  // Calculate fuel economy if both fuel rate and speed available
+  if (data.fuelRate > 0 && gpsSpeedVal > 5) {
+    data.fuelEconomy = ((data.fuelRate / gpsSpeedVal) * 100).toFixed(1);
+  }
+
   data.faults = [];
+
+  // Cache this data for the vehicle
+  cacheVehicleData(data);
+
   updateDisplay(data);
 }
 
@@ -2557,9 +2604,14 @@ function mapAssetDataToDisplay(asset) {
   const alt = findField(asset, 'Altitude', 'altitude', 'Alt', 'alt');
   if (alt !== undefined) data.alt = alt;
 
-  // Ignition from top level
+  // Ignition from top level — override with speed
   const ign = findField(asset, 'Ignition', 'ignition', 'DIn1');
-  data.ignition = ign ? 'ON' : 'OFF';
+  const assetSpeed = parseFloat(data.speed) || 0;
+  if (assetSpeed > 3) {
+    data.ignition = 'ON';
+  } else {
+    data.ignition = ign ? 'ON' : 'OFF';
+  }
   const gpsV = findField(asset, 'GpsValid', 'gpsValid', 'GpsFix');
   data.gpsSignal = (gpsV === false || gpsV === 0) ? 'NO FIX' : 'LOCKED';
 
@@ -2641,12 +2693,48 @@ function mapAssetDataToDisplay(asset) {
   const odo = findField(fields, 'Odometer', 'odometer', 'TotalDistance', 'Mileage', 'SPN_245', 'spn245', 'TotalVehicleDistance');
   if (odo !== undefined) data.odometer = parseFloat(odo);
 
+  // Filter unrealistic battery voltage
+  if (data.battVoltage !== undefined && (data.battVoltage < 5 || data.battVoltage > 32)) {
+    delete data.battVoltage;
+  }
+
+  // Track data sources
+  const engineVals2 = [data.rpm, data.coolantTemp, data.oilPressure, data.oilTemp,
+    data.boostPressure, data.exhaustTemp, data.engineLoad, data.fuelRate];
+  data._hasEngineData = engineVals2.some(v => v !== undefined && v !== null);
+  data._hasGpsData = (data.lat !== undefined && data.lng !== undefined);
+  data._dataSource = data._hasEngineData ? 'canbus' : (data._hasGpsData ? 'gps' : 'none');
+
+  // Calculate fuel economy
+  const assetSpd2 = parseFloat(data.speed) || 0;
+  if (data.fuelRate > 0 && assetSpd2 > 5) {
+    data.fuelEconomy = ((data.fuelRate / assetSpd2) * 100).toFixed(1);
+  }
+
   data.faults = [];
+
+  // Cache this data for the vehicle
+  cacheVehicleData(data);
+
   updateDisplay(data);
 }
 
 function showConnectionNote() {
   document.getElementById('update-time').textContent = 'NO DATA YET';
+
+  // Try loading cached data before showing "waiting" message
+  const cached = loadCachedVehicleData();
+  if (cached && cached.data) {
+    const age = Date.now() - cached.timestamp;
+    const ageStr = age < 3600000 ? Math.round(age / 60000) + ' min ago' :
+      age < 86400000 ? Math.round(age / 3600000) + ' hours ago' :
+      Math.round(age / 86400000) + ' days ago';
+    cached.data._cached = true;
+    cached.data._cacheAge = ageStr;
+    updateDisplay(cached.data);
+    document.getElementById('update-time').textContent = 'CACHED — ' + ageStr;
+    return;
+  }
 
   const faultList = document.getElementById('fault-list');
   faultList.innerHTML = `
@@ -2686,6 +2774,25 @@ function updateDisplay(data) {
   setGauge('fuel', data.fuelLevel, 0, 100, [20, 10], true);
 
   setText('val-regen', data.regenStatus || '—');
+
+  // Fuel economy display
+  const fuelEcoSection = document.getElementById('fuel-economy-section');
+  if (fuelEcoSection) {
+    if (data.fuelEconomy) {
+      fuelEcoSection.style.display = '';
+      setText('val-fuel-economy', data.fuelEconomy);
+      // Estimate range: (fuelLevel% * tankSize) / (L/100km) * 100
+      // Assume ~600L tank for heavy truck
+      if (data.fuelLevel > 0 && parseFloat(data.fuelEconomy) > 0) {
+        const tankLitres = (data.fuelLevel / 100) * 600;
+        const range = Math.round(tankLitres / parseFloat(data.fuelEconomy) * 100);
+        setText('val-fuel-range', range);
+      }
+    } else if (data.speed > 0 && !data._hasEngineData) {
+      // GPS only — show speed-based info instead
+      fuelEcoSection.style.display = 'none';
+    }
+  }
 
   // Drivetrain
   setText('val-gear', data.gear || '—');
@@ -2747,20 +2854,35 @@ function updateDisplay(data) {
   updateVehicleStatus(data);
 }
 
-// Show a subtle note on the ENGINE tab when engine is off and no engine data
+// Show status note on ENGINE tab based on data availability
 function showEngineOffNote(data) {
   const bar = document.getElementById('alert-bar');
   const alertText = document.getElementById('alert-text');
   if (!bar || !alertText) return;
 
   const ignOff = !data.ignition || data.ignition.toUpperCase() === 'OFF';
-  const engineVals = [data.rpm, data.coolantTemp, data.oilPressure, data.oilTemp,
-    data.boostPressure, data.exhaustTemp, data.engineLoad, data.fuelRate];
-  const hasEngineData = engineVals.some(v => v !== undefined && v !== null);
+  const speed = parseFloat(data.speed) || 0;
+  const hasEngineData = data._hasEngineData;
+  const hasGps = data._hasGpsData;
 
-  if (ignOff && !hasEngineData) {
+  // Don't show "engine off" if truck is clearly moving
+  if (speed > 3) {
+    if (!hasEngineData && hasGps) {
+      bar.classList.add('show');
+      bar.style.borderColor = 'rgba(0,176,255,0.4)';
+      bar.style.background = 'rgba(0,176,255,0.06)';
+      alertText.style.color = 'var(--blue)';
+      alertText.textContent = 'GPS tracker only \u2014 engine data requires CAN bus adapter';
+    }
+    return;
+  }
+
+  if (ignOff && !hasEngineData && hasGps) {
     bar.classList.add('show');
-    alertText.textContent = 'Engine off \u2014 showing last known position data';
+    bar.style.borderColor = 'rgba(255,214,0,0.4)';
+    bar.style.background = 'rgba(255,214,0,0.06)';
+    alertText.style.color = 'var(--yellow)';
+    alertText.textContent = 'Parked \u2014 showing last known position data';
   }
 }
 
@@ -2834,24 +2956,49 @@ function renderFaults(faults) {
 
 function checkAlerts(data) {
   const alerts = [];
-  if (data.coolantTemp >= 105) alerts.push('HIGH COOLANT TEMP: ' + data.coolantTemp + '°C');
-  if (data.oilPressure < 150) alerts.push('LOW OIL PRESSURE: ' + data.oilPressure + ' kPa');
-  if (data.defLevel < 15) alerts.push('LOW DEF LEVEL: ' + data.defLevel + '%');
-  if (data.dpfSoot > 85) alerts.push('DPF SOOT HIGH: ' + data.dpfSoot + '%');
-  if (data.fuelLevel < 15) alerts.push('LOW FUEL: ' + data.fuelLevel + '%');
+  // Only alert on values that actually exist and are realistic
+  if (data.coolantTemp !== undefined && data.coolantTemp >= 105) alerts.push('HIGH COOLANT TEMP: ' + data.coolantTemp + '°C');
+  if (data.oilPressure !== undefined && data.oilPressure > 0 && data.oilPressure < 150) alerts.push('LOW OIL PRESSURE: ' + data.oilPressure + ' kPa');
+  if (data.defLevel !== undefined && data.defLevel < 15) alerts.push('LOW DEF LEVEL: ' + data.defLevel + '%');
+  if (data.dpfSoot !== undefined && data.dpfSoot > 85) alerts.push('DPF SOOT HIGH: ' + data.dpfSoot + '%');
+  if (data.fuelLevel !== undefined && data.fuelLevel < 15) alerts.push('LOW FUEL: ' + data.fuelLevel + '%');
+  // Battery: only alert if in valid truck range (10-30V)
+  if (data.battVoltage !== undefined && data.battVoltage >= 5 && data.battVoltage < 11.0) alerts.push('LOW BATTERY: ' + data.battVoltage + 'V');
 
   const bar = document.getElementById('alert-bar');
   if (alerts.length > 0) {
     bar.classList.add('show');
-    document.getElementById('alert-text').textContent = alerts.join(' · ');
+    bar.style.borderColor = '';
+    bar.style.background = '';
+    const alertText = document.getElementById('alert-text');
+    alertText.style.color = '';
+    alertText.textContent = alerts.join(' · ');
+  } else if (!data._hasEngineData || (parseFloat(data.speed) || 0) <= 3) {
+    // Don't clear alert bar — let showEngineOffNote manage it
   } else {
     bar.classList.remove('show');
   }
 }
 
 function startLiveUpdates() {
+  // Load cached data immediately so UI isn't empty while fetching
+  const cached = loadCachedVehicleData();
+  if (cached && cached.data) {
+    const age = Date.now() - cached.timestamp;
+    const ageStr = age < 60000 ? 'just now' :
+      age < 3600000 ? Math.round(age / 60000) + 'm ago' :
+      age < 86400000 ? Math.round(age / 3600000) + 'h ago' :
+      Math.round(age / 86400000) + 'd ago';
+    cached.data._cached = true;
+    cached.data._cacheAge = ageStr;
+    updateDisplay(cached.data);
+  }
+
   fetchTelematicsData();
   updateInterval = setInterval(fetchTelematicsData, 5000);
+
+  // Fetch historical data in background (after initial load)
+  setTimeout(fetchHistoricalData, 3000);
 }
 
 function generateDemoData() {
@@ -3290,7 +3437,7 @@ checkAlerts = function(data) {
   if (data.defLevel !== undefined && data.defLevel < 10) criticals.push('DEF critically low: ' + data.defLevel + '%');
   if (data.dpfSoot > 95) criticals.push('DPF soot critical: ' + data.dpfSoot + '%');
   if (data.fuelLevel !== undefined && data.fuelLevel < 10) criticals.push('Fuel critically low: ' + data.fuelLevel + '%');
-  if (data.battVoltage !== undefined && data.battVoltage < 11.0) criticals.push('Battery low: ' + data.battVoltage + 'V');
+  if (data.battVoltage !== undefined && data.battVoltage >= 5 && data.battVoltage < 11.0) criticals.push('Battery low: ' + data.battVoltage + 'V');
   if (criticals.length > 0) {
     sendPushNotification('TKLINK ALERT', criticals.join(' | '));
   }
@@ -3336,10 +3483,27 @@ function selectVehicle(index) {
   const asset = allAssets[index];
   credentials.assetSerial = asset.Serial || asset.serial || asset.Id || asset.id;
   credentials.assetName = asset.Name || asset.name || 'Vehicle';
+  credentials._initialTabSet = false; // Reset for new vehicle
   document.getElementById('header-truck').textContent = credentials.assetName;
   document.getElementById('header-id').textContent = credentials.assetSerial || credentials.vid;
   closeVehiclePicker();
+
+  // Load cached data for new vehicle immediately
+  const cached = loadCachedVehicleData();
+  if (cached && cached.data) {
+    const age = Date.now() - cached.timestamp;
+    const ageStr = age < 60000 ? 'just now' :
+      age < 3600000 ? Math.round(age / 60000) + 'm ago' :
+      age < 86400000 ? Math.round(age / 3600000) + 'h ago' :
+      Math.round(age / 86400000) + 'd ago';
+    cached.data._cached = true;
+    cached.data._cacheAge = ageStr;
+    updateDisplay(cached.data);
+  }
+
   fetchTelematicsData();
+  // Fetch historical for new vehicle
+  setTimeout(fetchHistoricalData, 2000);
   showNotifToast('Switched to ' + credentials.assetName);
 }
 
@@ -3921,6 +4085,137 @@ renderTripHistory = async function() {
 };
 
 // ========================================
+// VEHICLE DATA CACHE (persist last known data per vehicle)
+// ========================================
+const CACHE_KEY_PREFIX = 'tklink-vdata-';
+
+function cacheVehicleData(data) {
+  if (!credentials.assetSerial) return;
+  try {
+    const key = CACHE_KEY_PREFIX + credentials.assetSerial;
+    const cache = {
+      data: data,
+      timestamp: Date.now(),
+      assetName: credentials.assetName
+    };
+    localStorage.setItem(key, JSON.stringify(cache));
+  } catch(e) {}
+}
+
+function loadCachedVehicleData() {
+  if (!credentials.assetSerial) return null;
+  try {
+    const key = CACHE_KEY_PREFIX + credentials.assetSerial;
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const cache = JSON.parse(raw);
+    // Cache valid for 21 days
+    if (Date.now() - cache.timestamp > 21 * 24 * 60 * 60 * 1000) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    return cache;
+  } catch(e) { return null; }
+}
+
+// ========================================
+// HISTORICAL DATA FETCH (last 7-21 days summary)
+// ========================================
+let historicalStats = null;
+
+async function fetchHistoricalData() {
+  if (!credentials.orgId || !credentials.assetSerial || !credentials.token) return;
+
+  const headers = {
+    'Authorization': 'Bearer ' + credentials.token,
+    'Content-Type': 'application/json'
+  };
+
+  // Try fetching last 24 hours of raw telemetry for richer data
+  try {
+    const now = new Date();
+    const from24h = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+    const to = now.toISOString();
+
+    const url = `${credentials.apiBase}/v2/${credentials.orgId}/asset/${credentials.assetSerial}/rawtelemetry?from=${from24h}&to=${to}&limit=100&sort=desc`;
+    const res = await proxiedFetch(url, { headers });
+    if (res.ok) {
+      const records = await res.json();
+      const items = Array.isArray(records) ? records : (records.Items || records.items || records.data || []);
+      if (items.length > 0) {
+        processHistoricalRecords(items);
+      }
+    }
+  } catch(e) { debugLog('Historical fetch error', e.message); }
+}
+
+function processHistoricalRecords(records) {
+  const stats = {
+    recordCount: records.length,
+    timespan: '',
+    maxSpeed: 0,
+    avgSpeed: 0,
+    totalDistance: 0,
+    avgFuelRate: null,
+    fuelEconomy: null,
+    speeds: [],
+    fuelRates: []
+  };
+
+  for (const r of records) {
+    const fields = {};
+    const containers = [r.Fields, r.fields, r.FieldData, r.Data, r.data, r];
+    for (const c of containers) {
+      if (c && typeof c === 'object' && !Array.isArray(c)) Object.assign(fields, c);
+    }
+
+    const spd = parseFloat(findField(r, 'Speed', 'speed', 'GpsSpeed') || 0);
+    if (spd > 0) stats.speeds.push(spd);
+    if (spd > stats.maxSpeed) stats.maxSpeed = spd;
+
+    const fr = parseFloat(findField(fields, 'FuelRate', 'fuelRate', 'FuelConsumption') || 0);
+    if (fr > 0) stats.fuelRates.push(fr);
+  }
+
+  if (stats.speeds.length > 0) {
+    stats.avgSpeed = Math.round(stats.speeds.reduce((a, b) => a + b, 0) / stats.speeds.length);
+  }
+  if (stats.fuelRates.length > 0) {
+    stats.avgFuelRate = (stats.fuelRates.reduce((a, b) => a + b, 0) / stats.fuelRates.length).toFixed(1);
+    if (stats.avgSpeed > 5) {
+      stats.fuelEconomy = ((stats.avgFuelRate / stats.avgSpeed) * 100).toFixed(1);
+    }
+  }
+
+  // Calculate time span
+  if (records.length > 1) {
+    const firstTime = new Date(records[records.length - 1].Timestamp || records[records.length - 1].timestamp || records[records.length - 1].DateTime || 0);
+    const lastTime = new Date(records[0].Timestamp || records[0].timestamp || records[0].DateTime || 0);
+    const hours = Math.round((lastTime - firstTime) / 3600000);
+    stats.timespan = hours > 24 ? Math.round(hours / 24) + ' days' : hours + ' hours';
+  }
+
+  historicalStats = stats;
+  renderHistoricalStats();
+}
+
+function renderHistoricalStats() {
+  const container = document.getElementById('historical-stats');
+  if (!container || !historicalStats) return;
+  const s = historicalStats;
+  container.innerHTML =
+    '<div class="section-header" style="margin-top:8px">RECENT ACTIVITY (' + (s.timespan || 'last 24h') + ')</div>' +
+    '<div class="gauge-grid">' +
+      '<div class="gauge-card"><div class="gauge-label">MAX SPEED</div><div class="gauge-value" style="font-size:24px">' + Math.round(s.maxSpeed) + '</div><div class="gauge-unit">km/h</div></div>' +
+      '<div class="gauge-card"><div class="gauge-label">AVG SPEED</div><div class="gauge-value" style="font-size:24px">' + s.avgSpeed + '</div><div class="gauge-unit">km/h</div></div>' +
+      (s.avgFuelRate ? '<div class="gauge-card"><div class="gauge-label">AVG FUEL RATE</div><div class="gauge-value" style="font-size:24px">' + s.avgFuelRate + '</div><div class="gauge-unit">L/hr</div></div>' : '') +
+      (s.fuelEconomy ? '<div class="gauge-card"><div class="gauge-label">FUEL ECONOMY</div><div class="gauge-value" style="font-size:24px">' + s.fuelEconomy + '</div><div class="gauge-unit">L/100km</div></div>' : '') +
+    '</div>' +
+    '<div style="font-size:11px;color:var(--dim);text-align:center;margin-top:4px">' + s.recordCount + ' data points</div>';
+  container.style.display = 'block';
+}
+
+// ========================================
 // VEHICLE STATUS INDICATOR
 // ========================================
 let lastDataTimestamp = Date.now();
@@ -3953,14 +4248,17 @@ function updateVehicleStatus(data) {
     badge.className = 'status-badge parked';
     label.textContent = 'PARKED';
 
-    // Auto-switch to GPS tab when parked and engine tab shows all dashes
-    const activePanel = document.querySelector('.tab-panel.active');
-    if (activePanel && activePanel.id === 'tab-engine') {
-      const engineVals = [data.rpm, data.coolantTemp, data.oilPressure, data.oilTemp,
-        data.boostPressure, data.exhaustTemp, data.engineLoad, data.fuelRate];
-      const hasEngineData = engineVals.some(v => v !== undefined && v !== null);
-      if (!hasEngineData) {
-        switchTab('gps');
+    // Only auto-switch to GPS on FIRST load if no engine data (not on every poll)
+    if (!credentials._initialTabSet) {
+      credentials._initialTabSet = true;
+      const activePanel = document.querySelector('.tab-panel.active');
+      if (activePanel && activePanel.id === 'tab-engine') {
+        const engineVals = [data.rpm, data.coolantTemp, data.oilPressure, data.oilTemp,
+          data.boostPressure, data.exhaustTemp, data.engineLoad, data.fuelRate];
+        const hasEngineData = engineVals.some(v => v !== undefined && v !== null);
+        if (!hasEngineData && data._hasGpsData) {
+          switchTab('gps');
+        }
       }
     }
   }

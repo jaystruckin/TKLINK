@@ -121,8 +121,17 @@ No `.env` files needed — the app auto-detects its deployment platform at runti
 2. Proxy files: `proxy/worker.js`, `functions/api/proxy.js`, `api/proxy.js`, `netlify/functions/proxy.js`, `proxy/server.js`
 
 ### Updating the service worker cache
-1. Bump the cache version in `sw.js` (e.g., `workshop-v5` → `workshop-v6`)
+1. Bump the cache version in `sw.js` (e.g., `tklink-v7` → `tklink-v8`)
 2. Update the pre-cache file list if new static assets were added
+
+### Data fetching architecture
+- 4 fetch strategies with cascading fallback: livedata → rawtelemetry (10min→1hr→24hr→7day) → single asset → asset list
+- `findField()` provides case-insensitive fuzzy field matching for TG API naming variants
+- Vehicle data cached in localStorage per assetSerial (21-day retention)
+- Historical data fetched in background for stats (speed, fuel economy)
+- GPS-only trackers (no CAN bus) show position/speed/heading only — engine gauges stay empty
+- Ignition detection uses GPS speed > 3 km/h as override when DI not wired
+- Battery voltage filtered (5-32V range) to exclude device backup battery
 
 ## Security Notes
 - Never commit credentials, API tokens, or `.env` files
