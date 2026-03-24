@@ -1917,6 +1917,9 @@
         </div>
       </div>
 
+      <!-- Historical stats + estimated fuel (GPS-only trucks) -->
+      <div id="historical-stats" style="display:none"></div>
+
       <button class="share-btn" onclick="openReportModal()">📥 DOWNLOAD REPORT</button>
     </div>
 
@@ -2034,6 +2037,15 @@
 
     <!-- ECM FILE READER -->
     <div class="tab-panel" id="tab-ecm">
+      <div class="note-box" style="margin-bottom:16px">
+        <strong style="color:var(--accent)">FULL DATA DUMP</strong><br>
+        Pull everything the MacTrack API has for this vehicle — raw API responses, all fields, every data point from the last 4 weeks. Weekly breakdown with distance and fuel estimates.
+      </div>
+      <button class="share-btn" onclick="downloadFullDataDump()" id="dump-btn" style="margin-top:0;margin-bottom:20px;background:rgba(0,176,255,0.1);border-color:rgba(0,176,255,0.3);color:var(--blue)">📥 DOWNLOAD FULL DATA DUMP</button>
+      <div id="dump-status" style="display:none;font-size:12px;color:var(--dim);margin-bottom:16px;text-align:center;letter-spacing:1px"></div>
+      <div id="dump-preview" style="display:none"></div>
+
+      <div class="section-header" style="margin-top:24px">ECM FILE UPLOAD</div>
       <div class="ecm-upload" id="ecm-dropzone" onclick="document.getElementById('ecm-file-input').click()">
         <div class="ecm-upload-icon">📁</div>
         <div class="ecm-upload-text">TAP TO LOAD ECM / CALIBRATION FILE</div>
@@ -2520,27 +2532,30 @@ async function fetchTelematicsData() {
         }
       } catch(e) { debugLog('Strategy 1 error', e.message); }
 
-      // Strategy 2: Raw telemetry — wider window (10 minutes)
-      try {
-        const now = new Date();
-        const from = new Date(now.getTime() - 600000).toISOString();
-        const to = now.toISOString();
+      // Strategy 2: Raw telemetry — try progressively wider windows
+      for (const windowMs of [600000, 3600000, 86400000, 604800000]) {
+        try {
+          const now = new Date();
+          const from = new Date(now.getTime() - windowMs).toISOString();
+          const to = now.toISOString();
+          const windowLabel = windowMs < 3600000 ? '10min' : windowMs < 86400000 ? '1hr' : windowMs < 604800000 ? '24hr' : '7day';
 
-        const telUrl = `${credentials.apiBase}/v2/${credentials.orgId}/asset/${credentials.assetSerial}/rawtelemetry?from=${from}&to=${to}&limit=1&sort=desc`;
-        debugLog('Strategy 2 URL', telUrl);
-        const res = await proxiedFetch(telUrl, { headers });
-        debugLog('Strategy 2 status', res.status);
+          const telUrl = `${credentials.apiBase}/v2/${credentials.orgId}/asset/${credentials.assetSerial}/rawtelemetry?from=${from}&to=${to}&limit=1&sort=desc`;
+          debugLog('Strategy 2 (' + windowLabel + ') URL', telUrl);
+          const res = await proxiedFetch(telUrl, { headers });
+          debugLog('Strategy 2 (' + windowLabel + ') status', res.status);
 
-        if (res.ok) {
-          const records = await res.json();
-          debugLog('Strategy 2 data', records);
-          const items = Array.isArray(records) ? records : (records.Items || records.items || records.data || []);
-          if (items.length > 0) {
-            mapTGDataToDisplay(items[0]);
-            return;
+          if (res.ok) {
+            const records = await res.json();
+            debugLog('Strategy 2 (' + windowLabel + ') data', records);
+            const items = Array.isArray(records) ? records : (records.Items || records.items || records.data || []);
+            if (items.length > 0) {
+              mapTGDataToDisplay(items[0]);
+              return;
+            }
           }
-        }
-      } catch(e) { debugLog('Strategy 2 error', e.message); }
+        } catch(e) { debugLog('Strategy 2 error', e.message); }
+      }
 
       // Strategy 3: Asset latest position (always has something if device ever reported)
       try {
@@ -2699,16 +2714,43 @@ function mapTGDataToDisplay(record) {
   const odo = findField(fields, 'Odometer', 'odometer', 'TotalDistance', 'totalDistance', 'Mileage', 'mileage', 'SPN_245', 'spn245', 'TotalVehicleDistance');
   if (odo !== undefined) data.odometer = parseFloat(odo);
 
-  // Ignition — check multiple fields
+  // Ignition — check multiple fields, but override with speed
   const ign = findField(record, 'DIn1', 'Ignition', 'ignition', 'DIn_1', 'DigitalInput1');
   const ignField = findField(fields, 'Ignition', 'ignition', 'IgnitionStatus');
-  data.ignition = (ign || ignField) ? 'ON' : 'OFF';
+  const gpsSpeedVal = parseFloat(data.speed) || 0;
+  // If GPS shows movement, ignition MUST be on regardless of DI wiring
+  if (gpsSpeedVal > 3) {
+    data.ignition = 'ON';
+  } else {
+    data.ignition = (ign || ignField) ? 'ON' : 'OFF';
+  }
+
+  // Filter unrealistic battery voltage (device backup battery vs truck battery)
+  if (data.battVoltage !== undefined && (data.battVoltage < 5 || data.battVoltage > 32)) {
+    delete data.battVoltage;
+  }
 
   // GPS status
   const gpsValid = findField(record, 'GpsValid', 'gpsValid', 'GpsFix', 'gpsFix', 'ValidPosition');
   data.gpsSignal = (gpsValid === false || gpsValid === 0) ? 'NO FIX' : 'LOCKED';
 
+  // Track what data sources are available
+  const engineVals = [data.rpm, data.coolantTemp, data.oilPressure, data.oilTemp,
+    data.boostPressure, data.exhaustTemp, data.engineLoad, data.fuelRate];
+  data._hasEngineData = engineVals.some(v => v !== undefined && v !== null);
+  data._hasGpsData = (data.lat !== undefined && data.lng !== undefined);
+  data._dataSource = data._hasEngineData ? 'canbus' : (data._hasGpsData ? 'gps' : 'none');
+
+  // Calculate fuel economy if both fuel rate and speed available
+  if (data.fuelRate > 0 && gpsSpeedVal > 5) {
+    data.fuelEconomy = ((data.fuelRate / gpsSpeedVal) * 100).toFixed(1);
+  }
+
   data.faults = [];
+
+  // Cache this data for the vehicle
+  cacheVehicleData(data);
+
   updateDisplay(data);
 }
 
@@ -2728,9 +2770,14 @@ function mapAssetDataToDisplay(asset) {
   const alt = findField(asset, 'Altitude', 'altitude', 'Alt', 'alt');
   if (alt !== undefined) data.alt = alt;
 
-  // Ignition from top level
+  // Ignition from top level — override with speed
   const ign = findField(asset, 'Ignition', 'ignition', 'DIn1');
-  data.ignition = ign ? 'ON' : 'OFF';
+  const assetSpeed = parseFloat(data.speed) || 0;
+  if (assetSpeed > 3) {
+    data.ignition = 'ON';
+  } else {
+    data.ignition = ign ? 'ON' : 'OFF';
+  }
   const gpsV = findField(asset, 'GpsValid', 'gpsValid', 'GpsFix');
   data.gpsSignal = (gpsV === false || gpsV === 0) ? 'NO FIX' : 'LOCKED';
 
@@ -2812,12 +2859,48 @@ function mapAssetDataToDisplay(asset) {
   const odo = findField(fields, 'Odometer', 'odometer', 'TotalDistance', 'Mileage', 'SPN_245', 'spn245', 'TotalVehicleDistance');
   if (odo !== undefined) data.odometer = parseFloat(odo);
 
+  // Filter unrealistic battery voltage
+  if (data.battVoltage !== undefined && (data.battVoltage < 5 || data.battVoltage > 32)) {
+    delete data.battVoltage;
+  }
+
+  // Track data sources
+  const engineVals2 = [data.rpm, data.coolantTemp, data.oilPressure, data.oilTemp,
+    data.boostPressure, data.exhaustTemp, data.engineLoad, data.fuelRate];
+  data._hasEngineData = engineVals2.some(v => v !== undefined && v !== null);
+  data._hasGpsData = (data.lat !== undefined && data.lng !== undefined);
+  data._dataSource = data._hasEngineData ? 'canbus' : (data._hasGpsData ? 'gps' : 'none');
+
+  // Calculate fuel economy
+  const assetSpd2 = parseFloat(data.speed) || 0;
+  if (data.fuelRate > 0 && assetSpd2 > 5) {
+    data.fuelEconomy = ((data.fuelRate / assetSpd2) * 100).toFixed(1);
+  }
+
   data.faults = [];
+
+  // Cache this data for the vehicle
+  cacheVehicleData(data);
+
   updateDisplay(data);
 }
 
 function showConnectionNote() {
   document.getElementById('update-time').textContent = 'NO DATA YET';
+
+  // Try loading cached data before showing "waiting" message
+  const cached = loadCachedVehicleData();
+  if (cached && cached.data) {
+    const age = Date.now() - cached.timestamp;
+    const ageStr = age < 3600000 ? Math.round(age / 60000) + ' min ago' :
+      age < 86400000 ? Math.round(age / 3600000) + ' hours ago' :
+      Math.round(age / 86400000) + ' days ago';
+    cached.data._cached = true;
+    cached.data._cacheAge = ageStr;
+    updateDisplay(cached.data);
+    document.getElementById('update-time').textContent = 'CACHED — ' + ageStr;
+    return;
+  }
 
   const faultList = document.getElementById('fault-list');
   faultList.innerHTML = `
@@ -2918,20 +3001,35 @@ function updateDisplay(data) {
   updateVehicleStatus(data);
 }
 
-// Show a subtle note on the ENGINE tab when engine is off and no engine data
+// Show status note on ENGINE tab based on data availability
 function showEngineOffNote(data) {
   const bar = document.getElementById('alert-bar');
   const alertText = document.getElementById('alert-text');
   if (!bar || !alertText) return;
 
   const ignOff = !data.ignition || data.ignition.toUpperCase() === 'OFF';
-  const engineVals = [data.rpm, data.coolantTemp, data.oilPressure, data.oilTemp,
-    data.boostPressure, data.exhaustTemp, data.engineLoad, data.fuelRate];
-  const hasEngineData = engineVals.some(v => v !== undefined && v !== null);
+  const speed = parseFloat(data.speed) || 0;
+  const hasEngineData = data._hasEngineData;
+  const hasGps = data._hasGpsData;
 
-  if (ignOff && !hasEngineData) {
+  // Don't show "engine off" if truck is clearly moving
+  if (speed > 3) {
+    if (!hasEngineData && hasGps) {
+      bar.classList.add('show');
+      bar.style.borderColor = 'rgba(0,176,255,0.4)';
+      bar.style.background = 'rgba(0,176,255,0.06)';
+      alertText.style.color = 'var(--blue)';
+      alertText.textContent = 'GPS tracker only \u2014 engine data requires CAN bus adapter';
+    }
+    return;
+  }
+
+  if (ignOff && !hasEngineData && hasGps) {
     bar.classList.add('show');
-    alertText.textContent = 'Engine off \u2014 showing last known position data';
+    bar.style.borderColor = 'rgba(255,214,0,0.4)';
+    bar.style.background = 'rgba(255,214,0,0.06)';
+    alertText.style.color = 'var(--yellow)';
+    alertText.textContent = 'Parked \u2014 showing last known position data';
   }
 }
 
@@ -3005,24 +3103,49 @@ function renderFaults(faults) {
 
 function checkAlerts(data) {
   const alerts = [];
-  if (data.coolantTemp >= 105) alerts.push('HIGH COOLANT TEMP: ' + data.coolantTemp + '°C');
-  if (data.oilPressure < 150) alerts.push('LOW OIL PRESSURE: ' + data.oilPressure + ' kPa');
-  if (data.defLevel < 15) alerts.push('LOW DEF LEVEL: ' + data.defLevel + '%');
-  if (data.dpfSoot > 85) alerts.push('DPF SOOT HIGH: ' + data.dpfSoot + '%');
-  if (data.fuelLevel < 15) alerts.push('LOW FUEL: ' + data.fuelLevel + '%');
+  // Only alert on values that actually exist and are realistic
+  if (data.coolantTemp !== undefined && data.coolantTemp >= 105) alerts.push('HIGH COOLANT TEMP: ' + data.coolantTemp + '°C');
+  if (data.oilPressure !== undefined && data.oilPressure > 0 && data.oilPressure < 150) alerts.push('LOW OIL PRESSURE: ' + data.oilPressure + ' kPa');
+  if (data.defLevel !== undefined && data.defLevel < 15) alerts.push('LOW DEF LEVEL: ' + data.defLevel + '%');
+  if (data.dpfSoot !== undefined && data.dpfSoot > 85) alerts.push('DPF SOOT HIGH: ' + data.dpfSoot + '%');
+  if (data.fuelLevel !== undefined && data.fuelLevel < 15) alerts.push('LOW FUEL: ' + data.fuelLevel + '%');
+  // Battery: only alert if in valid truck range (10-30V)
+  if (data.battVoltage !== undefined && data.battVoltage >= 5 && data.battVoltage < 11.0) alerts.push('LOW BATTERY: ' + data.battVoltage + 'V');
 
   const bar = document.getElementById('alert-bar');
   if (alerts.length > 0) {
     bar.classList.add('show');
-    document.getElementById('alert-text').textContent = alerts.join(' · ');
+    bar.style.borderColor = '';
+    bar.style.background = '';
+    const alertText = document.getElementById('alert-text');
+    alertText.style.color = '';
+    alertText.textContent = alerts.join(' · ');
+  } else if (!data._hasEngineData || (parseFloat(data.speed) || 0) <= 3) {
+    // Don't clear alert bar — let showEngineOffNote manage it
   } else {
     bar.classList.remove('show');
   }
 }
 
 function startLiveUpdates() {
+  // Load cached data immediately so UI isn't empty while fetching
+  const cached = loadCachedVehicleData();
+  if (cached && cached.data) {
+    const age = Date.now() - cached.timestamp;
+    const ageStr = age < 60000 ? 'just now' :
+      age < 3600000 ? Math.round(age / 60000) + 'm ago' :
+      age < 86400000 ? Math.round(age / 3600000) + 'h ago' :
+      Math.round(age / 86400000) + 'd ago';
+    cached.data._cached = true;
+    cached.data._cacheAge = ageStr;
+    updateDisplay(cached.data);
+  }
+
   fetchTelematicsData();
   updateInterval = setInterval(fetchTelematicsData, 5000);
+
+  // Fetch historical data in background (after initial load)
+  setTimeout(fetchHistoricalData, 3000);
 }
 
 function generateDemoData() {
@@ -3461,7 +3584,7 @@ checkAlerts = function(data) {
   if (data.defLevel !== undefined && data.defLevel < 10) criticals.push('DEF critically low: ' + data.defLevel + '%');
   if (data.dpfSoot > 95) criticals.push('DPF soot critical: ' + data.dpfSoot + '%');
   if (data.fuelLevel !== undefined && data.fuelLevel < 10) criticals.push('Fuel critically low: ' + data.fuelLevel + '%');
-  if (data.battVoltage !== undefined && data.battVoltage < 11.0) criticals.push('Battery low: ' + data.battVoltage + 'V');
+  if (data.battVoltage !== undefined && data.battVoltage >= 5 && data.battVoltage < 11.0) criticals.push('Battery low: ' + data.battVoltage + 'V');
   if (criticals.length > 0) {
     sendPushNotification('TKLINK ALERT', criticals.join(' | '));
   }
@@ -3507,10 +3630,27 @@ function selectVehicle(index) {
   const asset = allAssets[index];
   credentials.assetSerial = asset.Serial || asset.serial || asset.Id || asset.id;
   credentials.assetName = asset.Name || asset.name || 'Vehicle';
+  credentials._initialTabSet = false; // Reset for new vehicle
   document.getElementById('header-truck').textContent = credentials.assetName;
   document.getElementById('header-id').textContent = credentials.assetSerial || credentials.vid;
   closeVehiclePicker();
+
+  // Load cached data for new vehicle immediately
+  const cached = loadCachedVehicleData();
+  if (cached && cached.data) {
+    const age = Date.now() - cached.timestamp;
+    const ageStr = age < 60000 ? 'just now' :
+      age < 3600000 ? Math.round(age / 60000) + 'm ago' :
+      age < 86400000 ? Math.round(age / 3600000) + 'h ago' :
+      Math.round(age / 86400000) + 'd ago';
+    cached.data._cached = true;
+    cached.data._cacheAge = ageStr;
+    updateDisplay(cached.data);
+  }
+
   fetchTelematicsData();
+  // Fetch historical for new vehicle
+  setTimeout(fetchHistoricalData, 2000);
   showNotifToast('Switched to ' + credentials.assetName);
 }
 
@@ -3653,10 +3793,13 @@ async function renderTripHistory() {
           '</div>' +
           '<div style="font-size:12px;color:var(--dim);margin-bottom:6px">' + (t.vehicle || '') + '</div>' +
           '<div class="trip-stats">' +
-            '<div class="trip-stat"><div class="trip-stat-val">' + (t.distance || 0) + '</div><div class="trip-stat-label">KM</div></div>' +
+            '<div class="trip-stat"><div class="trip-stat-val">' + (t.totalDistance || t.distance || 0) + '</div><div class="trip-stat-label">KM</div></div>' +
             '<div class="trip-stat"><div class="trip-stat-val">' + (t.avgSpeed || 0) + '</div><div class="trip-stat-label">AVG KM/H</div></div>' +
-            '<div class="trip-stat"><div class="trip-stat-val">' + (t.avgFuelRate || 0) + '</div><div class="trip-stat-label">L/HR AVG</div></div>' +
-          '</div></div>';
+            '<div class="trip-stat"><div class="trip-stat-val">' + (t.totalFuelUsed || t.avgFuelRate || 0) + '</div><div class="trip-stat-label">' + (t.totalFuelUsed ? 'LITRES' + (t.fuelSource === 'estimated' ? '*' : '') : 'L/HR') + '</div></div>' +
+            (t.avgFuelEconomy ? '<div class="trip-stat"><div class="trip-stat-val">' + t.avgFuelEconomy + '</div><div class="trip-stat-label">L/100KM' + (t.fuelSource === 'estimated' ? '*' : '') + '</div></div>' : '') +
+          '</div>' +
+          (t.fuelSource === 'estimated' ? '<div style="font-size:10px;color:var(--dim);margin-top:4px">*fuel estimated at ' + GPS_ONLY_FUEL_RATE_L100 + ' L/100km</div>' : '') +
+          '</div>';
       }).join('');
     };
   } catch(e) {
@@ -3980,6 +4123,442 @@ function displayECMData(entries, filename) {
   showNotifToast('ECM file loaded: ' + entries.length + ' fields');
 }
 
+// ========================================
+// FULL DATA DUMP — pull everything from API
+// ========================================
+async function downloadFullDataDump() {
+  if (!credentials.token || !credentials.apiBase || !credentials.orgId) {
+    showNotifToast('Not connected to API', 'warn');
+    return;
+  }
+
+  const btn = document.getElementById('dump-btn');
+  const status = document.getElementById('dump-status');
+  const preview = document.getElementById('dump-preview');
+  btn.disabled = true;
+  btn.textContent = 'PULLING DATA...';
+  status.style.display = 'block';
+  status.textContent = 'Connecting to Telematics Guru API...';
+
+  const headers = {
+    'Authorization': 'Bearer ' + credentials.token,
+    'Content-Type': 'application/json'
+  };
+
+  const dump = {
+    vehicle: credentials.assetName || credentials.vid || 'Unknown',
+    serial: credentials.assetSerial || '—',
+    apiBase: credentials.apiBase,
+    orgId: credentials.orgId,
+    generated: new Date().toISOString(),
+    sections: {}
+  };
+
+  // 1. Asset details
+  status.textContent = 'Fetching asset details...';
+  try {
+    const res = await proxiedFetch(
+      `${credentials.apiBase}/v3/assets/${credentials.orgId}/${credentials.assetSerial}`,
+      { headers }
+    );
+    if (res.ok) {
+      dump.sections.assetDetails = await res.json();
+    } else {
+      dump.sections.assetDetails = { _error: 'HTTP ' + res.status };
+    }
+  } catch(e) { dump.sections.assetDetails = { _error: e.message }; }
+
+  // 2. Live data endpoint
+  status.textContent = 'Fetching live data...';
+  try {
+    const res = await proxiedFetch(
+      `${credentials.apiBase}/v3/assets/${credentials.orgId}/${credentials.assetSerial}/livedata`,
+      { headers }
+    );
+    if (res.ok) {
+      dump.sections.liveData = await res.json();
+    } else {
+      dump.sections.liveData = { _error: 'HTTP ' + res.status };
+    }
+  } catch(e) { dump.sections.liveData = { _error: e.message }; }
+
+  // 3. Raw telemetry — last 10 minutes
+  status.textContent = 'Fetching raw telemetry (last 10 min)...';
+  try {
+    const now = new Date();
+    const from = new Date(now.getTime() - 600000).toISOString();
+    const res = await proxiedFetch(
+      `${credentials.apiBase}/v2/${credentials.orgId}/asset/${credentials.assetSerial}/rawtelemetry?from=${from}&to=${now.toISOString()}&limit=50&sort=desc`,
+      { headers }
+    );
+    if (res.ok) {
+      const raw = await res.json();
+      dump.sections.rawTelemetry10min = Array.isArray(raw) ? raw : (raw.Items || raw.items || raw.data || raw);
+    } else {
+      dump.sections.rawTelemetry10min = { _error: 'HTTP ' + res.status };
+    }
+  } catch(e) { dump.sections.rawTelemetry10min = { _error: e.message }; }
+
+  // 4. Raw telemetry — last 24 hours
+  status.textContent = 'Fetching raw telemetry (last 24 hours)...';
+  try {
+    const now = new Date();
+    const from = new Date(now.getTime() - 86400000).toISOString();
+    const res = await proxiedFetch(
+      `${credentials.apiBase}/v2/${credentials.orgId}/asset/${credentials.assetSerial}/rawtelemetry?from=${from}&to=${now.toISOString()}&limit=200&sort=desc`,
+      { headers }
+    );
+    if (res.ok) {
+      const raw = await res.json();
+      dump.sections.rawTelemetry24h = Array.isArray(raw) ? raw : (raw.Items || raw.items || raw.data || raw);
+    } else {
+      dump.sections.rawTelemetry24h = { _error: 'HTTP ' + res.status };
+    }
+  } catch(e) { dump.sections.rawTelemetry24h = { _error: e.message }; }
+
+  // 5. Raw telemetry — last 4 weeks (fetched week by week to get more data)
+  dump.sections.rawTelemetry4weeks = [];
+  for (let week = 0; week < 4; week++) {
+    const weekLabel = week === 0 ? 'this week' : week + ' week' + (week > 1 ? 's' : '') + ' ago';
+    status.textContent = 'Fetching raw telemetry (' + weekLabel + ')...';
+    try {
+      const now = new Date();
+      const weekEnd = new Date(now.getTime() - week * 7 * 86400000);
+      const weekStart = new Date(now.getTime() - (week + 1) * 7 * 86400000);
+      const res = await proxiedFetch(
+        `${credentials.apiBase}/v2/${credentials.orgId}/asset/${credentials.assetSerial}/rawtelemetry?from=${weekStart.toISOString()}&to=${weekEnd.toISOString()}&limit=500&sort=desc`,
+        { headers }
+      );
+      if (res.ok) {
+        const raw = await res.json();
+        const items = Array.isArray(raw) ? raw : (raw.Items || raw.items || raw.data || []);
+        dump.sections.rawTelemetry4weeks.push({ week: week + 1, label: weekLabel, count: items.length, records: items });
+      } else {
+        dump.sections.rawTelemetry4weeks.push({ week: week + 1, label: weekLabel, _error: 'HTTP ' + res.status });
+      }
+    } catch(e) {
+      dump.sections.rawTelemetry4weeks.push({ week: week + 1, label: weekLabel, _error: e.message });
+    }
+  }
+  // Flatten all weeks into one array for backward compat
+  dump.sections.rawTelemetry7days = dump.sections.rawTelemetry4weeks
+    .filter(w => w.records)
+    .flatMap(w => w.records);
+
+  // 6. Full asset list (all vehicles in org)
+  status.textContent = 'Fetching fleet list...';
+  try {
+    const res = await proxiedFetch(
+      `${credentials.apiBase}/v3/assets/${credentials.orgId}`,
+      { headers }
+    );
+    if (res.ok) {
+      const raw = await res.json();
+      const assets = Array.isArray(raw) ? raw : (raw.Items || raw.items || raw.data || []);
+      // Find this vehicle from the list for comparison
+      const thisAsset = assets.find(a =>
+        String(a.Serial || a.serial || a.Id || a.id) === String(credentials.assetSerial)
+      );
+      dump.sections.thisAssetFromList = thisAsset || { _note: 'Vehicle not found in asset list' };
+      dump.sections.fleetSummary = assets.map(a => ({
+        name: a.Name || a.name,
+        serial: a.Serial || a.serial,
+        id: a.Id || a.id,
+        speed: a.Speed || a.speed,
+        ignition: a.Ignition || a.ignition,
+        lat: a.Latitude || a.latitude,
+        lng: a.Longitude || a.longitude
+      }));
+    }
+  } catch(e) { dump.sections.fleetSummary = { _error: e.message }; }
+
+  // 7. Cached data from localStorage
+  status.textContent = 'Collecting cached data...';
+  const cached = loadCachedVehicleData();
+  if (cached) {
+    dump.sections.cachedData = {
+      timestamp: new Date(cached.timestamp).toISOString(),
+      ageMinutes: Math.round((Date.now() - cached.timestamp) / 60000),
+      data: cached.data
+    };
+  }
+
+  // 8. Last displayed data
+  dump.sections.lastDisplayData = lastData;
+
+  // Build the file
+  status.textContent = 'Building download file...';
+
+  // Generate readable text report + raw JSON
+  let txt = '';
+  txt += '═══════════════════════════════════════════════════════════════\n';
+  txt += '  TKLINK FULL DATA DUMP\n';
+  txt += '  ' + dump.vehicle + ' (Serial: ' + dump.serial + ')\n';
+  txt += '  Generated: ' + new Date().toLocaleString('en-AU') + '\n';
+  txt += '═══════════════════════════════════════════════════════════════\n\n';
+
+  txt += '───────────────────────────────────────\n';
+  txt += '  CONNECTION INFO\n';
+  txt += '───────────────────────────────────────\n';
+  txt += 'API Instance:    ' + dump.apiBase + '\n';
+  txt += 'Organisation ID: ' + dump.orgId + '\n';
+  txt += 'Asset Serial:    ' + dump.serial + '\n';
+  txt += 'Asset Name:      ' + dump.vehicle + '\n\n';
+
+  // Summarize what data exists
+  txt += '───────────────────────────────────────\n';
+  txt += '  DATA AVAILABILITY SUMMARY\n';
+  txt += '───────────────────────────────────────\n';
+
+  const sections = [
+    ['Asset Details', dump.sections.assetDetails],
+    ['Live Data', dump.sections.liveData],
+    ['Raw Telemetry 10min', dump.sections.rawTelemetry10min],
+    ['Raw Telemetry 24h', dump.sections.rawTelemetry24h],
+    ['Raw Telemetry 4 weeks', dump.sections.rawTelemetry7days]
+  ];
+
+  for (const [name, data] of sections) {
+    if (!data) {
+      txt += name.padEnd(25) + ': NO DATA\n';
+    } else if (data._error) {
+      txt += name.padEnd(25) + ': ERROR — ' + data._error + '\n';
+    } else if (Array.isArray(data)) {
+      txt += name.padEnd(25) + ': ' + data.length + ' records\n';
+    } else {
+      const keys = Object.keys(data).filter(k => !k.startsWith('_'));
+      txt += name.padEnd(25) + ': ' + keys.length + ' fields\n';
+    }
+  }
+
+  // Show all unique field names across all data
+  txt += '\n───────────────────────────────────────\n';
+  txt += '  ALL FIELDS FOUND (every key the API returns)\n';
+  txt += '───────────────────────────────────────\n';
+
+  const allKeys = new Set();
+  function collectKeys(obj, prefix) {
+    if (!obj || typeof obj !== 'object') return;
+    if (Array.isArray(obj)) {
+      if (obj.length > 0) collectKeys(obj[0], prefix + '[0]');
+      return;
+    }
+    for (const [k, v] of Object.entries(obj)) {
+      const fullKey = prefix ? prefix + '.' + k : k;
+      if (v && typeof v === 'object' && !Array.isArray(v)) {
+        collectKeys(v, fullKey);
+      } else {
+        allKeys.add(fullKey);
+      }
+    }
+  }
+
+  // Collect all unique field paths across all API responses
+  for (const [sName, sData] of Object.entries(dump.sections)) {
+    if (sData && !sData._error) collectKeys(sData, sName);
+  }
+  [...allKeys].sort().forEach(k => { txt += '  ' + k + '\n'; });
+
+  // Collect from asset details
+  if (dump.sections.assetDetails && !dump.sections.assetDetails._error) {
+    txt += '\n[ASSET DETAILS]\n';
+    const ad = dump.sections.assetDetails;
+    for (const [k, v] of Object.entries(ad)) {
+      if (v && typeof v === 'object') {
+        txt += '  ' + k + ':\n';
+        for (const [k2, v2] of Object.entries(v)) {
+          txt += '    ' + k2.padEnd(30) + ': ' + String(v2) + '\n';
+        }
+      } else {
+        txt += '  ' + k.padEnd(30) + ': ' + String(v) + '\n';
+      }
+    }
+  }
+
+  // Collect from live data
+  if (dump.sections.liveData && !dump.sections.liveData._error) {
+    txt += '\n[LIVE DATA]\n';
+    const ld = dump.sections.liveData;
+    for (const [k, v] of Object.entries(ld)) {
+      if (v && typeof v === 'object') {
+        txt += '  ' + k + ':\n';
+        for (const [k2, v2] of Object.entries(v)) {
+          txt += '    ' + k2.padEnd(30) + ': ' + String(v2) + '\n';
+        }
+      } else {
+        txt += '  ' + k.padEnd(30) + ': ' + String(v) + '\n';
+      }
+    }
+  }
+
+  // Show latest raw telemetry record with ALL fields
+  const latestRecords = dump.sections.rawTelemetry10min || dump.sections.rawTelemetry24h || dump.sections.rawTelemetry7days;
+  if (latestRecords && !latestRecords._error && Array.isArray(latestRecords) && latestRecords.length > 0) {
+    txt += '\n[LATEST RAW TELEMETRY RECORD]\n';
+    const latest = latestRecords[0];
+    for (const [k, v] of Object.entries(latest)) {
+      if (v && typeof v === 'object' && !Array.isArray(v)) {
+        txt += '  ' + k + ':\n';
+        for (const [k2, v2] of Object.entries(v)) {
+          if (v2 && typeof v2 === 'object') {
+            txt += '    ' + k2 + ': ' + JSON.stringify(v2) + '\n';
+          } else {
+            txt += '    ' + k2.padEnd(30) + ': ' + String(v2) + '\n';
+          }
+        }
+      } else {
+        txt += '  ' + k.padEnd(30) + ': ' + String(v) + '\n';
+      }
+    }
+
+    // 4-WEEK DATA SUMMARY (week by week breakdown)
+    const allWeekData = dump.sections.rawTelemetry4weeks || [];
+    const allRecords = dump.sections.rawTelemetry7days || [];
+
+    if (allRecords.length > 0) {
+      txt += '\n[4-WEEK DATA SUMMARY]\n';
+      txt += '  Total records (all weeks): ' + allRecords.length + '\n';
+
+      const allSpeeds = allRecords.map(r => parseFloat(r.Speed || r.speed || 0)).filter(s => s > 0);
+      if (allSpeeds.length > 0) {
+        const avgSpd = allSpeeds.reduce((a, b) => a + b, 0) / allSpeeds.length;
+        txt += '  Max speed (4 weeks):     ' + Math.max(...allSpeeds).toFixed(1) + ' km/h\n';
+        txt += '  Avg speed (moving):      ' + avgSpd.toFixed(1) + ' km/h\n';
+        txt += '  Moving records:          ' + allSpeeds.length + ' / ' + allRecords.length + '\n';
+      }
+
+      if (allRecords.length > 1) {
+        const first = allRecords[allRecords.length - 1];
+        const last = allRecords[0];
+        txt += '  Earliest record:         ' + (first.Timestamp || first.timestamp || first.DateTime || '?') + '\n';
+        txt += '  Latest record:           ' + (last.Timestamp || last.timestamp || last.DateTime || '?') + '\n';
+      }
+
+      // Estimate total distance and fuel for full period
+      if (allSpeeds.length > 1) {
+        const sorted = allRecords
+          .map(r => new Date(r.Timestamp || r.timestamp || r.DateTime || 0).getTime())
+          .filter(t => t > 0).sort((a, b) => a - b);
+        if (sorted.length > 1) {
+          const totalHrs = (sorted[sorted.length - 1] - sorted[0]) / 3600000;
+          const movingFraction = allSpeeds.length / allRecords.length;
+          const avgSpd = allSpeeds.reduce((a, b) => a + b, 0) / allSpeeds.length;
+          const estDist = Math.round(avgSpd * totalHrs * movingFraction);
+          const estFuel = Math.round((estDist / 100) * GPS_ONLY_FUEL_RATE_L100);
+          txt += '\n  ESTIMATED TOTALS (4 WEEKS):\n';
+          txt += '  Distance travelled:      ~' + estDist.toLocaleString() + ' km\n';
+          txt += '  Fuel used (est):         ~' + estFuel.toLocaleString() + ' litres (at ' + GPS_ONLY_FUEL_RATE_L100 + ' L/100km)\n';
+          txt += '  Fuel cost (est @ $1.80): ~$' + Math.round(estFuel * 1.80).toLocaleString() + '\n';
+          txt += '  Time span:               ' + Math.round(totalHrs) + ' hours (' + Math.round(totalHrs / 24) + ' days)\n';
+          txt += '  Moving time:             ~' + Math.round(totalHrs * movingFraction) + ' hours\n';
+        }
+      }
+
+      // Week-by-week breakdown
+      txt += '\n  WEEKLY BREAKDOWN:\n';
+      txt += '  ' + 'Week'.padEnd(20) + 'Records'.padEnd(10) + 'Max km/h'.padEnd(12) + 'Avg km/h'.padEnd(12) + 'Est km'.padEnd(12) + 'Est Fuel L\n';
+      txt += '  ' + '─'.repeat(76) + '\n';
+
+      for (const w of allWeekData) {
+        if (w._error) {
+          txt += '  ' + ('Week ' + w.week + ' (' + w.label + ')').padEnd(20) + 'ERROR: ' + w._error + '\n';
+          continue;
+        }
+        const recs = w.records || [];
+        const wSpeeds = recs.map(r => parseFloat(r.Speed || r.speed || 0)).filter(s => s > 0);
+        const wMax = wSpeeds.length > 0 ? Math.max(...wSpeeds).toFixed(0) : '—';
+        const wAvg = wSpeeds.length > 0 ? (wSpeeds.reduce((a, b) => a + b, 0) / wSpeeds.length).toFixed(0) : '—';
+
+        let wDist = '—';
+        let wFuel = '—';
+        if (wSpeeds.length > 1) {
+          const wTimes = recs.map(r => new Date(r.Timestamp || r.timestamp || r.DateTime || 0).getTime()).filter(t => t > 0).sort((a, b) => a - b);
+          if (wTimes.length > 1) {
+            const wHrs = (wTimes[wTimes.length - 1] - wTimes[0]) / 3600000;
+            const mf = wSpeeds.length / recs.length;
+            const d = Math.round(parseFloat(wAvg) * wHrs * mf);
+            wDist = String(d);
+            wFuel = String(Math.round((d / 100) * GPS_ONLY_FUEL_RATE_L100));
+          }
+        }
+
+        txt += '  ' + ('Week ' + w.week).padEnd(20) + String(recs.length).padEnd(10) + String(wMax).padEnd(12) + String(wAvg).padEnd(12) + String(wDist).padEnd(12) + wFuel + '\n';
+      }
+
+      // List all unique field names across all records
+      const fieldSet = new Set();
+      allRecords.forEach(r => {
+        Object.keys(r).forEach(k => fieldSet.add(k));
+        const fc = r.Fields || r.fields || r.FieldData || r.Data || {};
+        if (fc && typeof fc === 'object') Object.keys(fc).forEach(k => fieldSet.add('Fields.' + k));
+      });
+      txt += '\n  All field names found:\n';
+      [...fieldSet].sort().forEach(f => { txt += '    - ' + f + '\n'; });
+    }
+  }
+
+  // Fleet summary
+  if (dump.sections.fleetSummary && Array.isArray(dump.sections.fleetSummary)) {
+    txt += '\n[FLEET — ALL VEHICLES]\n';
+    dump.sections.fleetSummary.forEach(v => {
+      const status = v.speed > 3 ? 'DRIVING ' + v.speed + 'km/h' : v.ignition ? 'IDLE' : 'PARKED';
+      txt += '  ' + (v.name || '?').padEnd(25) + ' ' + String(v.serial || '').padEnd(10) + ' ' + status + '\n';
+    });
+  }
+
+  // Cached display data
+  if (dump.sections.lastDisplayData) {
+    txt += '\n[LAST DISPLAYED VALUES]\n';
+    const d = dump.sections.lastDisplayData;
+    const displayFields = [
+      ['RPM', d.rpm], ['Coolant Temp', d.coolantTemp], ['Oil Pressure', d.oilPressure],
+      ['Oil Temp', d.oilTemp], ['Boost', d.boostPressure], ['Exhaust Temp', d.exhaustTemp],
+      ['Engine Load', d.engineLoad], ['Fuel Rate', d.fuelRate], ['Fuel Level', d.fuelLevel],
+      ['DEF Level', d.defLevel], ['DPF Soot', d.dpfSoot], ['Regen', d.regenStatus],
+      ['Battery', d.battVoltage], ['Ambient', d.ambientTemp], ['Trans Temp', d.transTemp],
+      ['Gear', d.gear], ['Speed', d.speed], ['Odometer', d.odometer],
+      ['Latitude', d.lat], ['Longitude', d.lng], ['Heading', d.heading],
+      ['Ignition', d.ignition], ['GPS Signal', d.gpsSignal], ['Fuel Economy', d.fuelEconomy],
+      ['Data Source', d._dataSource], ['Has Engine Data', d._hasEngineData], ['Has GPS', d._hasGpsData]
+    ];
+    displayFields.forEach(([label, val]) => {
+      txt += '  ' + label.padEnd(20) + ': ' + (val !== undefined && val !== null ? String(val) : '—') + '\n';
+    });
+  }
+
+  txt += '\n═══════════════════════════════════════════════════════════════\n';
+  txt += '  RAW JSON DATA (full API responses)\n';
+  txt += '═══════════════════════════════════════════════════════════════\n\n';
+  txt += JSON.stringify(dump.sections, null, 2);
+  txt += '\n';
+
+  // Download
+  const blob = new Blob([txt], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const name = (dump.vehicle || 'vehicle').replace(/\s+/g, '-');
+  a.download = 'TKLINK-DUMP-' + name + '-' + new Date().toISOString().slice(0, 10) + '.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  // Show preview on screen too
+  status.textContent = 'Downloaded. ' + txt.split('\n').length + ' lines of data.';
+  preview.style.display = 'block';
+  preview.innerHTML =
+    '<div class="section-header">DATA PREVIEW</div>' +
+    '<pre style="background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:12px;font-size:11px;font-family:\'Share Tech Mono\',monospace;color:var(--text);overflow-x:auto;max-height:400px;overflow-y:auto;white-space:pre-wrap;word-break:break-all">' +
+    txt.replace(/</g, '&lt;').substring(0, 8000) +
+    (txt.length > 8000 ? '\n\n... (' + txt.length + ' total chars — see downloaded file for full data)' : '') +
+    '</pre>';
+
+  btn.disabled = false;
+  btn.textContent = '📥 DOWNLOAD FULL DATA DUMP';
+  showNotifToast('Full data dump downloaded — ' + name);
+}
+
 // Drag & drop for ECM
 document.addEventListener('DOMContentLoaded', function() {
   const dz = document.getElementById('ecm-dropzone');
@@ -3998,7 +4577,11 @@ document.addEventListener('DOMContentLoaded', function() {
 // ========================================
 // FUEL ECONOMY CALCULATIONS
 // ========================================
-const ASSUMED_TANK_SIZE = 600; // litres
+const ASSUMED_TANK_SIZE = 600; // litres — typical heavy truck dual tank
+// Typical heavy truck fuel consumption when no CAN bus data available
+// Loaded B-double highway: ~38-45 L/100km, city/hills: ~50-60
+// Adjust per truck type: light rigid ~15, MR ~22, HR ~28, prime mover ~42
+const GPS_ONLY_FUEL_RATE_L100 = 42; // L/100km default for prime mover
 
 function calcFuelEconomy(fuelRateLH, speedKmh) {
   if (!fuelRateLH || !speedKmh || speedKmh < 1) return null;
@@ -4011,29 +4594,56 @@ function calcEstRange(fuelLevelPct, fuelEconomyL100) {
   return litresRemaining / (fuelEconomyL100 / 100);
 }
 
-// Enhance updateDisplay with fuel economy
+// Estimate fuel used from distance (GPS-only trucks)
+function estimateFuelFromDistance(distanceKm, rateL100) {
+  if (!distanceKm || distanceKm <= 0) return null;
+  return (distanceKm / 100) * (rateL100 || GPS_ONLY_FUEL_RATE_L100);
+}
+
+// Enhance updateDisplay with fuel economy (CAN bus OR GPS-only estimate)
 const _origUpdateDisplayFE = updateDisplay;
 updateDisplay = function(data) {
   _origUpdateDisplayFE(data);
 
-  // Calculate fuel economy
-  const fuelEcon = calcFuelEconomy(data.fuelRate, data.speed);
+  const speed = parseFloat(data.speed) || 0;
+  let fuelEcon = calcFuelEconomy(data.fuelRate, speed);
+  let isEstimated = false;
+
+  // GPS-only: use assumed consumption rate when no CAN fuel data
+  if (fuelEcon === null && speed > 5 && !data._hasEngineData) {
+    fuelEcon = GPS_ONLY_FUEL_RATE_L100;
+    isEstimated = true;
+  }
+
   if (fuelEcon !== null && isFinite(fuelEcon)) {
     data._fuelEconomy = fuelEcon;
+    data._fuelIsEstimated = isEstimated;
     setGauge('fuel-economy', fuelEcon, 0, 100, [50, 70]);
-    document.getElementById('val-fuel-economy').textContent = fuelEcon.toFixed(1);
+    const feEl = document.getElementById('val-fuel-economy');
+    if (feEl) feEl.textContent = fuelEcon.toFixed(1) + (isEstimated ? '*' : '');
+    // Update the label to show estimated
+    const feCard = document.getElementById('card-fuel-economy');
+    if (feCard) {
+      const label = feCard.querySelector('.gauge-label');
+      if (label) label.textContent = isEstimated ? 'FUEL ECONOMY (EST)' : 'FUEL ECONOMY';
+    }
   } else {
     const el = document.getElementById('val-fuel-economy');
     if (el) el.textContent = '—';
   }
 
   // Calculate estimated range
-  const estRange = calcEstRange(data.fuelLevel, fuelEcon);
+  let estRange = calcEstRange(data.fuelLevel, fuelEcon);
+  // GPS-only with no fuel level: estimate from assumed full tank minus distance
+  if (estRange === null && fuelEcon !== null && speed > 5) {
+    // Can't calculate range without fuel level — show the consumption rate instead
+    estRange = null;
+  }
+
   if (estRange !== null && isFinite(estRange)) {
     data._estRange = estRange;
     const rangeEl = document.getElementById('val-est-range');
     if (rangeEl) rangeEl.textContent = Math.round(estRange);
-    // bar: 0-2000km range
     const bar = document.getElementById('bar-estrange');
     if (bar) {
       const pct = Math.min(100, (estRange / 2000) * 100);
@@ -4061,21 +4671,30 @@ generateDemoData = function() {
   return data;
 };
 
-// Enhance trip recording with fuel economy
+// Enhance trip recording with fuel economy (CAN bus or GPS-only estimate)
 const _origStopTrip = stopTripRecording;
 stopTripRecording = async function() {
-  // Calculate fuel stats before stopping
   if (currentTrip && tripSnapshots.length > 0) {
     const fuelRates = tripSnapshots.map(s => s.fuelRate || 0).filter(f => f > 0);
     const speeds = tripSnapshots.map(s => s.speed || 0).filter(s => s > 0);
+    const avgSpeed = speeds.length ? speeds.reduce((a, b) => a + b, 0) / speeds.length : 0;
+    const durationHrs = (new Date().getTime() - new Date(currentTrip.startTime).getTime()) / 3600000;
+    const tripDistance = avgSpeed * durationHrs;
+
     if (fuelRates.length > 0 && speeds.length > 0) {
+      // CAN bus: use actual fuel rate
       const avgFuelRate = fuelRates.reduce((a, b) => a + b, 0) / fuelRates.length;
-      const avgSpeed = speeds.reduce((a, b) => a + b, 0) / speeds.length;
-      const durationHrs = (new Date().getTime() - new Date(currentTrip.startTime).getTime()) / 3600000;
       currentTrip.totalFuelUsed = Math.round(avgFuelRate * durationHrs * 10) / 10;
       const fuelEcon = calcFuelEconomy(avgFuelRate, avgSpeed);
       currentTrip.avgFuelEconomy = fuelEcon ? Math.round(fuelEcon * 10) / 10 : null;
+      currentTrip.fuelSource = 'canbus';
+    } else if (tripDistance > 0.5) {
+      // GPS-only: estimate fuel from distance using typical rate
+      currentTrip.totalFuelUsed = Math.round(estimateFuelFromDistance(tripDistance) * 10) / 10;
+      currentTrip.avgFuelEconomy = GPS_ONLY_FUEL_RATE_L100;
+      currentTrip.fuelSource = 'estimated';
     }
+    currentTrip.totalDistance = Math.round(tripDistance * 10) / 10;
   }
   await _origStopTrip();
 };
@@ -4090,6 +4709,194 @@ renderTripHistory = async function() {
   // The original renders 3 columns; we add fuel info if available via data attributes
   // (This is a visual enhancement for future trips that have the data)
 };
+
+// ========================================
+// VEHICLE DATA CACHE (persist last known data per vehicle)
+// ========================================
+const CACHE_KEY_PREFIX = 'tklink-vdata-';
+
+function cacheVehicleData(data) {
+  if (!credentials.assetSerial) return;
+  try {
+    const key = CACHE_KEY_PREFIX + credentials.assetSerial;
+    const cache = {
+      data: data,
+      timestamp: Date.now(),
+      assetName: credentials.assetName
+    };
+    localStorage.setItem(key, JSON.stringify(cache));
+  } catch(e) {}
+}
+
+function loadCachedVehicleData() {
+  if (!credentials.assetSerial) return null;
+  try {
+    const key = CACHE_KEY_PREFIX + credentials.assetSerial;
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const cache = JSON.parse(raw);
+    // Cache valid for 21 days
+    if (Date.now() - cache.timestamp > 21 * 24 * 60 * 60 * 1000) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    return cache;
+  } catch(e) { return null; }
+}
+
+// ========================================
+// HISTORICAL DATA FETCH (last 7-21 days summary)
+// ========================================
+let historicalStats = null;
+
+async function fetchHistoricalData() {
+  if (!credentials.orgId || !credentials.assetSerial || !credentials.token) return;
+
+  const headers = {
+    'Authorization': 'Bearer ' + credentials.token,
+    'Content-Type': 'application/json'
+  };
+
+  // Fetch last 4 weeks of raw telemetry (week by week for more data points)
+  const allItems = [];
+  const now = new Date();
+  for (let week = 0; week < 4; week++) {
+    try {
+      const weekEnd = new Date(now.getTime() - week * 7 * 86400000);
+      const weekStart = new Date(now.getTime() - (week + 1) * 7 * 86400000);
+      const url = `${credentials.apiBase}/v2/${credentials.orgId}/asset/${credentials.assetSerial}/rawtelemetry?from=${weekStart.toISOString()}&to=${weekEnd.toISOString()}&limit=200&sort=desc`;
+      const res = await proxiedFetch(url, { headers });
+      if (res.ok) {
+        const records = await res.json();
+        const items = Array.isArray(records) ? records : (records.Items || records.items || records.data || []);
+        allItems.push(...items);
+      }
+    } catch(e) { debugLog('Historical fetch week ' + (week + 1) + ' error', e.message); }
+  }
+
+  if (allItems.length > 0) {
+    processHistoricalRecords(allItems);
+  }
+}
+
+function processHistoricalRecords(records) {
+  const stats = {
+    recordCount: records.length,
+    timespan: '',
+    timespanHours: 0,
+    maxSpeed: 0,
+    avgSpeed: 0,
+    totalDistance: 0,
+    avgFuelRate: null,
+    fuelEconomy: null,
+    estFuelUsed: null,
+    fuelSource: 'none',
+    speeds: [],
+    fuelRates: [],
+    timestamps: []
+  };
+
+  for (const r of records) {
+    const fields = {};
+    const containers = [r.Fields, r.fields, r.FieldData, r.Data, r.data, r];
+    for (const c of containers) {
+      if (c && typeof c === 'object' && !Array.isArray(c)) Object.assign(fields, c);
+    }
+
+    const spd = parseFloat(findField(r, 'Speed', 'speed', 'GpsSpeed') || 0);
+    if (spd > 0) stats.speeds.push(spd);
+    if (spd > stats.maxSpeed) stats.maxSpeed = spd;
+
+    const fr = parseFloat(findField(fields, 'FuelRate', 'fuelRate', 'FuelConsumption') || 0);
+    if (fr > 0) stats.fuelRates.push(fr);
+
+    const ts = r.Timestamp || r.timestamp || r.DateTime || r.dateTime;
+    if (ts) stats.timestamps.push(new Date(ts).getTime());
+  }
+
+  if (stats.speeds.length > 0) {
+    stats.avgSpeed = Math.round(stats.speeds.reduce((a, b) => a + b, 0) / stats.speeds.length);
+  }
+
+  // Calculate time span and distance
+  if (stats.timestamps.length > 1) {
+    const sorted = stats.timestamps.sort((a, b) => a - b);
+    const firstTime = sorted[0];
+    const lastTime = sorted[sorted.length - 1];
+    stats.timespanHours = (lastTime - firstTime) / 3600000;
+    const hours = Math.round(stats.timespanHours);
+    stats.timespan = hours > 24 ? Math.round(hours / 24) + ' days' : hours + ' hours';
+
+    // Estimate distance: average moving speed * time spent moving
+    // Rough: assume moving for (movingRecords / totalRecords) of total time
+    if (stats.speeds.length > 0) {
+      const movingFraction = stats.speeds.length / records.length;
+      const movingHours = stats.timespanHours * movingFraction;
+      stats.totalDistance = Math.round(stats.avgSpeed * movingHours);
+    }
+  } else if (records.length > 0) {
+    stats.timespan = 'single record';
+  }
+
+  // Fuel economy: prefer CAN bus data, fall back to GPS-only estimate
+  if (stats.fuelRates.length > 0) {
+    stats.avgFuelRate = (stats.fuelRates.reduce((a, b) => a + b, 0) / stats.fuelRates.length).toFixed(1);
+    if (stats.avgSpeed > 5) {
+      stats.fuelEconomy = ((stats.avgFuelRate / stats.avgSpeed) * 100).toFixed(1);
+    }
+    stats.fuelSource = 'canbus';
+    // Estimate total fuel used from avg rate and moving time
+    if (stats.timespanHours > 0 && stats.speeds.length > 0) {
+      const movingFraction = stats.speeds.length / records.length;
+      stats.estFuelUsed = Math.round(parseFloat(stats.avgFuelRate) * stats.timespanHours * movingFraction);
+    }
+  } else if (stats.totalDistance > 0) {
+    // GPS-only: estimate fuel from distance
+    stats.fuelEconomy = GPS_ONLY_FUEL_RATE_L100;
+    stats.estFuelUsed = Math.round(estimateFuelFromDistance(stats.totalDistance));
+    stats.fuelSource = 'estimated';
+  }
+
+  historicalStats = stats;
+  renderHistoricalStats();
+}
+
+function renderHistoricalStats() {
+  const container = document.getElementById('historical-stats');
+  if (!container || !historicalStats) return;
+  const s = historicalStats;
+  const isEst = s.fuelSource === 'estimated';
+  const estLabel = isEst ? ' (EST)' : '';
+
+  let cards =
+    '<div class="gauge-card"><div class="gauge-label">MAX SPEED</div><div class="gauge-value" style="font-size:24px">' + Math.round(s.maxSpeed) + '</div><div class="gauge-unit">km/h</div></div>' +
+    '<div class="gauge-card"><div class="gauge-label">AVG SPEED</div><div class="gauge-value" style="font-size:24px">' + s.avgSpeed + '</div><div class="gauge-unit">km/h</div></div>';
+
+  if (s.totalDistance > 0) {
+    cards += '<div class="gauge-card"><div class="gauge-label">EST. DISTANCE</div><div class="gauge-value" style="font-size:24px">' + s.totalDistance + '</div><div class="gauge-unit">km</div></div>';
+  }
+
+  if (s.avgFuelRate && !isEst) {
+    cards += '<div class="gauge-card"><div class="gauge-label">AVG FUEL RATE</div><div class="gauge-value" style="font-size:24px">' + s.avgFuelRate + '</div><div class="gauge-unit">L/hr</div></div>';
+  }
+
+  if (s.fuelEconomy) {
+    cards += '<div class="gauge-card"><div class="gauge-label">FUEL ECONOMY' + estLabel + '</div><div class="gauge-value" style="font-size:24px">' + s.fuelEconomy + (isEst ? '*' : '') + '</div><div class="gauge-unit">L/100km</div></div>';
+  }
+
+  if (s.estFuelUsed) {
+    cards += '<div class="gauge-card"><div class="gauge-label">FUEL USED' + estLabel + '</div><div class="gauge-value" style="font-size:24px">' + s.estFuelUsed + '</div><div class="gauge-unit">litres</div></div>';
+  }
+
+  container.innerHTML =
+    '<div class="section-header" style="margin-top:8px">RECENT ACTIVITY (' + (s.timespan || 'last 24h') + ')</div>' +
+    '<div class="gauge-grid">' + cards + '</div>' +
+    '<div style="font-size:11px;color:var(--dim);text-align:center;margin-top:4px">' +
+      s.recordCount + ' data points' +
+      (isEst ? ' · fuel estimated at ' + GPS_ONLY_FUEL_RATE_L100 + ' L/100km (typical prime mover)' : '') +
+    '</div>';
+  container.style.display = 'block';
+}
 
 // ========================================
 // VEHICLE STATUS INDICATOR
@@ -4124,14 +4931,17 @@ function updateVehicleStatus(data) {
     badge.className = 'status-badge parked';
     label.textContent = 'PARKED';
 
-    // Auto-switch to GPS tab when parked and engine tab shows all dashes
-    const activePanel = document.querySelector('.tab-panel.active');
-    if (activePanel && activePanel.id === 'tab-engine') {
-      const engineVals = [data.rpm, data.coolantTemp, data.oilPressure, data.oilTemp,
-        data.boostPressure, data.exhaustTemp, data.engineLoad, data.fuelRate];
-      const hasEngineData = engineVals.some(v => v !== undefined && v !== null);
-      if (!hasEngineData) {
-        switchTab('gps');
+    // Only auto-switch to GPS on FIRST load if no engine data (not on every poll)
+    if (!credentials._initialTabSet) {
+      credentials._initialTabSet = true;
+      const activePanel = document.querySelector('.tab-panel.active');
+      if (activePanel && activePanel.id === 'tab-engine') {
+        const engineVals = [data.rpm, data.coolantTemp, data.oilPressure, data.oilTemp,
+          data.boostPressure, data.exhaustTemp, data.engineLoad, data.fuelRate];
+        const hasEngineData = engineVals.some(v => v !== undefined && v !== null);
+        if (!hasEngineData && data._hasGpsData) {
+          switchTab('gps');
+        }
       }
     }
   }
