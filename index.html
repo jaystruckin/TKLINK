@@ -1746,21 +1746,7 @@
         </div>
       </div>
 
-      <!-- Fuel Economy (shown when data available) -->
-      <div class="gauge-grid" id="fuel-economy-section" style="display:none">
-        <div class="gauge-card" id="card-fuel-economy">
-          <div class="gauge-label">FUEL ECONOMY</div>
-          <div class="gauge-value" id="val-fuel-economy" style="font-size:24px">—</div>
-          <div class="gauge-unit">L/100km</div>
-        </div>
-        <div class="gauge-card" id="card-distance-on-fuel">
-          <div class="gauge-label">EST. RANGE</div>
-          <div class="gauge-value" id="val-fuel-range" style="font-size:24px">—</div>
-          <div class="gauge-unit">km</div>
-        </div>
-      </div>
-
-      <!-- Historical stats -->
+      <!-- Historical stats + estimated fuel (GPS-only trucks) -->
       <div id="historical-stats" style="display:none"></div>
 
       <button class="share-btn" onclick="openReportModal()">📥 DOWNLOAD REPORT</button>
@@ -2784,25 +2770,6 @@ function updateDisplay(data) {
 
   setText('val-regen', data.regenStatus || '—');
 
-  // Fuel economy display
-  const fuelEcoSection = document.getElementById('fuel-economy-section');
-  if (fuelEcoSection) {
-    if (data.fuelEconomy) {
-      fuelEcoSection.style.display = '';
-      setText('val-fuel-economy', data.fuelEconomy);
-      // Estimate range: (fuelLevel% * tankSize) / (L/100km) * 100
-      // Assume ~600L tank for heavy truck
-      if (data.fuelLevel > 0 && parseFloat(data.fuelEconomy) > 0) {
-        const tankLitres = (data.fuelLevel / 100) * 600;
-        const range = Math.round(tankLitres / parseFloat(data.fuelEconomy) * 100);
-        setText('val-fuel-range', range);
-      }
-    } else if (data.speed > 0 && !data._hasEngineData) {
-      // GPS only — show speed-based info instead
-      fuelEcoSection.style.display = 'none';
-    }
-  }
-
   // Drivetrain
   setText('val-gear', data.gear || '—');
   setVal('val-trans-temp', data.transTemp, '°C', [105, 115]);
@@ -3655,10 +3622,13 @@ async function renderTripHistory() {
           '</div>' +
           '<div style="font-size:12px;color:var(--dim);margin-bottom:6px">' + (t.vehicle || '') + '</div>' +
           '<div class="trip-stats">' +
-            '<div class="trip-stat"><div class="trip-stat-val">' + (t.distance || 0) + '</div><div class="trip-stat-label">KM</div></div>' +
+            '<div class="trip-stat"><div class="trip-stat-val">' + (t.totalDistance || t.distance || 0) + '</div><div class="trip-stat-label">KM</div></div>' +
             '<div class="trip-stat"><div class="trip-stat-val">' + (t.avgSpeed || 0) + '</div><div class="trip-stat-label">AVG KM/H</div></div>' +
-            '<div class="trip-stat"><div class="trip-stat-val">' + (t.avgFuelRate || 0) + '</div><div class="trip-stat-label">L/HR AVG</div></div>' +
-          '</div></div>';
+            '<div class="trip-stat"><div class="trip-stat-val">' + (t.totalFuelUsed || t.avgFuelRate || 0) + '</div><div class="trip-stat-label">' + (t.totalFuelUsed ? 'LITRES' + (t.fuelSource === 'estimated' ? '*' : '') : 'L/HR') + '</div></div>' +
+            (t.avgFuelEconomy ? '<div class="trip-stat"><div class="trip-stat-val">' + t.avgFuelEconomy + '</div><div class="trip-stat-label">L/100KM' + (t.fuelSource === 'estimated' ? '*' : '') + '</div></div>' : '') +
+          '</div>' +
+          (t.fuelSource === 'estimated' ? '<div style="font-size:10px;color:var(--dim);margin-top:4px">*fuel estimated at ' + GPS_ONLY_FUEL_RATE_L100 + ' L/100km</div>' : '') +
+          '</div>';
       }).join('');
     };
   } catch(e) {
@@ -4187,7 +4157,7 @@ async function downloadFullDataDump() {
   function collectKeys(obj, prefix) {
     if (!obj || typeof obj !== 'object') return;
     if (Array.isArray(obj)) {
-      obj.forEach((item, i) => collectKeys(item, prefix + '[' + i + ']'));
+      if (obj.length > 0) collectKeys(obj[0], prefix + '[0]');
       return;
     }
     for (const [k, v] of Object.entries(obj)) {
@@ -4195,10 +4165,16 @@ async function downloadFullDataDump() {
       if (v && typeof v === 'object' && !Array.isArray(v)) {
         collectKeys(v, fullKey);
       } else {
-        allKeys.add(fullKey + ' = ' + String(v));
+        allKeys.add(fullKey);
       }
     }
   }
+
+  // Collect all unique field paths across all API responses
+  for (const [sName, sData] of Object.entries(dump.sections)) {
+    if (sData && !sData._error) collectKeys(sData, sName);
+  }
+  [...allKeys].sort().forEach(k => { txt += '  ' + k + '\n'; });
 
   // Collect from asset details
   if (dump.sections.assetDetails && !dump.sections.assetDetails._error) {
@@ -4360,7 +4336,11 @@ document.addEventListener('DOMContentLoaded', function() {
 // ========================================
 // FUEL ECONOMY CALCULATIONS
 // ========================================
-const ASSUMED_TANK_SIZE = 600; // litres
+const ASSUMED_TANK_SIZE = 600; // litres — typical heavy truck dual tank
+// Typical heavy truck fuel consumption when no CAN bus data available
+// Loaded B-double highway: ~38-45 L/100km, city/hills: ~50-60
+// Adjust per truck type: light rigid ~15, MR ~22, HR ~28, prime mover ~42
+const GPS_ONLY_FUEL_RATE_L100 = 42; // L/100km default for prime mover
 
 function calcFuelEconomy(fuelRateLH, speedKmh) {
   if (!fuelRateLH || !speedKmh || speedKmh < 1) return null;
@@ -4373,29 +4353,56 @@ function calcEstRange(fuelLevelPct, fuelEconomyL100) {
   return litresRemaining / (fuelEconomyL100 / 100);
 }
 
-// Enhance updateDisplay with fuel economy
+// Estimate fuel used from distance (GPS-only trucks)
+function estimateFuelFromDistance(distanceKm, rateL100) {
+  if (!distanceKm || distanceKm <= 0) return null;
+  return (distanceKm / 100) * (rateL100 || GPS_ONLY_FUEL_RATE_L100);
+}
+
+// Enhance updateDisplay with fuel economy (CAN bus OR GPS-only estimate)
 const _origUpdateDisplayFE = updateDisplay;
 updateDisplay = function(data) {
   _origUpdateDisplayFE(data);
 
-  // Calculate fuel economy
-  const fuelEcon = calcFuelEconomy(data.fuelRate, data.speed);
+  const speed = parseFloat(data.speed) || 0;
+  let fuelEcon = calcFuelEconomy(data.fuelRate, speed);
+  let isEstimated = false;
+
+  // GPS-only: use assumed consumption rate when no CAN fuel data
+  if (fuelEcon === null && speed > 5 && !data._hasEngineData) {
+    fuelEcon = GPS_ONLY_FUEL_RATE_L100;
+    isEstimated = true;
+  }
+
   if (fuelEcon !== null && isFinite(fuelEcon)) {
     data._fuelEconomy = fuelEcon;
+    data._fuelIsEstimated = isEstimated;
     setGauge('fuel-economy', fuelEcon, 0, 100, [50, 70]);
-    document.getElementById('val-fuel-economy').textContent = fuelEcon.toFixed(1);
+    const feEl = document.getElementById('val-fuel-economy');
+    if (feEl) feEl.textContent = fuelEcon.toFixed(1) + (isEstimated ? '*' : '');
+    // Update the label to show estimated
+    const feCard = document.getElementById('card-fuel-economy');
+    if (feCard) {
+      const label = feCard.querySelector('.gauge-label');
+      if (label) label.textContent = isEstimated ? 'FUEL ECONOMY (EST)' : 'FUEL ECONOMY';
+    }
   } else {
     const el = document.getElementById('val-fuel-economy');
     if (el) el.textContent = '—';
   }
 
   // Calculate estimated range
-  const estRange = calcEstRange(data.fuelLevel, fuelEcon);
+  let estRange = calcEstRange(data.fuelLevel, fuelEcon);
+  // GPS-only with no fuel level: estimate from assumed full tank minus distance
+  if (estRange === null && fuelEcon !== null && speed > 5) {
+    // Can't calculate range without fuel level — show the consumption rate instead
+    estRange = null;
+  }
+
   if (estRange !== null && isFinite(estRange)) {
     data._estRange = estRange;
     const rangeEl = document.getElementById('val-est-range');
     if (rangeEl) rangeEl.textContent = Math.round(estRange);
-    // bar: 0-2000km range
     const bar = document.getElementById('bar-estrange');
     if (bar) {
       const pct = Math.min(100, (estRange / 2000) * 100);
@@ -4423,21 +4430,30 @@ generateDemoData = function() {
   return data;
 };
 
-// Enhance trip recording with fuel economy
+// Enhance trip recording with fuel economy (CAN bus or GPS-only estimate)
 const _origStopTrip = stopTripRecording;
 stopTripRecording = async function() {
-  // Calculate fuel stats before stopping
   if (currentTrip && tripSnapshots.length > 0) {
     const fuelRates = tripSnapshots.map(s => s.fuelRate || 0).filter(f => f > 0);
     const speeds = tripSnapshots.map(s => s.speed || 0).filter(s => s > 0);
+    const avgSpeed = speeds.length ? speeds.reduce((a, b) => a + b, 0) / speeds.length : 0;
+    const durationHrs = (new Date().getTime() - new Date(currentTrip.startTime).getTime()) / 3600000;
+    const tripDistance = avgSpeed * durationHrs;
+
     if (fuelRates.length > 0 && speeds.length > 0) {
+      // CAN bus: use actual fuel rate
       const avgFuelRate = fuelRates.reduce((a, b) => a + b, 0) / fuelRates.length;
-      const avgSpeed = speeds.reduce((a, b) => a + b, 0) / speeds.length;
-      const durationHrs = (new Date().getTime() - new Date(currentTrip.startTime).getTime()) / 3600000;
       currentTrip.totalFuelUsed = Math.round(avgFuelRate * durationHrs * 10) / 10;
       const fuelEcon = calcFuelEconomy(avgFuelRate, avgSpeed);
       currentTrip.avgFuelEconomy = fuelEcon ? Math.round(fuelEcon * 10) / 10 : null;
+      currentTrip.fuelSource = 'canbus';
+    } else if (tripDistance > 0.5) {
+      // GPS-only: estimate fuel from distance using typical rate
+      currentTrip.totalFuelUsed = Math.round(estimateFuelFromDistance(tripDistance) * 10) / 10;
+      currentTrip.avgFuelEconomy = GPS_ONLY_FUEL_RATE_L100;
+      currentTrip.fuelSource = 'estimated';
     }
+    currentTrip.totalDistance = Math.round(tripDistance * 10) / 10;
   }
   await _origStopTrip();
 };
@@ -4522,13 +4538,17 @@ function processHistoricalRecords(records) {
   const stats = {
     recordCount: records.length,
     timespan: '',
+    timespanHours: 0,
     maxSpeed: 0,
     avgSpeed: 0,
     totalDistance: 0,
     avgFuelRate: null,
     fuelEconomy: null,
+    estFuelUsed: null,
+    fuelSource: 'none',
     speeds: [],
-    fuelRates: []
+    fuelRates: [],
+    timestamps: []
   };
 
   for (const r of records) {
@@ -4544,24 +4564,52 @@ function processHistoricalRecords(records) {
 
     const fr = parseFloat(findField(fields, 'FuelRate', 'fuelRate', 'FuelConsumption') || 0);
     if (fr > 0) stats.fuelRates.push(fr);
+
+    const ts = r.Timestamp || r.timestamp || r.DateTime || r.dateTime;
+    if (ts) stats.timestamps.push(new Date(ts).getTime());
   }
 
   if (stats.speeds.length > 0) {
     stats.avgSpeed = Math.round(stats.speeds.reduce((a, b) => a + b, 0) / stats.speeds.length);
   }
+
+  // Calculate time span and distance
+  if (stats.timestamps.length > 1) {
+    const sorted = stats.timestamps.sort((a, b) => a - b);
+    const firstTime = sorted[0];
+    const lastTime = sorted[sorted.length - 1];
+    stats.timespanHours = (lastTime - firstTime) / 3600000;
+    const hours = Math.round(stats.timespanHours);
+    stats.timespan = hours > 24 ? Math.round(hours / 24) + ' days' : hours + ' hours';
+
+    // Estimate distance: average moving speed * time spent moving
+    // Rough: assume moving for (movingRecords / totalRecords) of total time
+    if (stats.speeds.length > 0) {
+      const movingFraction = stats.speeds.length / records.length;
+      const movingHours = stats.timespanHours * movingFraction;
+      stats.totalDistance = Math.round(stats.avgSpeed * movingHours);
+    }
+  } else if (records.length > 0) {
+    stats.timespan = 'single record';
+  }
+
+  // Fuel economy: prefer CAN bus data, fall back to GPS-only estimate
   if (stats.fuelRates.length > 0) {
     stats.avgFuelRate = (stats.fuelRates.reduce((a, b) => a + b, 0) / stats.fuelRates.length).toFixed(1);
     if (stats.avgSpeed > 5) {
       stats.fuelEconomy = ((stats.avgFuelRate / stats.avgSpeed) * 100).toFixed(1);
     }
-  }
-
-  // Calculate time span
-  if (records.length > 1) {
-    const firstTime = new Date(records[records.length - 1].Timestamp || records[records.length - 1].timestamp || records[records.length - 1].DateTime || 0);
-    const lastTime = new Date(records[0].Timestamp || records[0].timestamp || records[0].DateTime || 0);
-    const hours = Math.round((lastTime - firstTime) / 3600000);
-    stats.timespan = hours > 24 ? Math.round(hours / 24) + ' days' : hours + ' hours';
+    stats.fuelSource = 'canbus';
+    // Estimate total fuel used from avg rate and moving time
+    if (stats.timespanHours > 0 && stats.speeds.length > 0) {
+      const movingFraction = stats.speeds.length / records.length;
+      stats.estFuelUsed = Math.round(parseFloat(stats.avgFuelRate) * stats.timespanHours * movingFraction);
+    }
+  } else if (stats.totalDistance > 0) {
+    // GPS-only: estimate fuel from distance
+    stats.fuelEconomy = GPS_ONLY_FUEL_RATE_L100;
+    stats.estFuelUsed = Math.round(estimateFuelFromDistance(stats.totalDistance));
+    stats.fuelSource = 'estimated';
   }
 
   historicalStats = stats;
@@ -4572,15 +4620,36 @@ function renderHistoricalStats() {
   const container = document.getElementById('historical-stats');
   if (!container || !historicalStats) return;
   const s = historicalStats;
+  const isEst = s.fuelSource === 'estimated';
+  const estLabel = isEst ? ' (EST)' : '';
+
+  let cards =
+    '<div class="gauge-card"><div class="gauge-label">MAX SPEED</div><div class="gauge-value" style="font-size:24px">' + Math.round(s.maxSpeed) + '</div><div class="gauge-unit">km/h</div></div>' +
+    '<div class="gauge-card"><div class="gauge-label">AVG SPEED</div><div class="gauge-value" style="font-size:24px">' + s.avgSpeed + '</div><div class="gauge-unit">km/h</div></div>';
+
+  if (s.totalDistance > 0) {
+    cards += '<div class="gauge-card"><div class="gauge-label">EST. DISTANCE</div><div class="gauge-value" style="font-size:24px">' + s.totalDistance + '</div><div class="gauge-unit">km</div></div>';
+  }
+
+  if (s.avgFuelRate && !isEst) {
+    cards += '<div class="gauge-card"><div class="gauge-label">AVG FUEL RATE</div><div class="gauge-value" style="font-size:24px">' + s.avgFuelRate + '</div><div class="gauge-unit">L/hr</div></div>';
+  }
+
+  if (s.fuelEconomy) {
+    cards += '<div class="gauge-card"><div class="gauge-label">FUEL ECONOMY' + estLabel + '</div><div class="gauge-value" style="font-size:24px">' + s.fuelEconomy + (isEst ? '*' : '') + '</div><div class="gauge-unit">L/100km</div></div>';
+  }
+
+  if (s.estFuelUsed) {
+    cards += '<div class="gauge-card"><div class="gauge-label">FUEL USED' + estLabel + '</div><div class="gauge-value" style="font-size:24px">' + s.estFuelUsed + '</div><div class="gauge-unit">litres</div></div>';
+  }
+
   container.innerHTML =
     '<div class="section-header" style="margin-top:8px">RECENT ACTIVITY (' + (s.timespan || 'last 24h') + ')</div>' +
-    '<div class="gauge-grid">' +
-      '<div class="gauge-card"><div class="gauge-label">MAX SPEED</div><div class="gauge-value" style="font-size:24px">' + Math.round(s.maxSpeed) + '</div><div class="gauge-unit">km/h</div></div>' +
-      '<div class="gauge-card"><div class="gauge-label">AVG SPEED</div><div class="gauge-value" style="font-size:24px">' + s.avgSpeed + '</div><div class="gauge-unit">km/h</div></div>' +
-      (s.avgFuelRate ? '<div class="gauge-card"><div class="gauge-label">AVG FUEL RATE</div><div class="gauge-value" style="font-size:24px">' + s.avgFuelRate + '</div><div class="gauge-unit">L/hr</div></div>' : '') +
-      (s.fuelEconomy ? '<div class="gauge-card"><div class="gauge-label">FUEL ECONOMY</div><div class="gauge-value" style="font-size:24px">' + s.fuelEconomy + '</div><div class="gauge-unit">L/100km</div></div>' : '') +
-    '</div>' +
-    '<div style="font-size:11px;color:var(--dim);text-align:center;margin-top:4px">' + s.recordCount + ' data points</div>';
+    '<div class="gauge-grid">' + cards + '</div>' +
+    '<div style="font-size:11px;color:var(--dim);text-align:center;margin-top:4px">' +
+      s.recordCount + ' data points' +
+      (isEst ? ' · fuel estimated at ' + GPS_ONLY_FUEL_RATE_L100 + ' L/100km (typical prime mover)' : '') +
+    '</div>';
   container.style.display = 'block';
 }
 
