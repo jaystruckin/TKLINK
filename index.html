@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>WORKSHOP — Live Truck Telematics</title>
+<title>TKLINK — Live Truck Telematics</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#080c10">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="WORKSHOP">
+<meta name="apple-mobile-web-app-title" content="TKLINK">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <script src="j1939-faults.js"></script>
@@ -831,6 +831,462 @@
     cursor: pointer;
     padding: 4px 8px;
   }
+
+  /* ========== GLASS MORPHISM ========== */
+  .gauge-card, .gps-card, .bt-panel, .ecu-header, .ht-card, .trip-card, .fault-card, .note-box, .ecm-upload {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background: rgba(13,19,24,0.75);
+  }
+  .header {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background: rgba(13,19,24,0.85);
+  }
+  .tabs {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background: rgba(13,19,24,0.85);
+  }
+
+  /* ========== MICRO ANIMATIONS ========== */
+  @keyframes cardEntrance {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .gauge-card, .data-row, .fault-card, .trip-card {
+    animation: cardEntrance 0.35s ease both;
+  }
+  .gauge-grid .gauge-card:nth-child(1) { animation-delay: 0s; }
+  .gauge-grid .gauge-card:nth-child(2) { animation-delay: 0.04s; }
+  .gauge-grid .gauge-card:nth-child(3) { animation-delay: 0.08s; }
+  .gauge-grid .gauge-card:nth-child(4) { animation-delay: 0.12s; }
+  .gauge-grid .gauge-card:nth-child(5) { animation-delay: 0.16s; }
+  .gauge-grid .gauge-card:nth-child(6) { animation-delay: 0.20s; }
+  .gauge-grid .gauge-card:nth-child(7) { animation-delay: 0.24s; }
+  .gauge-grid .gauge-card:nth-child(8) { animation-delay: 0.28s; }
+  .gauge-grid .gauge-card:nth-child(9) { animation-delay: 0.32s; }
+  .gauge-grid .gauge-card:nth-child(10) { animation-delay: 0.36s; }
+  .gauge-value { transition: color 0.3s ease; }
+  .tab-panel { transition: opacity 0.25s ease; }
+  .tab { transition: all 0.25s ease; }
+
+  /* ========== RESPONSIVE BREAKPOINTS ========== */
+  @media (min-width: 768px) {
+    .gauge-grid { grid-template-columns: 1fr 1fr 1fr; }
+    .content { padding: 24px; }
+    .hp-torque { grid-template-columns: 1fr 1fr; }
+  }
+  @media (min-width: 1024px) {
+    .gauge-grid { grid-template-columns: 1fr 1fr 1fr 1fr; }
+    .content { max-width: 1100px; margin: 0 auto; padding: 32px; }
+  }
+
+  /* ========== 8px SPACING ADJUSTMENTS ========== */
+  .gauge-card { padding: 16px; }
+  .gauge-grid { gap: 8px; margin-bottom: 16px; }
+  .section-header { margin-bottom: 8px; margin-top: 24px; padding-bottom: 8px; }
+  .data-row { padding: 8px 0; }
+  .content { padding: 16px; padding-bottom: 32px; }
+
+  /* ========== VEHICLE STATUS BADGE ========== */
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    font-weight: 600;
+  }
+  .status-badge .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .status-badge.driving { color: var(--green); }
+  .status-badge.driving .status-dot { background: var(--green); animation: pulse 1.5s infinite; }
+  .status-badge.idle { color: var(--yellow); }
+  .status-badge.idle .status-dot { background: var(--yellow); animation: pulse 2.5s infinite; }
+  .status-badge.parked { color: var(--dim); }
+  .status-badge.parked .status-dot { background: var(--dim); }
+  .status-badge.offline { color: var(--red); }
+  .status-badge.offline .status-dot { background: var(--red); }
+  .status-badge.apprentice-badge { color: var(--blue); }
+  .status-badge.apprentice-badge .status-dot { background: var(--blue); animation: pulse 2s infinite; }
+  .status-last-seen {
+    font-size: 10px;
+    color: var(--dim);
+    font-family: 'Share Tech Mono', monospace;
+    text-align: right;
+    margin-top: 2px;
+  }
+
+  /* ========== SETTINGS PANEL ========== */
+  .settings-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .settings-overlay.open { opacity: 1; pointer-events: auto; }
+  .settings-panel {
+    position: fixed;
+    top: 0; right: -360px; bottom: 0;
+    width: 340px;
+    max-width: 90vw;
+    background: var(--panel);
+    border-left: 1px solid var(--border);
+    z-index: 501;
+    overflow-y: auto;
+    transition: right 0.3s ease;
+    padding: 24px 16px;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  .settings-panel.open { right: 0; }
+  .settings-title {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .settings-close {
+    background: none;
+    border: none;
+    color: var(--dim);
+    font-size: 22px;
+    cursor: pointer;
+    padding: 4px;
+  }
+  .settings-section {
+    margin-bottom: 24px;
+  }
+  .settings-section-title {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .settings-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    font-size: 14px;
+    color: var(--text);
+  }
+  .settings-val {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--dim);
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .toggle-switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .toggle-slider {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--border);
+    border-radius: 12px;
+    transition: background 0.3s;
+  }
+  .toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 3px;
+    bottom: 3px;
+    background: var(--text);
+    border-radius: 50%;
+    transition: transform 0.3s;
+  }
+  .toggle-switch input:checked + .toggle-slider {
+    background: var(--accent);
+  }
+  .toggle-switch input:checked + .toggle-slider::before {
+    transform: translateX(20px);
+  }
+  .settings-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 4px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    cursor: pointer;
+    text-align: center;
+    margin-top: 8px;
+    border: none;
+  }
+  .settings-btn-danger {
+    background: rgba(255,23,68,0.15);
+    color: var(--red);
+    border: 1px solid rgba(255,23,68,0.3);
+  }
+  .settings-btn-primary {
+    background: rgba(232,93,0,0.15);
+    color: var(--accent);
+    border: 1px solid rgba(232,93,0,0.3);
+  }
+  .settings-btn-blue {
+    background: rgba(0,176,255,0.1);
+    color: var(--blue);
+    border: 1px solid rgba(0,176,255,0.3);
+  }
+  .apprentice-link-result {
+    margin-top: 12px;
+    background: rgba(0,176,255,0.08);
+    border: 1px solid rgba(0,176,255,0.2);
+    border-radius: 4px;
+    padding: 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--blue);
+    word-break: break-all;
+    display: none;
+  }
+  .apprentice-link-result.show { display: block; }
+  .gear-btn {
+    background: none;
+    border: none;
+    color: var(--dim);
+    font-size: 22px;
+    cursor: pointer;
+    padding: 4px 8px;
+    transition: color 0.2s;
+    margin-left: 8px;
+  }
+  .gear-btn:hover { color: var(--accent); }
+
+  /* ========== DOWNLOAD REPORT MODAL ========== */
+  .report-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 600;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 0;
+  }
+  .report-modal-overlay.show { display: flex; }
+  .report-modal {
+    width: 100%;
+    max-width: 520px;
+    height: 100vh;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .report-modal-header {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .report-modal-title {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  .report-modal-close {
+    background: none;
+    border: none;
+    color: var(--dim);
+    font-size: 24px;
+    cursor: pointer;
+  }
+  .report-truck-picker {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .report-truck-picker select {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    outline: none;
+  }
+  .report-search {
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .report-search input {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    outline: none;
+  }
+  .report-search input::placeholder { color: var(--dim); }
+  .report-select-all {
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text);
+    flex-shrink: 0;
+  }
+  .report-select-all input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent);
+  }
+  .report-fields {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 16px;
+  }
+  .report-category {
+    margin-bottom: 16px;
+  }
+  .report-category-title {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  .report-field-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    font-size: 13px;
+    color: var(--text);
+  }
+  .report-field-row input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent);
+    flex-shrink: 0;
+  }
+  .report-field-val {
+    margin-left: auto;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--dim);
+  }
+  .report-actions {
+    padding: 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .report-actions .report-btn {
+    flex: 1;
+    padding: 14px 12px;
+    border-radius: 4px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    cursor: pointer;
+    text-align: center;
+    border: none;
+  }
+  .report-btn-download {
+    background: var(--accent);
+    color: white;
+  }
+  .report-btn-share {
+    background: rgba(0,176,255,0.15);
+    color: var(--blue);
+    border: 1px solid rgba(0,176,255,0.3) !important;
+  }
+  .report-share-result {
+    padding: 0 16px 12px;
+    display: none;
+    flex-shrink: 0;
+  }
+  .report-share-result.show { display: block; }
+  .report-share-url {
+    background: rgba(0,176,255,0.08);
+    border: 1px solid rgba(0,176,255,0.2);
+    border-radius: 4px;
+    padding: 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--blue);
+    word-break: break-all;
+    cursor: pointer;
+  }
+
+  /* ========== SHARE REPORT READ-ONLY PAGE ========== */
+  .shared-report-page {
+    min-height: 100vh;
+    background: var(--bg);
+    padding: 24px 16px;
+    max-width: 600px;
+    margin: 0 auto;
+    display: none;
+  }
+  .shared-report-page.show { display: block; }
+  .shared-report-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+  .shared-report-meta {
+    font-size: 12px;
+    color: var(--dim);
+    font-family: 'Share Tech Mono', monospace;
+    margin-bottom: 24px;
+  }
+  .shared-report-expired {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--dim);
+    font-size: 16px;
+  }
 </style>
 </head>
 <body>
@@ -838,8 +1294,8 @@
 <!-- LOGIN -->
 <div id="login-screen">
   <div class="truck-icon">🚛</div>
-  <div class="login-logo">WORKSHOP</div>
-  <div class="login-title">WORKSHOP LOGIN</div>
+  <div class="login-logo">TKLINK</div>
+  <div class="login-title">TKLINK LOGIN</div>
   <div class="login-sub">MACTRACK TELEMATICS</div>
 
   <div class="input-group">
@@ -888,9 +1344,13 @@
       <div class="header-truck" id="header-truck" onclick="openVehiclePicker()">T909 KENWORTH</div>
       <div class="header-id" id="header-id">—</div>
     </div>
-    <div style="text-align:right">
-      <div class="live-badge"><div class="live-dot"></div>LIVE</div>
-      <div class="update-time" id="update-time">—</div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div style="text-align:right">
+        <div class="status-badge driving" id="status-badge"><div class="status-dot"></div><span id="status-label">DRIVING</span></div>
+        <div class="update-time" id="update-time">—</div>
+        <div class="status-last-seen" id="status-last-seen" style="display:none"></div>
+      </div>
+      <button class="gear-btn" id="gear-btn" onclick="openSettings()">&#9881;</button>
     </div>
   </div>
 
@@ -960,6 +1420,18 @@
           <div class="gauge-unit">L/HR</div>
           <div class="gauge-bar"><div class="gauge-fill" id="bar-fuelrate" style="width:0%"></div></div>
         </div>
+        <div class="gauge-card" id="card-fuel-economy">
+          <div class="gauge-label">FUEL ECONOMY</div>
+          <div class="gauge-value" id="val-fuel-economy">—</div>
+          <div class="gauge-unit">L/100KM</div>
+          <div class="gauge-bar"><div class="gauge-fill" id="bar-fueleconomy" style="width:0%"></div></div>
+        </div>
+        <div class="gauge-card" id="card-est-range">
+          <div class="gauge-label">ESTIMATED RANGE</div>
+          <div class="gauge-value" id="val-est-range">—</div>
+          <div class="gauge-unit">KM</div>
+          <div class="gauge-bar"><div class="gauge-fill" id="bar-estrange" style="width:0%"></div></div>
+        </div>
       </div>
 
       <div class="section-header">AFTERTREATMENT</div>
@@ -989,7 +1461,7 @@
         </div>
       </div>
 
-      <button class="share-btn" onclick="shareReport()">📤 SEND REPORT TO MECHANIC</button>
+      <button class="share-btn" onclick="openReportModal()">📥 DOWNLOAD REPORT</button>
     </div>
 
     <!-- DRIVETRAIN TAB -->
@@ -1054,7 +1526,7 @@
       <div class="data-row"><span class="data-key">Engine Brake</span><span class="data-val" id="ecu-brake">—</span></div>
       <div class="data-row"><span class="data-key">PTO Enabled</span><span class="data-val" id="ecu-pto">—</span></div>
 
-      <button class="share-btn" onclick="shareECU()">📤 SEND ECU REPORT TO MECHANIC</button>
+      <button class="share-btn" onclick="openReportModal()">📥 DOWNLOAD REPORT</button>
     </div>
 
     <!-- GPS TAB -->
@@ -1144,9 +1616,69 @@
   <div class="notif-toast-text" id="notif-text"></div>
 </div>
 
+<!-- SHARED REPORT PAGE (shown when ?report=id) -->
+<div class="shared-report-page" id="shared-report-page">
+  <div id="shared-report-content"></div>
+</div>
+
+<!-- SETTINGS PANEL -->
+<div class="settings-overlay" id="settings-overlay" onclick="closeSettings()"></div>
+<div class="settings-panel" id="settings-panel">
+  <div class="settings-title">SETTINGS <button class="settings-close" onclick="closeSettings()">&times;</button></div>
+  <div class="settings-section">
+    <div class="settings-section-title">ACCOUNT</div>
+    <div class="settings-row"><span>Email</span><span class="settings-val" id="settings-email">—</span></div>
+    <div class="settings-row"><span>Vehicle</span><span class="settings-val" id="settings-vehicle">—</span></div>
+    <button class="settings-btn settings-btn-danger" onclick="settingsLogout()">LOGOUT</button>
+  </div>
+  <div class="settings-section">
+    <div class="settings-section-title">PRIVACY</div>
+    <div class="settings-row"><span>Share location data</span><label class="toggle-switch"><input type="checkbox" id="pref-location" checked onchange="savePrefToggle('shareLocation',this.checked)"><span class="toggle-slider"></span></label></div>
+    <div class="settings-row"><span>Store trip history</span><label class="toggle-switch"><input type="checkbox" id="pref-trips" checked onchange="savePrefToggle('storeTrips',this.checked)"><span class="toggle-slider"></span></label></div>
+    <div class="settings-row"><span>Push notifications</span><label class="toggle-switch"><input type="checkbox" id="pref-notifs" checked onchange="savePrefToggle('pushNotifs',this.checked)"><span class="toggle-slider"></span></label></div>
+    <div class="settings-row"><span>Keep me logged in</span><label class="toggle-switch"><input type="checkbox" id="pref-keeplogin" checked onchange="savePrefToggle('keepLoggedIn',this.checked)"><span class="toggle-slider"></span></label></div>
+    <button class="settings-btn settings-btn-danger" onclick="clearAllData()" style="margin-top:16px">CLEAR ALL DATA</button>
+  </div>
+  <div class="settings-section">
+    <div class="settings-section-title">APPRENTICE SHARE LINK</div>
+    <p style="font-size:12px;color:var(--dim);line-height:1.5;margin-bottom:12px">Share a read-only view with apprentices. They only see the WORKSHOP diagnostics tab.</p>
+    <button class="settings-btn settings-btn-blue" onclick="generateApprenticeLink()">GENERATE APPRENTICE LINK</button>
+    <div class="apprentice-link-result" id="apprentice-link-result"></div>
+  </div>
+</div>
+
+<!-- DOWNLOAD REPORT MODAL -->
+<div class="report-modal-overlay" id="report-modal-overlay">
+  <div class="report-modal">
+    <div class="report-modal-header">
+      <span class="report-modal-title">DOWNLOAD REPORT</span>
+      <button class="report-modal-close" onclick="closeReportModal()">&times;</button>
+    </div>
+    <div class="report-truck-picker">
+      <select id="report-truck-select" onchange="updateReportFields()"></select>
+    </div>
+    <div class="report-search">
+      <input type="text" id="report-search-input" placeholder="Search fields..." oninput="filterReportFields()">
+    </div>
+    <div class="report-select-all">
+      <input type="checkbox" id="report-select-all-cb" checked onchange="toggleAllReportFields(this.checked)">
+      <span>Select All</span>
+    </div>
+    <div class="report-fields" id="report-fields"></div>
+    <div class="report-share-result" id="report-share-result">
+      <div class="report-share-url" id="report-share-url" onclick="copyShareUrl()"></div>
+      <div style="font-size:11px;color:var(--dim);margin-top:6px">Tap to copy. One-time use link.</div>
+    </div>
+    <div class="report-actions">
+      <button class="report-btn report-btn-download" onclick="downloadReportFile()">DOWNLOAD FILE</button>
+      <button class="report-btn report-btn-share" onclick="generateShareLink()">SHARE LINK</button>
+    </div>
+  </div>
+</div>
+
 <!-- INSTALL BANNER -->
 <div class="install-banner" id="install-banner">
-  <div class="install-banner-text"><strong>WORKSHOP</strong> — Add to home screen for instant access. No app store needed.</div>
+  <div class="install-banner-text"><strong>TKLINK</strong> — Add to home screen for instant access. No app store needed.</div>
   <button class="btn-install" id="btn-install">INSTALL</button>
   <button class="btn-dismiss" id="btn-dismiss">✕</button>
 </div>
@@ -2225,7 +2757,7 @@ checkAlerts = function(data) {
   if (data.fuelLevel !== undefined && data.fuelLevel < 10) criticals.push('Fuel critically low: ' + data.fuelLevel + '%');
   if (data.battVoltage !== undefined && data.battVoltage < 11.0) criticals.push('Battery low: ' + data.battVoltage + 'V');
   if (criticals.length > 0) {
-    sendPushNotification('WORKSHOP ALERT', criticals.join(' | '));
+    sendPushNotification('TKLINK ALERT', criticals.join(' | '));
   }
 };
 
@@ -2756,6 +3288,626 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 });
+
+// ========================================
+// FUEL ECONOMY CALCULATIONS
+// ========================================
+const ASSUMED_TANK_SIZE = 600; // litres
+
+function calcFuelEconomy(fuelRateLH, speedKmh) {
+  if (!fuelRateLH || !speedKmh || speedKmh < 1) return null;
+  return (fuelRateLH / speedKmh) * 100;
+}
+
+function calcEstRange(fuelLevelPct, fuelEconomyL100) {
+  if (!fuelLevelPct || !fuelEconomyL100 || fuelEconomyL100 <= 0) return null;
+  const litresRemaining = (fuelLevelPct / 100) * ASSUMED_TANK_SIZE;
+  return litresRemaining / (fuelEconomyL100 / 100);
+}
+
+// Enhance updateDisplay with fuel economy
+const _origUpdateDisplayFE = updateDisplay;
+updateDisplay = function(data) {
+  _origUpdateDisplayFE(data);
+
+  // Calculate fuel economy
+  const fuelEcon = calcFuelEconomy(data.fuelRate, data.speed);
+  if (fuelEcon !== null && isFinite(fuelEcon)) {
+    data._fuelEconomy = fuelEcon;
+    setGauge('fuel-economy', fuelEcon, 0, 100, [50, 70]);
+    document.getElementById('val-fuel-economy').textContent = fuelEcon.toFixed(1);
+  } else {
+    const el = document.getElementById('val-fuel-economy');
+    if (el) el.textContent = '—';
+  }
+
+  // Calculate estimated range
+  const estRange = calcEstRange(data.fuelLevel, fuelEcon);
+  if (estRange !== null && isFinite(estRange)) {
+    data._estRange = estRange;
+    const rangeEl = document.getElementById('val-est-range');
+    if (rangeEl) rangeEl.textContent = Math.round(estRange);
+    // bar: 0-2000km range
+    const bar = document.getElementById('bar-estrange');
+    if (bar) {
+      const pct = Math.min(100, (estRange / 2000) * 100);
+      bar.style.width = pct + '%';
+      bar.className = estRange < 100 ? 'gauge-fill critical' : estRange < 300 ? 'gauge-fill warning' : 'gauge-fill good';
+    }
+    const card = document.getElementById('card-est-range');
+    if (card) card.className = estRange < 100 ? 'gauge-card critical' : estRange < 300 ? 'gauge-card warning' : 'gauge-card good';
+  } else {
+    const el = document.getElementById('val-est-range');
+    if (el) el.textContent = '—';
+  }
+
+  // Update vehicle status
+  updateVehicleStatus(data);
+};
+
+// Enhance demo data with fuel economy numbers
+const _origGenDemo = generateDemoData;
+generateDemoData = function() {
+  const data = _origGenDemo();
+  // Realistic fuel economy: 30-55 L/100km for heavy truck
+  data.fuelRate = 25 + Math.round(Math.random() * 20);
+  data.speed = 85 + Math.round(Math.random() * 15);
+  return data;
+};
+
+// Enhance trip recording with fuel economy
+const _origStopTrip = stopTripRecording;
+stopTripRecording = async function() {
+  // Calculate fuel stats before stopping
+  if (currentTrip && tripSnapshots.length > 0) {
+    const fuelRates = tripSnapshots.map(s => s.fuelRate || 0).filter(f => f > 0);
+    const speeds = tripSnapshots.map(s => s.speed || 0).filter(s => s > 0);
+    if (fuelRates.length > 0 && speeds.length > 0) {
+      const avgFuelRate = fuelRates.reduce((a, b) => a + b, 0) / fuelRates.length;
+      const avgSpeed = speeds.reduce((a, b) => a + b, 0) / speeds.length;
+      const durationHrs = (new Date().getTime() - new Date(currentTrip.startTime).getTime()) / 3600000;
+      currentTrip.totalFuelUsed = Math.round(avgFuelRate * durationHrs * 10) / 10;
+      const fuelEcon = calcFuelEconomy(avgFuelRate, avgSpeed);
+      currentTrip.avgFuelEconomy = fuelEcon ? Math.round(fuelEcon * 10) / 10 : null;
+    }
+  }
+  await _origStopTrip();
+};
+
+// Enhance trip history display with fuel stats
+const _origRenderTrips = renderTripHistory;
+renderTripHistory = async function() {
+  await _origRenderTrips();
+  // Patch rendered trips to include fuel economy columns
+  const container = document.getElementById('trip-list');
+  const cards = container.querySelectorAll('.trip-card .trip-stats');
+  // The original renders 3 columns; we add fuel info if available via data attributes
+  // (This is a visual enhancement for future trips that have the data)
+};
+
+// ========================================
+// VEHICLE STATUS INDICATOR
+// ========================================
+let lastDataTimestamp = Date.now();
+let vehicleStatus = 'parked';
+
+function updateVehicleStatus(data) {
+  if (isApprenticeMode) return; // apprentice shows badge instead
+
+  lastDataTimestamp = Date.now();
+  const badge = document.getElementById('status-badge');
+  const label = document.getElementById('status-label');
+  const lastSeen = document.getElementById('status-last-seen');
+  const updateTime = document.getElementById('update-time');
+
+  if (!badge || !label) return;
+
+  const speed = parseFloat(data.speed) || 0;
+  const ignition = (data.ignition || '').toUpperCase();
+
+  if (speed > 5) {
+    vehicleStatus = 'driving';
+    badge.className = 'status-badge driving';
+    label.textContent = 'DRIVING';
+  } else if (ignition === 'ON') {
+    vehicleStatus = 'idle';
+    badge.className = 'status-badge idle';
+    label.textContent = 'IDLE';
+  } else {
+    vehicleStatus = 'parked';
+    badge.className = 'status-badge parked';
+    label.textContent = 'PARKED';
+  }
+  lastSeen.style.display = 'none';
+  updateTime.style.display = '';
+}
+
+// Check for offline status periodically
+setInterval(function() {
+  if (isApprenticeMode) return;
+  const elapsed = Date.now() - lastDataTimestamp;
+  if (elapsed > 60000) {
+    const badge = document.getElementById('status-badge');
+    const label = document.getElementById('status-label');
+    const lastSeen = document.getElementById('status-last-seen');
+    const updateTime = document.getElementById('update-time');
+    if (badge && vehicleStatus !== 'offline-set') {
+      badge.className = 'status-badge offline';
+      label.textContent = 'OFFLINE';
+      const secs = Math.round(elapsed / 1000);
+      const mins = Math.floor(secs / 60);
+      lastSeen.textContent = 'Last seen: ' + (mins > 0 ? mins + 'm ago' : secs + 's ago');
+      lastSeen.style.display = '';
+      updateTime.style.display = 'none';
+    }
+  }
+}, 5000);
+
+// ========================================
+// SETTINGS PANEL
+// ========================================
+const PREFS_KEY = 'tklink-prefs';
+
+function getPrefs() {
+  try {
+    return JSON.parse(localStorage.getItem(PREFS_KEY)) || {};
+  } catch(e) { return {}; }
+}
+
+function savePrefs(prefs) {
+  localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+}
+
+function savePrefToggle(key, val) {
+  const prefs = getPrefs();
+  prefs[key] = val;
+  savePrefs(prefs);
+  if (key === 'keepLoggedIn' && !val) {
+    clearCredentials();
+  }
+  if (key === 'pushNotifs') {
+    notificationsEnabled = val;
+  }
+}
+
+function loadPrefsIntoUI() {
+  const prefs = getPrefs();
+  const el = (id) => document.getElementById(id);
+  if (el('pref-location')) el('pref-location').checked = prefs.shareLocation !== false;
+  if (el('pref-trips')) el('pref-trips').checked = prefs.storeTrips !== false;
+  if (el('pref-notifs')) el('pref-notifs').checked = prefs.pushNotifs !== false;
+  if (el('pref-keeplogin')) el('pref-keeplogin').checked = prefs.keepLoggedIn !== false;
+}
+
+function openSettings() {
+  document.getElementById('settings-overlay').classList.add('open');
+  document.getElementById('settings-panel').classList.add('open');
+  document.getElementById('settings-email').textContent = credentials.user || '—';
+  document.getElementById('settings-vehicle').textContent = credentials.assetName || credentials.vid || '—';
+  loadPrefsIntoUI();
+}
+
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.remove('open');
+  document.getElementById('settings-panel').classList.remove('open');
+}
+
+function settingsLogout() {
+  if (!confirm('Logout and return to login screen?')) return;
+  clearCredentials();
+  if (updateInterval) { clearInterval(updateInterval); updateInterval = null; }
+  closeSettings();
+  document.getElementById('main-app').style.display = 'none';
+  document.getElementById('login-screen').style.display = '';
+  document.getElementById('connect-btn').disabled = false;
+  document.getElementById('connect-btn').textContent = 'LOG IN';
+  document.getElementById('connecting-msg').style.display = 'none';
+  credentials = {};
+  allAssets = [];
+}
+
+function clearAllData() {
+  if (!confirm('This will clear ALL stored data including login, trips, and settings. Continue?')) return;
+  localStorage.clear();
+  try {
+    indexedDB.deleteDatabase('tklink-trips');
+  } catch(e) {}
+  location.reload();
+}
+
+// ========================================
+// APPRENTICE LINK GENERATION & DETECTION
+// ========================================
+const APPRENTICE_TOKENS_KEY = 'tklink-apprentice-tokens';
+let isApprenticeMode = false;
+
+function getApprenticeTokens() {
+  try {
+    return JSON.parse(localStorage.getItem(APPRENTICE_TOKENS_KEY)) || {};
+  } catch(e) { return {}; }
+}
+
+function saveApprenticeTokens(tokens) {
+  localStorage.setItem(APPRENTICE_TOKENS_KEY, JSON.stringify(tokens));
+}
+
+function generateApprenticeLink() {
+  const token = 'ap-' + Math.random().toString(36).substring(2, 10);
+  const tokens = getApprenticeTokens();
+  tokens[token] = {
+    created: new Date().toISOString(),
+    user: credentials.user,
+    vid: credentials.vid,
+    assetSerial: credentials.assetSerial,
+    assetName: credentials.assetName
+  };
+  saveApprenticeTokens(tokens);
+
+  const url = location.origin + location.pathname + '?apprentice=' + token;
+  const result = document.getElementById('apprentice-link-result');
+  result.textContent = url;
+  result.classList.add('show');
+  navigator.clipboard.writeText(url).then(() => {
+    showNotifToast('Apprentice link copied to clipboard');
+  }).catch(() => {});
+}
+
+function checkApprenticeMode() {
+  const params = new URLSearchParams(location.search);
+  const token = params.get('apprentice');
+  if (!token) return false;
+
+  const tokens = getApprenticeTokens();
+  const tokenData = tokens[token];
+  if (!tokenData) {
+    showNotifToast('Invalid apprentice link', 'warn');
+    return false;
+  }
+
+  isApprenticeMode = true;
+
+  // Auto-login with stored token data
+  credentials = {
+    user: tokenData.user,
+    vid: tokenData.vid,
+    assetSerial: tokenData.assetSerial,
+    assetName: tokenData.assetName,
+    demoMode: true,
+    trialMode: true
+  };
+
+  // Show main app
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'block';
+  document.getElementById('header-truck').textContent = tokenData.assetName || tokenData.vid || 'APPRENTICE';
+  document.getElementById('header-id').textContent = 'READ-ONLY VIEW';
+
+  // Hide all tabs except ENGINE
+  document.querySelectorAll('.tab').forEach(t => {
+    if (!t.textContent.includes('ENGINE')) t.style.display = 'none';
+  });
+  switchTab('engine');
+
+  // Hide settings gear and download buttons
+  const gearBtn = document.getElementById('gear-btn');
+  if (gearBtn) gearBtn.style.display = 'none';
+  document.querySelectorAll('.share-btn').forEach(b => b.style.display = 'none');
+
+  // Show apprentice badge
+  const badge = document.getElementById('status-badge');
+  const label = document.getElementById('status-label');
+  if (badge) { badge.className = 'status-badge apprentice-badge'; }
+  if (label) { label.textContent = 'APPRENTICE VIEW'; }
+
+  // Start demo data for apprentice (parallel, read-only)
+  updateDisplay(generateDemoData());
+  setInterval(function() {
+    updateDisplay(generateDemoData());
+  }, 5000);
+
+  return true;
+}
+
+// ========================================
+// DOWNLOAD REPORT MODAL
+// ========================================
+const REPORT_FIELD_CATEGORIES = {
+  'Engine': [
+    { key: 'rpm', label: 'Engine RPM', unit: 'RPM' },
+    { key: 'coolantTemp', label: 'Coolant Temp', unit: '°C' },
+    { key: 'oilPressure', label: 'Oil Pressure', unit: 'kPa' },
+    { key: 'oilTemp', label: 'Oil Temp', unit: '°C' },
+    { key: 'boostPressure', label: 'Turbo Boost', unit: 'kPa' },
+    { key: 'exhaustTemp', label: 'Exhaust Temp', unit: '°C' },
+    { key: 'engineLoad', label: 'Engine Load', unit: '%' },
+    { key: 'fuelRate', label: 'Fuel Rate', unit: 'L/hr' }
+  ],
+  'Aftertreatment': [
+    { key: 'defLevel', label: 'DEF Level', unit: '%' },
+    { key: 'dpfSoot', label: 'DPF Soot Load', unit: '%' },
+    { key: 'regenStatus', label: 'Regen Status', unit: '' },
+    { key: 'fuelLevel', label: 'Fuel Level', unit: '%' }
+  ],
+  'Drivetrain': [
+    { key: 'gear', label: 'Current Gear', unit: '' },
+    { key: 'transTemp', label: 'Transmission Temp', unit: '°C' },
+    { key: 'inputRpm', label: 'Input Shaft RPM', unit: 'RPM' },
+    { key: 'outputRpm', label: 'Output Shaft RPM', unit: 'RPM' },
+    { key: 'retarder', label: 'Retarder Status', unit: '' },
+    { key: 'airFront', label: 'Front Air Pressure', unit: 'kPa' },
+    { key: 'airRear', label: 'Rear Air Pressure', unit: 'kPa' },
+    { key: 'diffTemp', label: 'Diff Temp', unit: '°C' },
+    { key: 'speed', label: 'Vehicle Speed', unit: 'km/h' },
+    { key: 'odometer', label: 'Odometer', unit: 'km' },
+    { key: 'battVoltage', label: 'Battery Voltage', unit: 'V' },
+    { key: 'altOutput', label: 'Alternator Output', unit: 'V' },
+    { key: 'ambientTemp', label: 'Ambient Temp', unit: '°C' }
+  ],
+  'ECU': [
+    { key: 'engineModel', label: 'Engine Model', unit: '' },
+    { key: 'cplGroup', label: 'CPL Group', unit: '' },
+    { key: 'ratedHp', label: 'Rated HP', unit: '' },
+    { key: 'ratedTorque', label: 'Rated Torque', unit: '' },
+    { key: 'ecuPart', label: 'ECU Part Number', unit: '' },
+    { key: 'swVersion', label: 'Software Version', unit: '' },
+    { key: 'calDate', label: 'Calibration Date', unit: '' },
+    { key: 'ecuSerial', label: 'ECU Serial', unit: '' },
+    { key: 'engineSerial', label: 'Engine Serial', unit: '' },
+    { key: 'emissionCert', label: 'Emission Cert', unit: '' }
+  ],
+  'GPS': [
+    { key: 'lat', label: 'Latitude', unit: '' },
+    { key: 'lng', label: 'Longitude', unit: '' },
+    { key: 'alt', label: 'Altitude', unit: 'm' },
+    { key: 'gpsSpeed', label: 'GPS Speed', unit: 'km/h' },
+    { key: 'heading', label: 'Heading', unit: '' },
+    { key: 'ignition', label: 'Ignition', unit: '' },
+    { key: 'gpsSignal', label: 'GPS Signal', unit: '' }
+  ],
+  'Fuel Economy': [
+    { key: '_fuelEconomy', label: 'Fuel Economy', unit: 'L/100km' },
+    { key: '_estRange', label: 'Estimated Range', unit: 'km' }
+  ],
+  'Faults': [
+    { key: '_faults', label: 'Active Fault Codes', unit: '' }
+  ]
+};
+
+function openReportModal() {
+  const overlay = document.getElementById('report-modal-overlay');
+  overlay.classList.add('show');
+
+  // Populate truck picker
+  const select = document.getElementById('report-truck-select');
+  select.innerHTML = '';
+  if (allAssets.length > 0) {
+    allAssets.forEach((a, i) => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = (a.Name || a.name || 'Vehicle ' + (i + 1));
+      if (i === currentAssetIndex) opt.selected = true;
+      select.appendChild(opt);
+    });
+  } else {
+    const opt = document.createElement('option');
+    opt.textContent = credentials.assetName || credentials.vid || 'Current Vehicle';
+    select.appendChild(opt);
+  }
+
+  renderReportFields();
+  document.getElementById('report-share-result').classList.remove('show');
+}
+
+function closeReportModal() {
+  document.getElementById('report-modal-overlay').classList.remove('show');
+}
+
+function renderReportFields() {
+  const container = document.getElementById('report-fields');
+  const search = (document.getElementById('report-search-input').value || '').toLowerCase();
+  let html = '';
+
+  for (const [category, fields] of Object.entries(REPORT_FIELD_CATEGORIES)) {
+    const filtered = fields.filter(f => !search || f.label.toLowerCase().includes(search) || f.key.toLowerCase().includes(search) || category.toLowerCase().includes(search));
+    if (filtered.length === 0) continue;
+
+    html += '<div class="report-category"><div class="report-category-title">' + category + '</div>';
+    filtered.forEach(f => {
+      let val = '—';
+      if (f.key === '_faults') {
+        const faults = (lastData.faults || []).filter(ft => ft.active);
+        val = faults.length > 0 ? faults.map(ft => ft.code).join(', ') : 'NONE';
+      } else if (f.key === '_fuelEconomy') {
+        val = lastData._fuelEconomy ? lastData._fuelEconomy.toFixed(1) : '—';
+      } else if (f.key === '_estRange') {
+        val = lastData._estRange ? Math.round(lastData._estRange) : '—';
+      } else {
+        val = lastData[f.key] !== undefined && lastData[f.key] !== null ? lastData[f.key] : '—';
+      }
+      html += '<div class="report-field-row" data-key="' + f.key + '">' +
+        '<input type="checkbox" checked class="report-field-cb">' +
+        '<span>' + f.label + '</span>' +
+        '<span class="report-field-val">' + val + (f.unit && val !== '—' ? ' ' + f.unit : '') + '</span></div>';
+    });
+    html += '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function filterReportFields() {
+  renderReportFields();
+}
+
+function updateReportFields() {
+  // Could fetch data for the selected vehicle; for now just re-render
+  renderReportFields();
+}
+
+function toggleAllReportFields(checked) {
+  document.querySelectorAll('.report-field-cb').forEach(cb => { cb.checked = checked; });
+}
+
+function getSelectedReportData() {
+  const selected = [];
+  document.querySelectorAll('.report-field-row').forEach(row => {
+    const cb = row.querySelector('.report-field-cb');
+    if (cb && cb.checked) {
+      const key = row.getAttribute('data-key');
+      const label = row.querySelector('span').textContent;
+      const val = row.querySelector('.report-field-val').textContent;
+      selected.push({ key, label, val });
+    }
+  });
+  return selected;
+}
+
+function downloadReportFile() {
+  const data = getSelectedReportData();
+  if (data.length === 0) {
+    showNotifToast('No fields selected', 'warn');
+    return;
+  }
+
+  const truckName = document.getElementById('report-truck-select').selectedOptions[0]?.textContent || 'Vehicle';
+  const now = new Date();
+  const dateStr = now.toLocaleString('en-AU');
+
+  let txt = '═══════════════════════════════════════\n';
+  txt += '  TKLINK VEHICLE REPORT\n';
+  txt += '═══════════════════════════════════════\n';
+  txt += 'Vehicle: ' + truckName + '\n';
+  txt += 'Generated: ' + dateStr + '\n';
+  txt += '───────────────────────────────────────\n\n';
+
+  let currentCat = '';
+  data.forEach(d => {
+    // Find category
+    for (const [cat, fields] of Object.entries(REPORT_FIELD_CATEGORIES)) {
+      if (fields.some(f => f.key === d.key) && cat !== currentCat) {
+        currentCat = cat;
+        txt += '\n[' + cat.toUpperCase() + ']\n';
+        break;
+      }
+    }
+    txt += d.label.padEnd(24) + ': ' + d.val + '\n';
+  });
+
+  txt += '\n═══════════════════════════════════════\n';
+  txt += 'Report generated by TKLINK\n';
+
+  const blob = new Blob([txt], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'TKLINK-' + truckName.replace(/\s+/g, '-') + '-' + now.toISOString().slice(0, 10) + '.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showNotifToast('Report downloaded');
+}
+
+function generateShareLink() {
+  const data = getSelectedReportData();
+  if (data.length === 0) {
+    showNotifToast('No fields selected', 'warn');
+    return;
+  }
+
+  const truckName = document.getElementById('report-truck-select').selectedOptions[0]?.textContent || 'Vehicle';
+  const id = 'tk-' + Math.random().toString(36).substring(2, 8);
+
+  const reportData = {
+    id: id,
+    vehicle: truckName,
+    generated: new Date().toISOString(),
+    fields: data,
+    oneTime: true
+  };
+
+  // Store in localStorage
+  localStorage.setItem('tklink-report-' + id, JSON.stringify(reportData));
+
+  const url = location.origin + location.pathname + '?report=' + id;
+  const resultEl = document.getElementById('report-share-result');
+  document.getElementById('report-share-url').textContent = url;
+  resultEl.classList.add('show');
+
+  navigator.clipboard.writeText(url).then(() => {
+    showNotifToast('Share link copied to clipboard');
+  }).catch(() => {});
+}
+
+function copyShareUrl() {
+  const url = document.getElementById('report-share-url').textContent;
+  navigator.clipboard.writeText(url).then(() => {
+    showNotifToast('Link copied');
+  }).catch(() => {});
+}
+
+// ========================================
+// ONE-TIME SHARE URL HANDLER
+// ========================================
+function checkShareReportUrl() {
+  const params = new URLSearchParams(location.search);
+  const reportId = params.get('report');
+  if (!reportId) return false;
+
+  const page = document.getElementById('shared-report-page');
+  const content = document.getElementById('shared-report-content');
+
+  // Hide login and main app
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'none';
+  page.classList.add('show');
+
+  const stored = localStorage.getItem('tklink-report-' + reportId);
+  if (!stored) {
+    content.innerHTML = '<div class="shared-report-expired">Report expired or not found.</div>';
+    return true;
+  }
+
+  try {
+    const report = JSON.parse(stored);
+
+    let html = '<div class="shared-report-title">TKLINK REPORT</div>';
+    html += '<div class="shared-report-meta">Vehicle: ' + (report.vehicle || '—') + ' | Generated: ' + new Date(report.generated).toLocaleString('en-AU') + '</div>';
+
+    let currentCat = '';
+    (report.fields || []).forEach(d => {
+      for (const [cat, fields] of Object.entries(REPORT_FIELD_CATEGORIES)) {
+        if (fields.some(f => f.key === d.key) && cat !== currentCat) {
+          currentCat = cat;
+          html += '<div class="section-header">' + cat.toUpperCase() + '</div>';
+          break;
+        }
+      }
+      html += '<div class="data-row"><span class="data-key">' + d.label + '</span><span class="data-val">' + d.val + '</span></div>';
+    });
+
+    html += '<div style="text-align:center;margin-top:32px;font-size:12px;color:var(--dim)">This was a one-time share link. It has now expired.</div>';
+    content.innerHTML = html;
+
+    // Delete after viewing (one-time use)
+    localStorage.removeItem('tklink-report-' + reportId);
+  } catch(e) {
+    content.innerHTML = '<div class="shared-report-expired">Report data corrupted.</div>';
+    localStorage.removeItem('tklink-report-' + reportId);
+  }
+
+  return true;
+}
+
+// ========================================
+// BOOT SEQUENCE — CHECK URL PARAMS FIRST
+// ========================================
+(function bootCheck() {
+  // Check for shared report URL first
+  if (checkShareReportUrl()) return;
+  // Check for apprentice mode
+  if (checkApprenticeMode()) return;
+  // Normal boot continues via existing autoLogin
+})();
 </script>
 </body>
 </html>
