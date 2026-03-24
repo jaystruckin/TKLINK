@@ -1880,6 +1880,15 @@
 
     <!-- ECM FILE READER -->
     <div class="tab-panel" id="tab-ecm">
+      <div class="note-box" style="margin-bottom:16px">
+        <strong style="color:var(--accent)">FULL DATA DUMP</strong><br>
+        Pull everything the MacTrack API has for this vehicle — raw API responses, all fields, every data point from the last 7 days. See exactly what's available.
+      </div>
+      <button class="share-btn" onclick="downloadFullDataDump()" id="dump-btn" style="margin-top:0;margin-bottom:20px;background:rgba(0,176,255,0.1);border-color:rgba(0,176,255,0.3);color:var(--blue)">📥 DOWNLOAD FULL DATA DUMP</button>
+      <div id="dump-status" style="display:none;font-size:12px;color:var(--dim);margin-bottom:16px;text-align:center;letter-spacing:1px"></div>
+      <div id="dump-preview" style="display:none"></div>
+
+      <div class="section-header" style="margin-top:24px">ECM FILE UPLOAD</div>
       <div class="ecm-upload" id="ecm-dropzone" onclick="document.getElementById('ecm-file-input').click()">
         <div class="ecm-upload-icon">📁</div>
         <div class="ecm-upload-text">TAP TO LOAD ECM / CALIBRATION FILE</div>
@@ -3971,6 +3980,366 @@ function displayECMData(entries, filename) {
 
   results.classList.add('show');
   showNotifToast('ECM file loaded: ' + entries.length + ' fields');
+}
+
+// ========================================
+// FULL DATA DUMP — pull everything from API
+// ========================================
+async function downloadFullDataDump() {
+  if (!credentials.token || !credentials.apiBase || !credentials.orgId) {
+    showNotifToast('Not connected to API', 'warn');
+    return;
+  }
+
+  const btn = document.getElementById('dump-btn');
+  const status = document.getElementById('dump-status');
+  const preview = document.getElementById('dump-preview');
+  btn.disabled = true;
+  btn.textContent = 'PULLING DATA...';
+  status.style.display = 'block';
+  status.textContent = 'Connecting to Telematics Guru API...';
+
+  const headers = {
+    'Authorization': 'Bearer ' + credentials.token,
+    'Content-Type': 'application/json'
+  };
+
+  const dump = {
+    vehicle: credentials.assetName || credentials.vid || 'Unknown',
+    serial: credentials.assetSerial || '—',
+    apiBase: credentials.apiBase,
+    orgId: credentials.orgId,
+    generated: new Date().toISOString(),
+    sections: {}
+  };
+
+  // 1. Asset details
+  status.textContent = 'Fetching asset details...';
+  try {
+    const res = await proxiedFetch(
+      `${credentials.apiBase}/v3/assets/${credentials.orgId}/${credentials.assetSerial}`,
+      { headers }
+    );
+    if (res.ok) {
+      dump.sections.assetDetails = await res.json();
+    } else {
+      dump.sections.assetDetails = { _error: 'HTTP ' + res.status };
+    }
+  } catch(e) { dump.sections.assetDetails = { _error: e.message }; }
+
+  // 2. Live data endpoint
+  status.textContent = 'Fetching live data...';
+  try {
+    const res = await proxiedFetch(
+      `${credentials.apiBase}/v3/assets/${credentials.orgId}/${credentials.assetSerial}/livedata`,
+      { headers }
+    );
+    if (res.ok) {
+      dump.sections.liveData = await res.json();
+    } else {
+      dump.sections.liveData = { _error: 'HTTP ' + res.status };
+    }
+  } catch(e) { dump.sections.liveData = { _error: e.message }; }
+
+  // 3. Raw telemetry — last 10 minutes
+  status.textContent = 'Fetching raw telemetry (last 10 min)...';
+  try {
+    const now = new Date();
+    const from = new Date(now.getTime() - 600000).toISOString();
+    const res = await proxiedFetch(
+      `${credentials.apiBase}/v2/${credentials.orgId}/asset/${credentials.assetSerial}/rawtelemetry?from=${from}&to=${now.toISOString()}&limit=50&sort=desc`,
+      { headers }
+    );
+    if (res.ok) {
+      const raw = await res.json();
+      dump.sections.rawTelemetry10min = Array.isArray(raw) ? raw : (raw.Items || raw.items || raw.data || raw);
+    } else {
+      dump.sections.rawTelemetry10min = { _error: 'HTTP ' + res.status };
+    }
+  } catch(e) { dump.sections.rawTelemetry10min = { _error: e.message }; }
+
+  // 4. Raw telemetry — last 24 hours
+  status.textContent = 'Fetching raw telemetry (last 24 hours)...';
+  try {
+    const now = new Date();
+    const from = new Date(now.getTime() - 86400000).toISOString();
+    const res = await proxiedFetch(
+      `${credentials.apiBase}/v2/${credentials.orgId}/asset/${credentials.assetSerial}/rawtelemetry?from=${from}&to=${now.toISOString()}&limit=200&sort=desc`,
+      { headers }
+    );
+    if (res.ok) {
+      const raw = await res.json();
+      dump.sections.rawTelemetry24h = Array.isArray(raw) ? raw : (raw.Items || raw.items || raw.data || raw);
+    } else {
+      dump.sections.rawTelemetry24h = { _error: 'HTTP ' + res.status };
+    }
+  } catch(e) { dump.sections.rawTelemetry24h = { _error: e.message }; }
+
+  // 5. Raw telemetry — last 7 days
+  status.textContent = 'Fetching raw telemetry (last 7 days)...';
+  try {
+    const now = new Date();
+    const from = new Date(now.getTime() - 7 * 86400000).toISOString();
+    const res = await proxiedFetch(
+      `${credentials.apiBase}/v2/${credentials.orgId}/asset/${credentials.assetSerial}/rawtelemetry?from=${from}&to=${now.toISOString()}&limit=500&sort=desc`,
+      { headers }
+    );
+    if (res.ok) {
+      const raw = await res.json();
+      dump.sections.rawTelemetry7days = Array.isArray(raw) ? raw : (raw.Items || raw.items || raw.data || raw);
+    } else {
+      dump.sections.rawTelemetry7days = { _error: 'HTTP ' + res.status };
+    }
+  } catch(e) { dump.sections.rawTelemetry7days = { _error: e.message }; }
+
+  // 6. Full asset list (all vehicles in org)
+  status.textContent = 'Fetching fleet list...';
+  try {
+    const res = await proxiedFetch(
+      `${credentials.apiBase}/v3/assets/${credentials.orgId}`,
+      { headers }
+    );
+    if (res.ok) {
+      const raw = await res.json();
+      const assets = Array.isArray(raw) ? raw : (raw.Items || raw.items || raw.data || []);
+      // Find this vehicle from the list for comparison
+      const thisAsset = assets.find(a =>
+        String(a.Serial || a.serial || a.Id || a.id) === String(credentials.assetSerial)
+      );
+      dump.sections.thisAssetFromList = thisAsset || { _note: 'Vehicle not found in asset list' };
+      dump.sections.fleetSummary = assets.map(a => ({
+        name: a.Name || a.name,
+        serial: a.Serial || a.serial,
+        id: a.Id || a.id,
+        speed: a.Speed || a.speed,
+        ignition: a.Ignition || a.ignition,
+        lat: a.Latitude || a.latitude,
+        lng: a.Longitude || a.longitude
+      }));
+    }
+  } catch(e) { dump.sections.fleetSummary = { _error: e.message }; }
+
+  // 7. Cached data from localStorage
+  status.textContent = 'Collecting cached data...';
+  const cached = loadCachedVehicleData();
+  if (cached) {
+    dump.sections.cachedData = {
+      timestamp: new Date(cached.timestamp).toISOString(),
+      ageMinutes: Math.round((Date.now() - cached.timestamp) / 60000),
+      data: cached.data
+    };
+  }
+
+  // 8. Last displayed data
+  dump.sections.lastDisplayData = lastData;
+
+  // Build the file
+  status.textContent = 'Building download file...';
+
+  // Generate readable text report + raw JSON
+  let txt = '';
+  txt += '═══════════════════════════════════════════════════════════════\n';
+  txt += '  TKLINK FULL DATA DUMP\n';
+  txt += '  ' + dump.vehicle + ' (Serial: ' + dump.serial + ')\n';
+  txt += '  Generated: ' + new Date().toLocaleString('en-AU') + '\n';
+  txt += '═══════════════════════════════════════════════════════════════\n\n';
+
+  txt += '───────────────────────────────────────\n';
+  txt += '  CONNECTION INFO\n';
+  txt += '───────────────────────────────────────\n';
+  txt += 'API Instance:    ' + dump.apiBase + '\n';
+  txt += 'Organisation ID: ' + dump.orgId + '\n';
+  txt += 'Asset Serial:    ' + dump.serial + '\n';
+  txt += 'Asset Name:      ' + dump.vehicle + '\n\n';
+
+  // Summarize what data exists
+  txt += '───────────────────────────────────────\n';
+  txt += '  DATA AVAILABILITY SUMMARY\n';
+  txt += '───────────────────────────────────────\n';
+
+  const sections = [
+    ['Asset Details', dump.sections.assetDetails],
+    ['Live Data', dump.sections.liveData],
+    ['Raw Telemetry 10min', dump.sections.rawTelemetry10min],
+    ['Raw Telemetry 24h', dump.sections.rawTelemetry24h],
+    ['Raw Telemetry 7 days', dump.sections.rawTelemetry7days]
+  ];
+
+  for (const [name, data] of sections) {
+    if (!data) {
+      txt += name.padEnd(25) + ': NO DATA\n';
+    } else if (data._error) {
+      txt += name.padEnd(25) + ': ERROR — ' + data._error + '\n';
+    } else if (Array.isArray(data)) {
+      txt += name.padEnd(25) + ': ' + data.length + ' records\n';
+    } else {
+      const keys = Object.keys(data).filter(k => !k.startsWith('_'));
+      txt += name.padEnd(25) + ': ' + keys.length + ' fields\n';
+    }
+  }
+
+  // Show all unique field names across all data
+  txt += '\n───────────────────────────────────────\n';
+  txt += '  ALL FIELDS FOUND (every key the API returns)\n';
+  txt += '───────────────────────────────────────\n';
+
+  const allKeys = new Set();
+  function collectKeys(obj, prefix) {
+    if (!obj || typeof obj !== 'object') return;
+    if (Array.isArray(obj)) {
+      obj.forEach((item, i) => collectKeys(item, prefix + '[' + i + ']'));
+      return;
+    }
+    for (const [k, v] of Object.entries(obj)) {
+      const fullKey = prefix ? prefix + '.' + k : k;
+      if (v && typeof v === 'object' && !Array.isArray(v)) {
+        collectKeys(v, fullKey);
+      } else {
+        allKeys.add(fullKey + ' = ' + String(v));
+      }
+    }
+  }
+
+  // Collect from asset details
+  if (dump.sections.assetDetails && !dump.sections.assetDetails._error) {
+    txt += '\n[ASSET DETAILS]\n';
+    const ad = dump.sections.assetDetails;
+    for (const [k, v] of Object.entries(ad)) {
+      if (v && typeof v === 'object') {
+        txt += '  ' + k + ':\n';
+        for (const [k2, v2] of Object.entries(v)) {
+          txt += '    ' + k2.padEnd(30) + ': ' + String(v2) + '\n';
+        }
+      } else {
+        txt += '  ' + k.padEnd(30) + ': ' + String(v) + '\n';
+      }
+    }
+  }
+
+  // Collect from live data
+  if (dump.sections.liveData && !dump.sections.liveData._error) {
+    txt += '\n[LIVE DATA]\n';
+    const ld = dump.sections.liveData;
+    for (const [k, v] of Object.entries(ld)) {
+      if (v && typeof v === 'object') {
+        txt += '  ' + k + ':\n';
+        for (const [k2, v2] of Object.entries(v)) {
+          txt += '    ' + k2.padEnd(30) + ': ' + String(v2) + '\n';
+        }
+      } else {
+        txt += '  ' + k.padEnd(30) + ': ' + String(v) + '\n';
+      }
+    }
+  }
+
+  // Show latest raw telemetry record with ALL fields
+  const latestRecords = dump.sections.rawTelemetry10min || dump.sections.rawTelemetry24h || dump.sections.rawTelemetry7days;
+  if (latestRecords && !latestRecords._error && Array.isArray(latestRecords) && latestRecords.length > 0) {
+    txt += '\n[LATEST RAW TELEMETRY RECORD]\n';
+    const latest = latestRecords[0];
+    for (const [k, v] of Object.entries(latest)) {
+      if (v && typeof v === 'object' && !Array.isArray(v)) {
+        txt += '  ' + k + ':\n';
+        for (const [k2, v2] of Object.entries(v)) {
+          if (v2 && typeof v2 === 'object') {
+            txt += '    ' + k2 + ': ' + JSON.stringify(v2) + '\n';
+          } else {
+            txt += '    ' + k2.padEnd(30) + ': ' + String(v2) + '\n';
+          }
+        }
+      } else {
+        txt += '  ' + k.padEnd(30) + ': ' + String(v) + '\n';
+      }
+    }
+
+    // Summary of 7-day records
+    const weekData = dump.sections.rawTelemetry7days;
+    if (weekData && Array.isArray(weekData) && weekData.length > 0) {
+      txt += '\n[7-DAY DATA SUMMARY]\n';
+      txt += '  Total records:           ' + weekData.length + '\n';
+      const speeds = weekData.map(r => parseFloat(r.Speed || r.speed || 0)).filter(s => s > 0);
+      if (speeds.length > 0) {
+        txt += '  Max speed:               ' + Math.max(...speeds).toFixed(1) + ' km/h\n';
+        txt += '  Avg speed (moving):      ' + (speeds.reduce((a, b) => a + b, 0) / speeds.length).toFixed(1) + ' km/h\n';
+        txt += '  Moving records:          ' + speeds.length + '\n';
+      }
+      const first = weekData[weekData.length - 1];
+      const last = weekData[0];
+      txt += '  Earliest record:         ' + (first.Timestamp || first.timestamp || first.DateTime || '?') + '\n';
+      txt += '  Latest record:           ' + (last.Timestamp || last.timestamp || last.DateTime || '?') + '\n';
+
+      // List all unique field names across all records
+      const fieldSet = new Set();
+      weekData.forEach(r => {
+        Object.keys(r).forEach(k => fieldSet.add(k));
+        const fc = r.Fields || r.fields || r.FieldData || r.Data || {};
+        if (fc && typeof fc === 'object') Object.keys(fc).forEach(k => fieldSet.add('Fields.' + k));
+      });
+      txt += '  All field names found:\n';
+      [...fieldSet].sort().forEach(f => { txt += '    - ' + f + '\n'; });
+    }
+  }
+
+  // Fleet summary
+  if (dump.sections.fleetSummary && Array.isArray(dump.sections.fleetSummary)) {
+    txt += '\n[FLEET — ALL VEHICLES]\n';
+    dump.sections.fleetSummary.forEach(v => {
+      const status = v.speed > 3 ? 'DRIVING ' + v.speed + 'km/h' : v.ignition ? 'IDLE' : 'PARKED';
+      txt += '  ' + (v.name || '?').padEnd(25) + ' ' + String(v.serial || '').padEnd(10) + ' ' + status + '\n';
+    });
+  }
+
+  // Cached display data
+  if (dump.sections.lastDisplayData) {
+    txt += '\n[LAST DISPLAYED VALUES]\n';
+    const d = dump.sections.lastDisplayData;
+    const displayFields = [
+      ['RPM', d.rpm], ['Coolant Temp', d.coolantTemp], ['Oil Pressure', d.oilPressure],
+      ['Oil Temp', d.oilTemp], ['Boost', d.boostPressure], ['Exhaust Temp', d.exhaustTemp],
+      ['Engine Load', d.engineLoad], ['Fuel Rate', d.fuelRate], ['Fuel Level', d.fuelLevel],
+      ['DEF Level', d.defLevel], ['DPF Soot', d.dpfSoot], ['Regen', d.regenStatus],
+      ['Battery', d.battVoltage], ['Ambient', d.ambientTemp], ['Trans Temp', d.transTemp],
+      ['Gear', d.gear], ['Speed', d.speed], ['Odometer', d.odometer],
+      ['Latitude', d.lat], ['Longitude', d.lng], ['Heading', d.heading],
+      ['Ignition', d.ignition], ['GPS Signal', d.gpsSignal], ['Fuel Economy', d.fuelEconomy],
+      ['Data Source', d._dataSource], ['Has Engine Data', d._hasEngineData], ['Has GPS', d._hasGpsData]
+    ];
+    displayFields.forEach(([label, val]) => {
+      txt += '  ' + label.padEnd(20) + ': ' + (val !== undefined && val !== null ? String(val) : '—') + '\n';
+    });
+  }
+
+  txt += '\n═══════════════════════════════════════════════════════════════\n';
+  txt += '  RAW JSON DATA (full API responses)\n';
+  txt += '═══════════════════════════════════════════════════════════════\n\n';
+  txt += JSON.stringify(dump.sections, null, 2);
+  txt += '\n';
+
+  // Download
+  const blob = new Blob([txt], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const name = (dump.vehicle || 'vehicle').replace(/\s+/g, '-');
+  a.download = 'TKLINK-DUMP-' + name + '-' + new Date().toISOString().slice(0, 10) + '.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  // Show preview on screen too
+  status.textContent = 'Downloaded. ' + txt.split('\n').length + ' lines of data.';
+  preview.style.display = 'block';
+  preview.innerHTML =
+    '<div class="section-header">DATA PREVIEW</div>' +
+    '<pre style="background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:12px;font-size:11px;font-family:\'Share Tech Mono\',monospace;color:var(--text);overflow-x:auto;max-height:400px;overflow-y:auto;white-space:pre-wrap;word-break:break-all">' +
+    txt.replace(/</g, '&lt;').substring(0, 8000) +
+    (txt.length > 8000 ? '\n\n... (' + txt.length + ' total chars — see downloaded file for full data)' : '') +
+    '</pre>';
+
+  btn.disabled = false;
+  btn.textContent = '📥 DOWNLOAD FULL DATA DUMP';
+  showNotifToast('Full data dump downloaded — ' + name);
 }
 
 // Drag & drop for ECM
