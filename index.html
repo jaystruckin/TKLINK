@@ -344,7 +344,7 @@
   }
 
   /* CONTENT */
-  .content { padding: 20px 16px; padding-bottom: 32px; }
+  .content { padding: 24px 18px; padding-bottom: 40px; }
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
@@ -369,9 +369,12 @@
   /* GAUGE GRID */
   .gauge-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 16px;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  @media (min-width: 420px) {
+    .gauge-grid { grid-template-columns: 1fr 1fr; }
   }
 
   .gauge-card {
@@ -425,22 +428,22 @@
   .gauge-card.good::after { background: linear-gradient(180deg, rgba(0,230,118,0.03) 0%, transparent 100%); opacity: 1; }
 
   .gauge-label {
-    font-size: 10px;
+    font-size: 11px;
     letter-spacing: 1.5px;
     color: var(--dim);
     text-transform: uppercase;
-    margin-bottom: 12px;
+    margin-bottom: 4px;
     font-weight: 500;
   }
 
   .gauge-value {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 38px;
+    font-size: 22px;
     font-weight: 700;
     color: var(--text);
     line-height: 1;
-    margin-bottom: 6px;
-    text-shadow: 0 0 40px rgba(0,212,170,0.1), 0 0 10px rgba(255,255,255,0.04);
+    margin-bottom: 0;
+    text-shadow: 0 0 25px rgba(0,212,170,0.1), 0 0 6px rgba(255,255,255,0.04);
     transition: color 0.4s ease, opacity 0.3s ease, text-shadow 0.4s ease;
   }
 
@@ -454,10 +457,10 @@
   }
 
   .gauge-unit {
-    font-size: 11px;
-    color: var(--dim);
-    letter-spacing: 0.5px;
-    font-weight: 400;
+    font-size: 10px;
+    color: rgba(255,255,255,0.25);
+    letter-spacing: 1px;
+    font-weight: 500;
   }
 
   .gauge-bar {
@@ -1098,21 +1101,20 @@
 
   /* ========== RESPONSIVE BREAKPOINTS ========== */
   @media (min-width: 768px) {
-    .gauge-grid { grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-    .content { padding: 24px; }
+    .gauge-grid { grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    .content { padding: 28px; }
     .hp-torque { grid-template-columns: 1fr 1fr; }
   }
   @media (min-width: 1024px) {
-    .gauge-grid { grid-template-columns: 1fr 1fr 1fr 1fr; }
-    .content { max-width: 1100px; margin: 0 auto; padding: 32px; }
+    .gauge-grid { grid-template-columns: 1fr 1fr 1fr; }
+    .content { max-width: 1100px; margin: 0 auto; padding: 36px; }
   }
 
-  /* ========== SPACING ========== */
-  .gauge-card { padding: 18px; }
-  .gauge-grid { gap: 12px; margin-bottom: 20px; }
-  .section-header { margin-bottom: 12px; margin-top: 28px; padding-bottom: 8px; }
-  .data-row { padding: 12px 8px; }
-  .content { padding: 20px 16px; padding-bottom: 32px; }
+  /* ========== SPACING — BREATHE ========== */
+  .gauge-card { padding: 20px; }
+  .gauge-grid { gap: 14px; margin-bottom: 24px; }
+  .data-row { padding: 14px 12px; }
+  .content { padding: 24px 18px; padding-bottom: 40px; }
 
   /* ========== VEHICLE STATUS BADGE ========== */
   .status-badge {
@@ -1590,12 +1592,12 @@
   }
   .content > * { position: relative; z-index: 1; }
 
-  /* ========== HERO RADIAL GAUGES ========== */
+  /* ========== HERO RADIAL GAUGES — DOMINATE ========== */
   .hero-gauges {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 28px;
   }
 
   .hero-gauge {
@@ -1603,20 +1605,20 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 24px 12px 20px;
-    box-shadow: var(--card-glow);
-    backdrop-filter: blur(16px) saturate(1.2);
-    -webkit-backdrop-filter: blur(16px) saturate(1.2);
+    background: linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 100%);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 20px;
+    padding: 32px 16px 28px;
+    box-shadow: 0 0 0 1px rgba(0,212,170,0.06), 0 8px 40px rgba(0,0,0,0.5), 0 0 60px rgba(0,212,170,0.04), inset 0 1px 0 rgba(255,255,255,0.06);
+    backdrop-filter: blur(24px) saturate(1.3);
+    -webkit-backdrop-filter: blur(24px) saturate(1.3);
     overflow: hidden;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .hero-gauge:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--card-hover-glow);
+    transform: translateY(-4px);
+    box-shadow: 0 0 0 1px rgba(0,212,170,0.15), 0 12px 50px rgba(0,0,0,0.6), 0 0 80px rgba(0,212,170,0.08), inset 0 1px 0 rgba(255,255,255,0.08);
     border-color: rgba(0,212,170,0.12);
   }
 
@@ -1625,70 +1627,69 @@
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 2px;
-    background: linear-gradient(90deg, var(--accent), var(--cyan), var(--accent-blue));
-    opacity: 0.6;
+    background: linear-gradient(90deg, transparent, var(--accent), var(--cyan), var(--accent-blue), transparent);
+    opacity: 0.7;
   }
 
   .hero-gauge::after {
     content: '';
     position: absolute;
-    top: -40%;
-    left: -40%;
-    width: 180%;
-    height: 180%;
-    background: radial-gradient(circle at 50% 40%, rgba(0,212,170,0.04) 0%, transparent 55%);
+    top: -50%;
+    left: -30%;
+    width: 160%;
+    height: 200%;
+    background: radial-gradient(circle at 50% 35%, rgba(0,212,170,0.05) 0%, transparent 50%);
     pointer-events: none;
   }
 
   .hero-gauge-wrap {
     position: relative;
     width: 100%;
-    max-width: 170px;
+    max-width: 240px;
   }
 
   .hero-gauge svg {
     width: 100%;
     height: auto;
     display: block;
-    filter: drop-shadow(0 0 2px rgba(0,212,170,0.2));
+    filter: drop-shadow(0 0 6px rgba(0,212,170,0.15));
   }
 
   .hero-arc-track {
     fill: none;
-    stroke: rgba(255,255,255,0.05);
-    stroke-width: 7;
+    stroke: rgba(255,255,255,0.04);
+    stroke-width: 6;
     stroke-linecap: round;
   }
 
   .hero-arc-glow {
     fill: none;
-    stroke-width: 12;
+    stroke-width: 14;
     stroke-linecap: round;
-    opacity: 0.25;
-    transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-    filter: blur(4px);
+    opacity: 0.2;
+    transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: blur(6px);
   }
 
   .hero-arc-fill {
     fill: none;
-    stroke-width: 7;
+    stroke-width: 6;
     stroke-linecap: round;
-    transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.4s;
+    transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.4s;
   }
 
   .hero-arc-fill.good, .hero-arc-glow.good { stroke: var(--green); }
   .hero-arc-fill.warning, .hero-arc-glow.warning { stroke: var(--yellow); }
   .hero-arc-fill.critical, .hero-arc-glow.critical { stroke: var(--red); }
 
-  /* Tick marks around the arc */
   .hero-ticks line {
-    stroke: rgba(255,255,255,0.1);
-    stroke-width: 1.5;
+    stroke: rgba(255,255,255,0.08);
+    stroke-width: 1;
     stroke-linecap: round;
   }
   .hero-ticks line.major {
-    stroke: rgba(255,255,255,0.2);
-    stroke-width: 2;
+    stroke: rgba(255,255,255,0.18);
+    stroke-width: 1.5;
   }
 
   .hero-gauge-inner {
@@ -1703,62 +1704,219 @@
 
   .hero-gauge-value {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 42px;
+    font-size: 52px;
     font-weight: 700;
     color: var(--text);
     line-height: 1;
-    text-shadow: 0 0 40px rgba(0,212,170,0.2), 0 0 12px rgba(255,255,255,0.06);
+    text-shadow: 0 0 50px rgba(0,212,170,0.15), 0 0 15px rgba(255,255,255,0.05);
     transition: color 0.4s, text-shadow 0.4s;
+    letter-spacing: -1px;
   }
 
-  .hero-gauge-value.warning { color: var(--yellow); text-shadow: 0 0 40px rgba(255,165,2,0.3); }
-  .hero-gauge-value.critical { color: var(--red); text-shadow: 0 0 40px rgba(255,71,87,0.35); animation: criticalPulse 1.5s ease-in-out infinite; }
-  .hero-gauge-value.good { color: var(--green); text-shadow: 0 0 40px rgba(0,230,118,0.25); }
+  .hero-gauge-value.warning { color: var(--yellow); text-shadow: 0 0 50px rgba(255,165,2,0.3); }
+  .hero-gauge-value.critical { color: var(--red); text-shadow: 0 0 50px rgba(255,71,87,0.35); animation: criticalPulse 1.5s ease-in-out infinite; }
+  .hero-gauge-value.good { color: var(--green); text-shadow: 0 0 50px rgba(0,230,118,0.25); }
 
   .hero-gauge-unit {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--dim);
-    letter-spacing: 2px;
-    margin-top: 4px;
+    letter-spacing: 3px;
+    margin-top: 6px;
     font-weight: 500;
   }
 
   .hero-gauge-label {
-    font-size: 9px;
+    font-size: 10px;
     color: var(--accent);
-    letter-spacing: 3px;
-    margin-top: 10px;
+    letter-spacing: 4px;
+    margin-top: 12px;
     font-weight: 600;
-    opacity: 0.6;
+    opacity: 0.5;
     text-transform: uppercase;
   }
 
-  /* Breathing glow animation for hero arcs */
   @keyframes arcBreathe {
-    0%, 100% { opacity: 0.2; }
-    50% { opacity: 0.35; }
+    0%, 100% { opacity: 0.15; }
+    50% { opacity: 0.3; }
   }
   .hero-arc-glow { animation: arcBreathe 3s ease-in-out infinite; }
 
-  /* ========== SECTION HEADER UPGRADE ========== */
+  /* ========== MINI RING GAUGE INSIDE CARDS ========== */
+  .gauge-card-inner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .gauge-ring-wrap {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
+  }
+
+  .gauge-ring-wrap svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+    filter: drop-shadow(0 0 4px rgba(0,212,170,0.15));
+  }
+
+  .ring-track {
+    fill: none;
+    stroke: rgba(255,255,255,0.04);
+    stroke-width: 4;
+  }
+
+  .ring-fill {
+    fill: none;
+    stroke: url(#ring-grad-default);
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-dasharray: 188.5;
+    stroke-dashoffset: 188.5;
+    transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .ring-glow {
+    fill: none;
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 188.5;
+    stroke-dashoffset: 188.5;
+    transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: blur(4px);
+    opacity: 0.2;
+  }
+
+  .ring-fill.good, .ring-glow.good { stroke: var(--green); }
+  .ring-fill.warning, .ring-glow.warning { stroke: var(--yellow); }
+  .ring-fill.critical, .ring-glow.critical { stroke: var(--red); }
+
+  .gauge-ring-value {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    pointer-events: none;
+  }
+
+  .gauge-card-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  /* Hide old flat bars — ring gauges replace them */
+  .gauge-bar { display: none; }
+
+  /* ========== SECTION DIVIDER (replaces text headers) ========== */
+  .section-header {
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.2);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    margin-top: 36px;
+    padding-bottom: 0;
+    padding-left: 0;
+    border-bottom: none;
+    font-weight: 600;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-header::before {
+    content: '';
+    width: 20px;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    position: static;
+    border-radius: 0;
+    box-shadow: none;
+    transform: none;
+    top: auto;
+  }
   .section-header::after {
     content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 14px;
-    right: 0;
+    flex: 1;
     height: 1px;
-    background: linear-gradient(90deg, rgba(0,212,170,0.2) 0%, transparent 60%);
+    background: linear-gradient(90deg, rgba(255,255,255,0.04) 0%, transparent 80%);
+    position: static;
+    bottom: auto;
+    left: auto;
+    right: auto;
+  }
+
+  /* ========== COLLAPSIBLE SECONDARY METRICS ========== */
+  .metrics-secondary {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .metrics-secondary.expanded {
+    max-height: 2000px;
+  }
+  .expand-metrics-btn {
+    width: 100%;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    color: var(--dim);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 8px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .expand-metrics-btn:hover {
+    background: rgba(0,212,170,0.04);
+    border-color: rgba(0,212,170,0.1);
+    color: var(--accent);
+  }
+  .expand-metrics-btn .expand-arrow {
+    transition: transform 0.3s;
+    font-size: 10px;
+  }
+  .expand-metrics-btn.expanded .expand-arrow {
+    transform: rotate(180deg);
+  }
+
+  /* ========== TRUCK SILHOUETTE ========== */
+  .truck-silhouette {
+    text-align: center;
+    margin-bottom: 24px;
+    opacity: 0.06;
+    pointer-events: none;
+    position: relative;
+    height: 60px;
+    overflow: hidden;
+  }
+  .truck-silhouette svg {
+    width: 200px;
+    height: auto;
+    margin: 0 auto;
+    display: block;
   }
 
   /* ========== ENHANCED HP/TORQUE CARDS ========== */
-  .ht-value {
-    text-shadow: 0 0 30px rgba(0,212,170,0.3), 0 0 8px rgba(0,212,170,0.12);
-  }
-
   .ht-card {
     position: relative;
     overflow: hidden;
+    padding: 28px 20px;
   }
   .ht-card::before {
     content: '';
@@ -1768,9 +1926,14 @@
     background: linear-gradient(90deg, var(--accent), var(--cyan));
     opacity: 0.5;
   }
+  .ht-value {
+    font-size: 48px;
+    text-shadow: 0 0 40px rgba(0,212,170,0.3), 0 0 10px rgba(0,212,170,0.12);
+  }
 
   /* ========== ENHANCED ECU ENGINE NAME ========== */
   .ecu-engine {
+    font-size: 28px;
     background: linear-gradient(135deg, var(--text) 0%, rgba(0,212,170,0.6) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -1780,23 +1943,119 @@
   /* ========== GPS CARD UPGRADE ========== */
   .gps-card {
     border-color: rgba(0,229,255,0.08);
+    padding: 24px;
   }
   .gps-card::after {
     background: linear-gradient(90deg, var(--cyan), var(--accent-blue), var(--accent));
     opacity: 0.5;
   }
 
+  /* ========== DRIVETRAIN HERO SECTION ========== */
+  .drive-hero {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(160deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px 20px;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--card-glow);
+  }
+  .drive-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyan), var(--accent-blue), transparent);
+    opacity: 0.6;
+  }
+  .drive-hero-content {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    width: 100%;
+    max-width: 400px;
+  }
+  .drive-hero-gauge {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    flex-shrink: 0;
+  }
+  .drive-hero-gauge svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 0 6px rgba(0,229,255,0.15));
+  }
+  .drive-hero-inner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+  .drive-hero-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+  }
+  .drive-hero-unit {
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: 2px;
+    margin-top: 4px;
+  }
+  .drive-hero-stats {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .drive-hero-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .drive-hero-stat-label {
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .drive-hero-stat-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
   /* ========== RESPONSIVE HERO GAUGES ========== */
+  @media (min-width: 480px) {
+    .hero-gauges {
+      flex-direction: row;
+      gap: 16px;
+    }
+    .hero-gauge {
+      flex: 1;
+    }
+  }
   @media (min-width: 768px) {
-    .hero-gauges { gap: 18px; }
-    .hero-gauge { padding: 28px 16px 24px; }
-    .hero-gauge-value { font-size: 48px; }
-    .hero-gauge-wrap { max-width: 200px; }
+    .hero-gauge { padding: 36px 20px 32px; }
+    .hero-gauge-value { font-size: 58px; }
+    .hero-gauge-wrap { max-width: 260px; }
+    .gauge-ring-wrap { width: 80px; height: 80px; }
   }
   @media (max-width: 360px) {
-    .hero-gauge-value { font-size: 34px; }
-    .hero-gauge-wrap { max-width: 140px; }
-    .hero-gauge { padding: 18px 8px 16px; }
+    .hero-gauge-value { font-size: 44px; }
+    .hero-gauge-wrap { max-width: 200px; }
+    .hero-gauge { padding: 24px 12px 20px; }
+    .gauge-ring-wrap { width: 64px; height: 64px; }
   }
 </style>
 </head>
@@ -1882,7 +2141,25 @@
     <div class="tab-panel active" id="tab-engine">
       <div class="alert-bar" id="alert-bar">⚠️ <span id="alert-text">Warning detected</span></div>
 
-      <!-- HERO RADIAL GAUGES -->
+      <!-- SVG DEFS for ring gauges (shared) -->
+      <svg width="0" height="0" style="position:absolute">
+        <defs>
+          <linearGradient id="ring-grad-default" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#00d4aa"/>
+            <stop offset="100%" stop-color="#00e5ff"/>
+          </linearGradient>
+          <linearGradient id="ring-grad-blue" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#00e5ff"/>
+            <stop offset="100%" stop-color="#3b82f6"/>
+          </linearGradient>
+          <linearGradient id="ring-grad-purple" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#3b82f6"/>
+            <stop offset="100%" stop-color="#8b5cf6"/>
+          </linearGradient>
+        </defs>
+      </svg>
+
+      <!-- HERO RADIAL GAUGES — FULL WIDTH -->
       <div class="hero-gauges">
         <div class="hero-gauge" id="hero-card-rpm">
           <div class="hero-gauge-wrap">
@@ -1894,32 +2171,28 @@
                   <stop offset="100%" stop-color="#3b82f6"/>
                 </linearGradient>
               </defs>
-              <!-- Tick marks -->
               <g class="hero-ticks" transform="rotate(135 100 100)">
-                <line x1="100" y1="10" x2="100" y2="18" transform="rotate(0 100 100)" class="major"/>
-                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(27 100 100)"/>
-                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(54 100 100)"/>
-                <line x1="100" y1="10" x2="100" y2="18" transform="rotate(67.5 100 100)" class="major"/>
-                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(81 100 100)"/>
-                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(108 100 100)"/>
-                <line x1="100" y1="10" x2="100" y2="18" transform="rotate(135 100 100)" class="major"/>
-                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(162 100 100)"/>
-                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(189 100 100)"/>
-                <line x1="100" y1="10" x2="100" y2="18" transform="rotate(202.5 100 100)" class="major"/>
-                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(216 100 100)"/>
-                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(243 100 100)"/>
-                <line x1="100" y1="10" x2="100" y2="18" transform="rotate(270 100 100)" class="major"/>
+                <line x1="100" y1="12" x2="100" y2="18" transform="rotate(0 100 100)" class="major"/>
+                <line x1="100" y1="14" x2="100" y2="18" transform="rotate(27 100 100)"/>
+                <line x1="100" y1="14" x2="100" y2="18" transform="rotate(54 100 100)"/>
+                <line x1="100" y1="12" x2="100" y2="18" transform="rotate(67.5 100 100)" class="major"/>
+                <line x1="100" y1="14" x2="100" y2="18" transform="rotate(81 100 100)"/>
+                <line x1="100" y1="14" x2="100" y2="18" transform="rotate(108 100 100)"/>
+                <line x1="100" y1="12" x2="100" y2="18" transform="rotate(135 100 100)" class="major"/>
+                <line x1="100" y1="14" x2="100" y2="18" transform="rotate(162 100 100)"/>
+                <line x1="100" y1="14" x2="100" y2="18" transform="rotate(189 100 100)"/>
+                <line x1="100" y1="12" x2="100" y2="18" transform="rotate(202.5 100 100)" class="major"/>
+                <line x1="100" y1="14" x2="100" y2="18" transform="rotate(216 100 100)"/>
+                <line x1="100" y1="14" x2="100" y2="18" transform="rotate(243 100 100)"/>
+                <line x1="100" y1="12" x2="100" y2="18" transform="rotate(270 100 100)" class="major"/>
               </g>
-              <!-- Background arc track -->
               <circle class="hero-arc-track" cx="100" cy="100" r="85"
                 stroke-dasharray="400.5 600" stroke-dashoffset="0"
                 transform="rotate(135 100 100)"/>
-              <!-- Glow layer (blurred duplicate) -->
               <circle class="hero-arc-glow" id="hero-glow-rpm" cx="100" cy="100" r="85"
                 stroke="url(#hero-grad-rpm)"
                 stroke-dasharray="400.5 600" stroke-dashoffset="400.5"
                 transform="rotate(135 100 100)"/>
-              <!-- Main arc fill -->
               <circle class="hero-arc-fill" id="hero-arc-rpm" cx="100" cy="100" r="85"
                 stroke="url(#hero-grad-rpm)"
                 stroke-dasharray="400.5 600" stroke-dashoffset="400.5"
@@ -1944,19 +2217,19 @@
                 </linearGradient>
               </defs>
               <g class="hero-ticks" transform="rotate(135 100 100)">
-                <line x1="100" y1="10" x2="100" y2="18" transform="rotate(0 100 100)" class="major"/>
-                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(27 100 100)"/>
-                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(54 100 100)"/>
-                <line x1="100" y1="10" x2="100" y2="18" transform="rotate(67.5 100 100)" class="major"/>
-                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(81 100 100)"/>
-                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(108 100 100)"/>
-                <line x1="100" y1="10" x2="100" y2="18" transform="rotate(135 100 100)" class="major"/>
-                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(162 100 100)"/>
-                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(189 100 100)"/>
-                <line x1="100" y1="10" x2="100" y2="18" transform="rotate(202.5 100 100)" class="major"/>
-                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(216 100 100)"/>
-                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(243 100 100)"/>
-                <line x1="100" y1="10" x2="100" y2="18" transform="rotate(270 100 100)" class="major"/>
+                <line x1="100" y1="12" x2="100" y2="18" transform="rotate(0 100 100)" class="major"/>
+                <line x1="100" y1="14" x2="100" y2="18" transform="rotate(27 100 100)"/>
+                <line x1="100" y1="14" x2="100" y2="18" transform="rotate(54 100 100)"/>
+                <line x1="100" y1="12" x2="100" y2="18" transform="rotate(67.5 100 100)" class="major"/>
+                <line x1="100" y1="14" x2="100" y2="18" transform="rotate(81 100 100)"/>
+                <line x1="100" y1="14" x2="100" y2="18" transform="rotate(108 100 100)"/>
+                <line x1="100" y1="12" x2="100" y2="18" transform="rotate(135 100 100)" class="major"/>
+                <line x1="100" y1="14" x2="100" y2="18" transform="rotate(162 100 100)"/>
+                <line x1="100" y1="14" x2="100" y2="18" transform="rotate(189 100 100)"/>
+                <line x1="100" y1="12" x2="100" y2="18" transform="rotate(202.5 100 100)" class="major"/>
+                <line x1="100" y1="14" x2="100" y2="18" transform="rotate(216 100 100)"/>
+                <line x1="100" y1="14" x2="100" y2="18" transform="rotate(243 100 100)"/>
+                <line x1="100" y1="12" x2="100" y2="18" transform="rotate(270 100 100)" class="major"/>
               </g>
               <circle class="hero-arc-track" cx="100" cy="100" r="85"
                 stroke-dasharray="400.5 600" stroke-dashoffset="0"
@@ -1979,93 +2252,198 @@
         </div>
       </div>
 
+      <!-- PRIMARY METRICS — ring gauge cards -->
       <div class="gauge-grid">
-        <div class="gauge-card" id="card-rpm">
-          <div class="gauge-label">ENGINE RPM</div>
-          <div class="gauge-value" id="val-rpm">—</div>
-          <div class="gauge-unit">RPM</div>
-          <div class="gauge-bar"><div class="gauge-fill" id="bar-rpm" style="width:0%"></div></div>
-        </div>
         <div class="gauge-card" id="card-coolant">
-          <div class="gauge-label">COOLANT TEMP</div>
-          <div class="gauge-value" id="val-coolant">—</div>
-          <div class="gauge-unit">°C</div>
+          <div class="gauge-card-inner">
+            <div class="gauge-ring-wrap">
+              <svg viewBox="0 0 80 80"><circle class="ring-track" cx="40" cy="40" r="30"/><circle class="ring-glow" id="ringg-coolant" cx="40" cy="40" r="30" stroke="url(#ring-grad-default)"/><circle class="ring-fill" id="ring-coolant" cx="40" cy="40" r="30" stroke="url(#ring-grad-default)"/></svg>
+              <div class="gauge-ring-value"><div class="gauge-value" id="val-coolant">—</div></div>
+            </div>
+            <div class="gauge-card-info">
+              <div class="gauge-label">COOLANT TEMP</div>
+              <div class="gauge-unit">°C</div>
+            </div>
+          </div>
           <div class="gauge-bar"><div class="gauge-fill" id="bar-coolant" style="width:0%"></div></div>
         </div>
         <div class="gauge-card" id="card-oil-press">
-          <div class="gauge-label">OIL PRESSURE</div>
-          <div class="gauge-value" id="val-oil-press">—</div>
-          <div class="gauge-unit">kPa</div>
+          <div class="gauge-card-inner">
+            <div class="gauge-ring-wrap">
+              <svg viewBox="0 0 80 80"><circle class="ring-track" cx="40" cy="40" r="30"/><circle class="ring-glow" id="ringg-oilpress" cx="40" cy="40" r="30" stroke="url(#ring-grad-default)"/><circle class="ring-fill" id="ring-oilpress" cx="40" cy="40" r="30" stroke="url(#ring-grad-default)"/></svg>
+              <div class="gauge-ring-value"><div class="gauge-value" id="val-oil-press">—</div></div>
+            </div>
+            <div class="gauge-card-info">
+              <div class="gauge-label">OIL PRESSURE</div>
+              <div class="gauge-unit">kPa</div>
+            </div>
+          </div>
           <div class="gauge-bar"><div class="gauge-fill" id="bar-oilpress" style="width:0%"></div></div>
         </div>
-        <div class="gauge-card" id="card-oil-temp">
-          <div class="gauge-label">OIL TEMP</div>
-          <div class="gauge-value" id="val-oil-temp">—</div>
-          <div class="gauge-unit">°C</div>
-          <div class="gauge-bar"><div class="gauge-fill" id="bar-oiltemp" style="width:0%"></div></div>
-        </div>
         <div class="gauge-card" id="card-boost">
-          <div class="gauge-label">TURBO BOOST</div>
-          <div class="gauge-value" id="val-boost">—</div>
-          <div class="gauge-unit">kPa</div>
+          <div class="gauge-card-inner">
+            <div class="gauge-ring-wrap">
+              <svg viewBox="0 0 80 80"><circle class="ring-track" cx="40" cy="40" r="30"/><circle class="ring-glow" id="ringg-boost" cx="40" cy="40" r="30" stroke="url(#ring-grad-blue)"/><circle class="ring-fill" id="ring-boost" cx="40" cy="40" r="30" stroke="url(#ring-grad-blue)"/></svg>
+              <div class="gauge-ring-value"><div class="gauge-value" id="val-boost">—</div></div>
+            </div>
+            <div class="gauge-card-info">
+              <div class="gauge-label">TURBO BOOST</div>
+              <div class="gauge-unit">kPa</div>
+            </div>
+          </div>
           <div class="gauge-bar"><div class="gauge-fill" id="bar-boost" style="width:0%"></div></div>
         </div>
-        <div class="gauge-card" id="card-exhaust">
-          <div class="gauge-label">EXHAUST TEMP</div>
-          <div class="gauge-value" id="val-exhaust">—</div>
-          <div class="gauge-unit">°C</div>
-          <div class="gauge-bar"><div class="gauge-fill" id="bar-exhaust" style="width:0%"></div></div>
-        </div>
         <div class="gauge-card" id="card-load">
-          <div class="gauge-label">ENGINE LOAD</div>
-          <div class="gauge-value" id="val-load">—</div>
-          <div class="gauge-unit">%</div>
+          <div class="gauge-card-inner">
+            <div class="gauge-ring-wrap">
+              <svg viewBox="0 0 80 80"><circle class="ring-track" cx="40" cy="40" r="30"/><circle class="ring-glow" id="ringg-load" cx="40" cy="40" r="30" stroke="url(#ring-grad-blue)"/><circle class="ring-fill" id="ring-load" cx="40" cy="40" r="30" stroke="url(#ring-grad-blue)"/></svg>
+              <div class="gauge-ring-value"><div class="gauge-value" id="val-load">—</div></div>
+            </div>
+            <div class="gauge-card-info">
+              <div class="gauge-label">ENGINE LOAD</div>
+              <div class="gauge-unit">%</div>
+            </div>
+          </div>
           <div class="gauge-bar"><div class="gauge-fill" id="bar-load" style="width:0%"></div></div>
         </div>
+        <div class="gauge-card" id="card-fuel">
+          <div class="gauge-card-inner">
+            <div class="gauge-ring-wrap">
+              <svg viewBox="0 0 80 80"><circle class="ring-track" cx="40" cy="40" r="30"/><circle class="ring-glow" id="ringg-fuel" cx="40" cy="40" r="30" stroke="url(#ring-grad-default)"/><circle class="ring-fill" id="ring-fuel" cx="40" cy="40" r="30" stroke="url(#ring-grad-default)"/></svg>
+              <div class="gauge-ring-value"><div class="gauge-value" id="val-fuel">—</div></div>
+            </div>
+            <div class="gauge-card-info">
+              <div class="gauge-label">FUEL LEVEL</div>
+              <div class="gauge-unit">%</div>
+            </div>
+          </div>
+          <div class="gauge-bar"><div class="gauge-fill" id="bar-fuel" style="width:0%"></div></div>
+        </div>
         <div class="gauge-card" id="card-fuel-rate">
-          <div class="gauge-label">FUEL RATE</div>
-          <div class="gauge-value" id="val-fuel-rate">—</div>
-          <div class="gauge-unit">L/HR</div>
+          <div class="gauge-card-inner">
+            <div class="gauge-ring-wrap">
+              <svg viewBox="0 0 80 80"><circle class="ring-track" cx="40" cy="40" r="30"/><circle class="ring-glow" id="ringg-fuelrate" cx="40" cy="40" r="30" stroke="url(#ring-grad-purple)"/><circle class="ring-fill" id="ring-fuelrate" cx="40" cy="40" r="30" stroke="url(#ring-grad-purple)"/></svg>
+              <div class="gauge-ring-value"><div class="gauge-value" id="val-fuel-rate">—</div></div>
+            </div>
+            <div class="gauge-card-info">
+              <div class="gauge-label">FUEL RATE</div>
+              <div class="gauge-unit">L/HR</div>
+            </div>
+          </div>
           <div class="gauge-bar"><div class="gauge-fill" id="bar-fuelrate" style="width:0%"></div></div>
-        </div>
-        <div class="gauge-card" id="card-fuel-economy">
-          <div class="gauge-label">FUEL ECONOMY</div>
-          <div class="gauge-value" id="val-fuel-economy">—</div>
-          <div class="gauge-unit">L/100KM</div>
-          <div class="gauge-bar"><div class="gauge-fill" id="bar-fueleconomy" style="width:0%"></div></div>
-        </div>
-        <div class="gauge-card" id="card-est-range">
-          <div class="gauge-label">ESTIMATED RANGE</div>
-          <div class="gauge-value" id="val-est-range">—</div>
-          <div class="gauge-unit">KM</div>
-          <div class="gauge-bar"><div class="gauge-fill" id="bar-estrange" style="width:0%"></div></div>
         </div>
       </div>
 
-      <div class="section-header">AFTERTREATMENT</div>
-      <div class="gauge-grid">
-        <div class="gauge-card" id="card-def">
-          <div class="gauge-label">DEF LEVEL</div>
-          <div class="gauge-value" id="val-def">—</div>
-          <div class="gauge-unit">%</div>
-          <div class="gauge-bar"><div class="gauge-fill" id="bar-def" style="width:0%"></div></div>
-        </div>
-        <div class="gauge-card" id="card-dpf">
-          <div class="gauge-label">DPF SOOT</div>
-          <div class="gauge-value" id="val-dpf">—</div>
-          <div class="gauge-unit">%</div>
-          <div class="gauge-bar"><div class="gauge-fill" id="bar-dpf" style="width:0%"></div></div>
-        </div>
-        <div class="gauge-card" id="card-regen">
-          <div class="gauge-label">REGEN STATUS</div>
-          <div class="gauge-value" id="val-regen" style="font-size:18px">—</div>
-          <div class="gauge-unit"></div>
-        </div>
-        <div class="gauge-card" id="card-fuel">
-          <div class="gauge-label">FUEL LEVEL</div>
-          <div class="gauge-value" id="val-fuel">—</div>
-          <div class="gauge-unit">%</div>
-          <div class="gauge-bar"><div class="gauge-fill" id="bar-fuel" style="width:0%"></div></div>
+      <!-- EXPAND BUTTON for secondary metrics -->
+      <button class="expand-metrics-btn" id="expand-engine-btn" onclick="toggleSecondaryMetrics()">
+        MORE METRICS <span class="expand-arrow">▼</span>
+      </button>
+
+      <!-- SECONDARY METRICS (collapsed by default) -->
+      <div class="metrics-secondary" id="secondary-metrics">
+        <div class="gauge-grid">
+          <div class="gauge-card" id="card-rpm">
+            <div class="gauge-card-inner">
+              <div class="gauge-ring-wrap">
+                <svg viewBox="0 0 80 80"><circle class="ring-track" cx="40" cy="40" r="30"/><circle class="ring-glow" id="ringg-rpm" cx="40" cy="40" r="30" stroke="url(#ring-grad-default)"/><circle class="ring-fill" id="ring-rpm" cx="40" cy="40" r="30" stroke="url(#ring-grad-default)"/></svg>
+                <div class="gauge-ring-value"><div class="gauge-value" id="val-rpm">—</div></div>
+              </div>
+              <div class="gauge-card-info">
+                <div class="gauge-label">ENGINE RPM</div>
+                <div class="gauge-unit">RPM</div>
+              </div>
+            </div>
+            <div class="gauge-bar"><div class="gauge-fill" id="bar-rpm" style="width:0%"></div></div>
+          </div>
+          <div class="gauge-card" id="card-oil-temp">
+            <div class="gauge-card-inner">
+              <div class="gauge-ring-wrap">
+                <svg viewBox="0 0 80 80"><circle class="ring-track" cx="40" cy="40" r="30"/><circle class="ring-glow" id="ringg-oiltemp" cx="40" cy="40" r="30" stroke="url(#ring-grad-default)"/><circle class="ring-fill" id="ring-oiltemp" cx="40" cy="40" r="30" stroke="url(#ring-grad-default)"/></svg>
+                <div class="gauge-ring-value"><div class="gauge-value" id="val-oil-temp">—</div></div>
+              </div>
+              <div class="gauge-card-info">
+                <div class="gauge-label">OIL TEMP</div>
+                <div class="gauge-unit">°C</div>
+              </div>
+            </div>
+            <div class="gauge-bar"><div class="gauge-fill" id="bar-oiltemp" style="width:0%"></div></div>
+          </div>
+          <div class="gauge-card" id="card-exhaust">
+            <div class="gauge-card-inner">
+              <div class="gauge-ring-wrap">
+                <svg viewBox="0 0 80 80"><circle class="ring-track" cx="40" cy="40" r="30"/><circle class="ring-glow" id="ringg-exhaust" cx="40" cy="40" r="30" stroke="url(#ring-grad-default)"/><circle class="ring-fill" id="ring-exhaust" cx="40" cy="40" r="30" stroke="url(#ring-grad-default)"/></svg>
+                <div class="gauge-ring-value"><div class="gauge-value" id="val-exhaust">—</div></div>
+              </div>
+              <div class="gauge-card-info">
+                <div class="gauge-label">EXHAUST TEMP</div>
+                <div class="gauge-unit">°C</div>
+              </div>
+            </div>
+            <div class="gauge-bar"><div class="gauge-fill" id="bar-exhaust" style="width:0%"></div></div>
+          </div>
+          <div class="gauge-card" id="card-fuel-economy">
+            <div class="gauge-card-inner">
+              <div class="gauge-ring-wrap">
+                <svg viewBox="0 0 80 80"><circle class="ring-track" cx="40" cy="40" r="30"/><circle class="ring-glow" id="ringg-fueleconomy" cx="40" cy="40" r="30" stroke="url(#ring-grad-purple)"/><circle class="ring-fill" id="ring-fueleconomy" cx="40" cy="40" r="30" stroke="url(#ring-grad-purple)"/></svg>
+                <div class="gauge-ring-value"><div class="gauge-value" id="val-fuel-economy">—</div></div>
+              </div>
+              <div class="gauge-card-info">
+                <div class="gauge-label">FUEL ECONOMY</div>
+                <div class="gauge-unit">L/100KM</div>
+              </div>
+            </div>
+            <div class="gauge-bar"><div class="gauge-fill" id="bar-fueleconomy" style="width:0%"></div></div>
+          </div>
+          <div class="gauge-card" id="card-est-range">
+            <div class="gauge-card-inner">
+              <div class="gauge-ring-wrap">
+                <svg viewBox="0 0 80 80"><circle class="ring-track" cx="40" cy="40" r="30"/><circle class="ring-glow" id="ringg-estrange" cx="40" cy="40" r="30" stroke="url(#ring-grad-blue)"/><circle class="ring-fill" id="ring-estrange" cx="40" cy="40" r="30" stroke="url(#ring-grad-blue)"/></svg>
+                <div class="gauge-ring-value"><div class="gauge-value" id="val-est-range">—</div></div>
+              </div>
+              <div class="gauge-card-info">
+                <div class="gauge-label">EST. RANGE</div>
+                <div class="gauge-unit">KM</div>
+              </div>
+            </div>
+            <div class="gauge-bar"><div class="gauge-fill" id="bar-estrange" style="width:0%"></div></div>
+          </div>
+          <div class="gauge-card" id="card-def">
+            <div class="gauge-card-inner">
+              <div class="gauge-ring-wrap">
+                <svg viewBox="0 0 80 80"><circle class="ring-track" cx="40" cy="40" r="30"/><circle class="ring-glow" id="ringg-def" cx="40" cy="40" r="30" stroke="url(#ring-grad-blue)"/><circle class="ring-fill" id="ring-def" cx="40" cy="40" r="30" stroke="url(#ring-grad-blue)"/></svg>
+                <div class="gauge-ring-value"><div class="gauge-value" id="val-def">—</div></div>
+              </div>
+              <div class="gauge-card-info">
+                <div class="gauge-label">DEF LEVEL</div>
+                <div class="gauge-unit">%</div>
+              </div>
+            </div>
+            <div class="gauge-bar"><div class="gauge-fill" id="bar-def" style="width:0%"></div></div>
+          </div>
+          <div class="gauge-card" id="card-dpf">
+            <div class="gauge-card-inner">
+              <div class="gauge-ring-wrap">
+                <svg viewBox="0 0 80 80"><circle class="ring-track" cx="40" cy="40" r="30"/><circle class="ring-glow" id="ringg-dpf" cx="40" cy="40" r="30" stroke="url(#ring-grad-default)"/><circle class="ring-fill" id="ring-dpf" cx="40" cy="40" r="30" stroke="url(#ring-grad-default)"/></svg>
+                <div class="gauge-ring-value"><div class="gauge-value" id="val-dpf">—</div></div>
+              </div>
+              <div class="gauge-card-info">
+                <div class="gauge-label">DPF SOOT</div>
+                <div class="gauge-unit">%</div>
+              </div>
+            </div>
+            <div class="gauge-bar"><div class="gauge-fill" id="bar-dpf" style="width:0%"></div></div>
+          </div>
+          <div class="gauge-card" id="card-regen">
+            <div class="gauge-card-inner">
+              <div class="gauge-ring-wrap" style="display:flex;align-items:center;justify-content:center">
+                <div class="gauge-value" id="val-regen" style="font-size:16px;position:static">—</div>
+              </div>
+              <div class="gauge-card-info">
+                <div class="gauge-label">REGEN STATUS</div>
+                <div class="gauge-unit"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2077,9 +2455,46 @@
 
     <!-- DRIVETRAIN TAB -->
     <div class="tab-panel" id="tab-drivetrain">
+
+      <!-- HERO: Speed + Gear -->
+      <div class="drive-hero">
+        <div class="drive-hero-content">
+          <div class="drive-hero-gauge">
+            <svg viewBox="0 0 120 120">
+              <defs>
+                <linearGradient id="drive-hero-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#00e5ff"/>
+                  <stop offset="100%" stop-color="#3b82f6"/>
+                </linearGradient>
+              </defs>
+              <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="5"/>
+              <circle id="drive-ring-speed" cx="60" cy="60" r="52" fill="none" stroke="url(#drive-hero-grad)" stroke-width="5" stroke-linecap="round"
+                stroke-dasharray="326.7" stroke-dashoffset="326.7"
+                transform="rotate(-90 60 60)" style="transition:stroke-dashoffset 1s cubic-bezier(0.4,0,0.2,1);filter:drop-shadow(0 0 6px rgba(0,229,255,0.2))"/>
+            </svg>
+            <div class="drive-hero-inner">
+              <div class="drive-hero-value" id="drive-hero-speed">—</div>
+              <div class="drive-hero-unit">KM/H</div>
+            </div>
+          </div>
+          <div class="drive-hero-stats">
+            <div class="drive-hero-stat">
+              <span class="drive-hero-stat-label">GEAR</span>
+              <span class="drive-hero-stat-val" id="val-gear">—</span>
+            </div>
+            <div class="drive-hero-stat">
+              <span class="drive-hero-stat-label">TRANS TEMP</span>
+              <span class="drive-hero-stat-val" id="val-trans-temp">—</span>
+            </div>
+            <div class="drive-hero-stat">
+              <span class="drive-hero-stat-label">ODOMETER</span>
+              <span class="drive-hero-stat-val" id="val-odo">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="section-header">TRANSMISSION</div>
-      <div class="data-row"><span class="data-key">Current Gear</span><span class="data-val" id="val-gear">—</span></div>
-      <div class="data-row"><span class="data-key">Transmission Temp</span><span class="data-val" id="val-trans-temp">—</span></div>
       <div class="data-row"><span class="data-key">Input Shaft RPM</span><span class="data-val" id="val-input-rpm">—</span></div>
       <div class="data-row"><span class="data-key">Output Shaft RPM</span><span class="data-val" id="val-output-rpm">—</span></div>
       <div class="data-row"><span class="data-key">Retarder Status</span><span class="data-val" id="val-retarder">—</span></div>
@@ -2089,7 +2504,6 @@
       <div class="data-row"><span class="data-key">Rear Air Pressure</span><span class="data-val" id="val-air-rear">—</span></div>
       <div class="data-row"><span class="data-key">Diff Temp (Drive)</span><span class="data-val" id="val-diff">—</span></div>
       <div class="data-row"><span class="data-key">Vehicle Speed</span><span class="data-val" id="val-speed">—</span></div>
-      <div class="data-row"><span class="data-key">Odometer</span><span class="data-val" id="val-odo">—</span></div>
 
       <div class="section-header">ELECTRICAL</div>
       <div class="data-row"><span class="data-key">Battery Voltage</span><span class="data-val" id="val-batt">—</span></div>
@@ -2112,11 +2526,27 @@
 
       <div class="hp-torque">
         <div class="ht-card">
-          <div class="ht-value" id="ecu-hp">—</div>
+          <div style="position:relative;width:100px;height:100px;margin:0 auto 12px">
+            <svg viewBox="0 0 100 100" style="width:100%;height:100%;transform:rotate(-90deg);filter:drop-shadow(0 0 6px rgba(0,212,170,0.15))">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="5"/>
+              <circle id="ecu-hp-ring" cx="50" cy="50" r="42" fill="none" stroke="url(#ring-grad-default)" stroke-width="5" stroke-linecap="round" stroke-dasharray="263.9" stroke-dashoffset="66" style="transition:stroke-dashoffset 1s"/>
+            </svg>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">
+              <div class="ht-value" id="ecu-hp" style="font-size:32px;margin:0">—</div>
+            </div>
+          </div>
           <div class="ht-label">RATED HP</div>
         </div>
         <div class="ht-card">
-          <div class="ht-value" id="ecu-torque">—</div>
+          <div style="position:relative;width:100px;height:100px;margin:0 auto 12px">
+            <svg viewBox="0 0 100 100" style="width:100%;height:100%;transform:rotate(-90deg);filter:drop-shadow(0 0 6px rgba(0,229,255,0.15))">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="5"/>
+              <circle id="ecu-torque-ring" cx="50" cy="50" r="42" fill="none" stroke="url(#ring-grad-blue)" stroke-width="5" stroke-linecap="round" stroke-dasharray="263.9" stroke-dashoffset="66" style="transition:stroke-dashoffset 1s"/>
+            </svg>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">
+              <div class="ht-value" id="ecu-torque" style="font-size:32px;margin:0">—</div>
+            </div>
+          </div>
           <div class="ht-label">NM TORQUE</div>
         </div>
       </div>
@@ -2142,8 +2572,14 @@
 
     <!-- GPS TAB -->
     <div class="tab-panel" id="tab-gps">
-      <div class="gps-card">
-        <div class="gauge-label" style="margin-bottom:12px">CURRENT POSITION</div>
+      <div class="gps-card" style="margin-bottom:24px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+          <div style="width:40px;height:40px;border-radius:50%;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.15);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📍</div>
+          <div>
+            <div style="font-size:10px;letter-spacing:3px;color:var(--dim);text-transform:uppercase;font-weight:500">CURRENT POSITION</div>
+            <div id="gps-signal-inline" style="font-size:10px;color:var(--green);letter-spacing:1px;margin-top:2px">—</div>
+          </div>
+        </div>
         <div class="gps-coords">
           LAT: <span id="gps-lat">—</span><br>
           LNG: <span id="gps-lng">—</span><br>
@@ -2152,11 +2588,40 @@
         <a class="map-btn" id="maps-link" href="#" target="_blank">📍 OPEN IN GOOGLE MAPS</a>
       </div>
 
-      <div class="section-header">MOVEMENT</div>
+      <!-- GPS Speed Hero -->
+      <div class="drive-hero" style="margin-bottom:24px">
+        <div class="drive-hero-content">
+          <div class="drive-hero-gauge">
+            <svg viewBox="0 0 120 120">
+              <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="5"/>
+              <circle id="gps-ring-speed" cx="60" cy="60" r="52" fill="none" stroke="url(#ring-grad-blue)" stroke-width="5" stroke-linecap="round"
+                stroke-dasharray="326.7" stroke-dashoffset="326.7"
+                transform="rotate(-90 60 60)" style="transition:stroke-dashoffset 1s cubic-bezier(0.4,0,0.2,1);filter:drop-shadow(0 0 6px rgba(59,130,246,0.2))"/>
+            </svg>
+            <div class="drive-hero-inner">
+              <div class="drive-hero-value" id="gps-hero-speed">—</div>
+              <div class="drive-hero-unit">KM/H</div>
+            </div>
+          </div>
+          <div class="drive-hero-stats">
+            <div class="drive-hero-stat">
+              <span class="drive-hero-stat-label">HEADING</span>
+              <span class="drive-hero-stat-val" id="gps-heading">—</span>
+            </div>
+            <div class="drive-hero-stat">
+              <span class="drive-hero-stat-label">IGNITION</span>
+              <span class="drive-hero-stat-val" id="gps-ignition">—</span>
+            </div>
+            <div class="drive-hero-stat">
+              <span class="drive-hero-stat-label">GPS SIGNAL</span>
+              <span class="drive-hero-stat-val" id="gps-signal">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-header">DETAILS</div>
       <div class="data-row"><span class="data-key">Speed (GPS)</span><span class="data-val" id="gps-speed">—</span></div>
-      <div class="data-row"><span class="data-key">Heading</span><span class="data-val" id="gps-heading">—</span></div>
-      <div class="data-row"><span class="data-key">Ignition</span><span class="data-val" id="gps-ignition">—</span></div>
-      <div class="data-row"><span class="data-key">GPS Signal</span><span class="data-val" id="gps-signal">—</span></div>
       <div class="data-row"><span class="data-key">Last Update</span><span class="data-val" id="gps-updated">—</span></div>
     </div>
 
@@ -3142,7 +3607,13 @@ function updateDisplay(data) {
   setText('gps-heading', data.heading || '—');
   setText('gps-ignition', data.ignition || '—');
   setText('gps-signal', data.gpsSignal || '—');
+  // Also set inline GPS signal indicator
+  const gpsInline = document.getElementById('gps-signal-inline');
+  if (gpsInline) gpsInline.textContent = data.gpsSignal || '—';
   setText('gps-updated', new Date().toLocaleTimeString('en-AU'));
+
+  // Update drivetrain & GPS hero gauges
+  updateDriveHero(parseFloat(data.speed) || data.gpsSpeed || 0);
 
   // Faults
   renderFaults(data.faults || []);
@@ -3220,6 +3691,58 @@ function setGauge(id, value, min, max, warnLevels, invertWarn) {
   }
   if (card) {
     card.className = 'gauge-card' + (state !== 'normal' ? ' ' + state : '');
+  }
+  // Update mini ring gauge
+  updateRingGauge(id.replace('-',''), pct, state);
+}
+
+// Ring gauge constants
+const RING_CIRC = 2 * Math.PI * 30; // r=30 → ~188.5
+const DRIVE_RING_CIRC = 2 * Math.PI * 52; // r=52 → ~326.7
+
+// Update mini ring gauges inside cards
+function updateRingGauge(id, pct, state) {
+  const ring = document.getElementById('ring-' + id);
+  const glow = document.getElementById('ringg-' + id);
+  if (!ring) return;
+  const offset = RING_CIRC * (1 - Math.min(100, Math.max(0, pct)) / 100);
+  ring.style.strokeDashoffset = offset;
+  if (glow) glow.style.strokeDashoffset = offset;
+  if (state && state !== 'normal') {
+    ring.className.baseVal = 'ring-fill ' + state;
+    if (glow) glow.className.baseVal = 'ring-glow ' + state;
+  } else {
+    ring.className.baseVal = 'ring-fill';
+    if (glow) glow.className.baseVal = 'ring-glow';
+  }
+}
+
+// Expand/collapse secondary metrics
+function toggleSecondaryMetrics() {
+  const sec = document.getElementById('secondary-metrics');
+  const btn = document.getElementById('expand-engine-btn');
+  if (!sec || !btn) return;
+  const expanded = sec.classList.toggle('expanded');
+  btn.classList.toggle('expanded', expanded);
+  btn.firstChild.textContent = expanded ? 'LESS METRICS ' : 'MORE METRICS ';
+}
+
+// Update drivetrain hero gauge
+function updateDriveHero(speed) {
+  const el = document.getElementById('drive-hero-speed');
+  const ring = document.getElementById('drive-ring-speed');
+  if (el) el.textContent = speed ? Math.round(speed) : '—';
+  if (ring) {
+    const pct = Math.min(100, Math.max(0, (parseFloat(speed) || 0) / 140 * 100));
+    ring.style.strokeDashoffset = DRIVE_RING_CIRC * (1 - pct / 100);
+  }
+  // GPS hero speed
+  const gpsEl = document.getElementById('gps-hero-speed');
+  const gpsRing = document.getElementById('gps-ring-speed');
+  if (gpsEl) gpsEl.textContent = speed ? Math.round(speed) : '—';
+  if (gpsRing) {
+    const pct = Math.min(100, Math.max(0, (parseFloat(speed) || 0) / 140 * 100));
+    gpsRing.style.strokeDashoffset = DRIVE_RING_CIRC * (1 - pct / 100);
   }
 }
 
