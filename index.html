@@ -18,27 +18,31 @@
 <style>
 
   :root {
-    --bg: #08090c;
+    --bg: #060810;
     --panel: rgba(255,255,255,0.035);
-    --panel-solid: #111318;
+    --panel-solid: #0d1017;
     --border: rgba(255,255,255,0.06);
     --accent: #00d4aa;
     --accent2: #00f0c0;
     --accent-glow: rgba(0,212,170,0.15);
     --accent-blue: #3b82f6;
     --accent-blue-glow: rgba(59,130,246,0.15);
+    --cyan: #00e5ff;
+    --cyan-glow: rgba(0,229,255,0.2);
     --green: #00e676;
     --red: #ff4757;
     --yellow: #ffa502;
     --blue: #54a0ff;
-    --text: #e8eaed;
+    --text: #edf0f5;
     --dim: rgba(255,255,255,0.35);
     --glow: rgba(0,212,170,0.1);
     --radius: 16px;
     --radius-sm: 12px;
     --radius-xs: 8px;
-    --card-bg: linear-gradient(135deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0.02) 100%);
-    --card-glow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
+    --card-bg: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.015) 100%);
+    --card-glow: 0 0 0 1px rgba(255,255,255,0.05), 0 4px 30px rgba(0,0,0,0.4), 0 0 20px rgba(0,212,170,0.03), inset 0 1px 0 rgba(255,255,255,0.05);
+    --card-hover-glow: 0 0 0 1px rgba(0,212,170,0.15), 0 8px 40px rgba(0,0,0,0.5), 0 0 40px rgba(0,212,170,0.08), inset 0 1px 0 rgba(255,255,255,0.07);
+    --neon-shadow: 0 0 20px rgba(0,212,170,0.25), 0 0 60px rgba(0,212,170,0.08);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -51,9 +55,9 @@
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     background-image:
-      radial-gradient(ellipse at 15% 10%, rgba(0,212,170,0.04) 0%, transparent 50%),
-      radial-gradient(ellipse at 85% 20%, rgba(59,130,246,0.03) 0%, transparent 45%),
-      radial-gradient(ellipse at 50% 80%, rgba(0,212,170,0.025) 0%, transparent 50%);
+      radial-gradient(ellipse 800px 600px at 15% 10%, rgba(0,212,170,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse 600px 500px at 85% 20%, rgba(0,229,255,0.04) 0%, transparent 45%),
+      radial-gradient(ellipse 700px 500px at 50% 80%, rgba(0,212,170,0.035) 0%, transparent 50%);
     background-attachment: fixed;
   }
 
@@ -89,12 +93,16 @@
   }
 
   .login-title {
-    font-size: 34px;
+    font-size: 36px;
     font-weight: 800;
     color: var(--text);
-    letter-spacing: 2px;
+    letter-spacing: 3px;
     margin-bottom: 4px;
-    text-shadow: 0 0 40px rgba(255,255,255,0.06);
+    text-shadow: 0 0 60px rgba(0,212,170,0.15), 0 0 20px rgba(255,255,255,0.05);
+    background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   .login-sub {
@@ -110,14 +118,20 @@
     margin-bottom: 32px;
     filter: drop-shadow(0 0 30px var(--accent-glow));
     position: relative;
-    width: 120px;
-    height: 120px;
+    width: 130px;
+    height: 130px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: radial-gradient(circle, rgba(0,212,170,0.08) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(0,212,170,0.1) 0%, transparent 65%);
     border-radius: 50%;
-    box-shadow: 0 0 0 1px rgba(0,212,170,0.1), 0 0 60px rgba(0,212,170,0.08), inset 0 0 30px rgba(0,212,170,0.05);
+    box-shadow: 0 0 0 2px rgba(0,212,170,0.12), 0 0 80px rgba(0,212,170,0.12), 0 0 40px rgba(0,229,255,0.06), inset 0 0 40px rgba(0,212,170,0.06);
+    animation: iconBreathe 4s ease-in-out infinite;
+  }
+
+  @keyframes iconBreathe {
+    0%, 100% { box-shadow: 0 0 0 2px rgba(0,212,170,0.12), 0 0 80px rgba(0,212,170,0.12), 0 0 40px rgba(0,229,255,0.06), inset 0 0 40px rgba(0,212,170,0.06); }
+    50% { box-shadow: 0 0 0 2px rgba(0,212,170,0.2), 0 0 100px rgba(0,212,170,0.18), 0 0 60px rgba(0,229,255,0.1), inset 0 0 50px rgba(0,212,170,0.08); }
   }
 
   .input-group {
@@ -169,22 +183,29 @@
   .btn-connect {
     width: 100%;
     max-width: 360px;
-    background: linear-gradient(135deg, var(--accent) 0%, #00b894 100%);
+    background: linear-gradient(135deg, var(--accent) 0%, var(--cyan) 50%, #00b894 100%);
     border: none;
     border-radius: var(--radius-sm);
     padding: 18px;
-    color: #0a0a0a;
+    color: #060810;
     font-family: 'Inter', sans-serif;
     font-size: 15px;
     font-weight: 700;
     letter-spacing: 2px;
     text-transform: uppercase;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 24px rgba(0,212,170,0.3), 0 0 0 1px rgba(0,212,170,0.1);
+    transition: all 0.4s ease;
+    box-shadow: 0 4px 30px rgba(0,212,170,0.35), 0 0 60px rgba(0,229,255,0.1), 0 0 0 1px rgba(0,212,170,0.15);
+    background-size: 200% 100%;
+    animation: btnShimmer 3s ease-in-out infinite;
   }
 
-  .btn-connect:hover { box-shadow: 0 8px 40px rgba(0,212,170,0.4), 0 0 0 1px rgba(0,212,170,0.2); transform: translateY(-2px); }
+  @keyframes btnShimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .btn-connect:hover { box-shadow: 0 8px 50px rgba(0,212,170,0.45), 0 0 80px rgba(0,229,255,0.15), 0 0 0 1px rgba(0,212,170,0.25); transform: translateY(-3px); }
   .btn-connect:active { transform: scale(0.98); }
   .btn-connect:disabled { opacity: 0.4; }
 
@@ -243,14 +264,14 @@
     bottom: -1px;
     left: 0;
     right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent 0%, var(--accent) 30%, var(--accent-blue) 70%, transparent 100%);
-    opacity: 0.4;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, var(--accent) 20%, var(--cyan) 50%, var(--accent-blue) 80%, transparent 100%);
+    opacity: 0.5;
   }
 
   .header-left { display: flex; flex-direction: column; gap: 2px; }
-  .header-truck { font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: 0.5px; }
-  .header-id { font-size: 11px; color: var(--dim); letter-spacing: 1px; font-family: 'JetBrains Mono', monospace; font-weight: 400; }
+  .header-truck { font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: 0.5px; text-shadow: 0 0 30px rgba(255,255,255,0.05); }
+  .header-id { font-size: 11px; color: var(--accent); letter-spacing: 1.5px; font-family: 'JetBrains Mono', monospace; font-weight: 500; opacity: 0.7; }
 
   .live-badge {
     display: flex;
@@ -317,9 +338,9 @@
 
   .tab.active {
     color: #0a0a0a;
-    background: var(--accent);
+    background: linear-gradient(135deg, var(--accent) 0%, var(--cyan) 100%);
     font-weight: 600;
-    box-shadow: 0 2px 16px rgba(0,212,170,0.35), 0 0 0 1px rgba(0,212,170,0.2);
+    box-shadow: 0 2px 20px rgba(0,212,170,0.4), 0 0 40px rgba(0,229,255,0.12), 0 0 0 1px rgba(0,212,170,0.2);
   }
 
   /* CONTENT */
@@ -360,14 +381,14 @@
     padding: 16px;
     position: relative;
     overflow: hidden;
-    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: var(--card-glow);
   }
 
   .gauge-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
-    border-color: rgba(255,255,255,0.1);
+    transform: translateY(-3px) scale(1.01);
+    box-shadow: var(--card-hover-glow);
+    border-color: rgba(0,212,170,0.12);
   }
 
   .gauge-card::before {
@@ -375,16 +396,33 @@
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 2px;
-    background: linear-gradient(90deg, var(--accent), var(--accent-blue));
-    opacity: 0.4;
-    transition: opacity 0.3s;
+    background: linear-gradient(90deg, var(--accent), var(--cyan), var(--accent-blue));
+    opacity: 0.5;
+    transition: opacity 0.4s;
   }
 
-  .gauge-card:hover::before { opacity: 0.8; }
+  .gauge-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 80px;
+    background: linear-gradient(180deg, rgba(0,212,170,0.03) 0%, transparent 100%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
 
-  .gauge-card.warning::before { background: linear-gradient(90deg, var(--yellow), #ff8c00); opacity: 1; }
-  .gauge-card.critical::before { background: linear-gradient(90deg, var(--red), #ff6b81); opacity: 1; }
-  .gauge-card.good::before { background: linear-gradient(90deg, var(--green), #69f0ae); opacity: 0.8; }
+  .gauge-card:hover::before { opacity: 1; }
+  .gauge-card:hover::after { opacity: 1; }
+
+  .gauge-card.warning { border-color: rgba(255,165,2,0.15); }
+  .gauge-card.warning::before { background: linear-gradient(90deg, var(--yellow), #ff8c00, var(--yellow)); opacity: 1; }
+  .gauge-card.warning::after { background: linear-gradient(180deg, rgba(255,165,2,0.04) 0%, transparent 100%); opacity: 1; }
+  .gauge-card.critical { border-color: rgba(255,71,87,0.15); }
+  .gauge-card.critical::before { background: linear-gradient(90deg, var(--red), #ff6b81, var(--red)); opacity: 1; }
+  .gauge-card.critical::after { background: linear-gradient(180deg, rgba(255,71,87,0.04) 0%, transparent 100%); opacity: 1; }
+  .gauge-card.good::before { background: linear-gradient(90deg, var(--green), #69f0ae, var(--green)); opacity: 0.9; }
+  .gauge-card.good::after { background: linear-gradient(180deg, rgba(0,230,118,0.03) 0%, transparent 100%); opacity: 1; }
 
   .gauge-label {
     font-size: 10px;
@@ -397,18 +435,23 @@
 
   .gauge-value {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 36px;
-    font-weight: 600;
+    font-size: 38px;
+    font-weight: 700;
     color: var(--text);
     line-height: 1;
     margin-bottom: 6px;
-    text-shadow: 0 0 30px rgba(255,255,255,0.06);
-    transition: color 0.3s ease, opacity 0.3s ease;
+    text-shadow: 0 0 40px rgba(0,212,170,0.1), 0 0 10px rgba(255,255,255,0.04);
+    transition: color 0.4s ease, opacity 0.3s ease, text-shadow 0.4s ease;
   }
 
-  .gauge-value.warning { color: var(--yellow); text-shadow: 0 0 20px rgba(255,165,2,0.2); }
-  .gauge-value.critical { color: var(--red); text-shadow: 0 0 20px rgba(255,71,87,0.2); }
-  .gauge-value.good { color: var(--green); text-shadow: 0 0 20px rgba(0,230,118,0.2); }
+  .gauge-value.warning { color: var(--yellow); text-shadow: 0 0 30px rgba(255,165,2,0.35), 0 0 8px rgba(255,165,2,0.15); }
+  .gauge-value.critical { color: var(--red); text-shadow: 0 0 30px rgba(255,71,87,0.4), 0 0 8px rgba(255,71,87,0.2); animation: criticalPulse 1.5s ease-in-out infinite; }
+  .gauge-value.good { color: var(--green); text-shadow: 0 0 25px rgba(0,230,118,0.3), 0 0 8px rgba(0,230,118,0.12); }
+
+  @keyframes criticalPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
 
   .gauge-unit {
     font-size: 11px;
@@ -418,26 +461,48 @@
   }
 
   .gauge-bar {
-    margin-top: 12px;
-    height: 4px;
-    background: rgba(255,255,255,0.06);
-    border-radius: 4px;
-    overflow: hidden;
+    margin-top: 14px;
+    height: 6px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 6px;
+    overflow: visible;
     position: relative;
   }
 
   .gauge-fill {
     height: 100%;
-    border-radius: 4px;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 0 8px rgba(0,212,170,0.3);
+    border-radius: 6px;
+    background: linear-gradient(90deg, var(--accent), var(--cyan), var(--accent2));
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 12px rgba(0,212,170,0.4), 0 0 4px rgba(0,229,255,0.3);
     position: relative;
   }
 
-  .gauge-fill.warning { background: linear-gradient(90deg, #ff8c00, var(--yellow)); box-shadow: 0 0 8px rgba(255,165,2,0.3); }
-  .gauge-fill.critical { background: linear-gradient(90deg, #e63946, var(--red)); box-shadow: 0 0 8px rgba(255,71,87,0.3); }
-  .gauge-fill.good { background: linear-gradient(90deg, #00c853, var(--green)); box-shadow: 0 0 8px rgba(0,230,118,0.3); }
+  .gauge-fill::after {
+    content: '';
+    position: absolute;
+    right: -2px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 10px rgba(0,212,170,0.6), 0 0 20px rgba(0,212,170,0.3);
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+
+  .gauge-fill[style*="width:0%"]::after,
+  .gauge-fill[style="width:0%"]::after { opacity: 0; }
+  .gauge-card:hover .gauge-fill::after { opacity: 1; }
+
+  .gauge-fill.warning { background: linear-gradient(90deg, #ff8c00, var(--yellow), #ffb74d); box-shadow: 0 0 14px rgba(255,165,2,0.4), 0 0 4px rgba(255,165,2,0.3); }
+  .gauge-fill.warning::after { box-shadow: 0 0 10px rgba(255,165,2,0.6), 0 0 20px rgba(255,165,2,0.3); }
+  .gauge-fill.critical { background: linear-gradient(90deg, #e63946, var(--red), #ff6b81); box-shadow: 0 0 14px rgba(255,71,87,0.4), 0 0 4px rgba(255,71,87,0.3); }
+  .gauge-fill.critical::after { box-shadow: 0 0 10px rgba(255,71,87,0.6), 0 0 20px rgba(255,71,87,0.3); }
+  .gauge-fill.good { background: linear-gradient(90deg, #00c853, var(--green), #69f0ae); box-shadow: 0 0 14px rgba(0,230,118,0.4), 0 0 4px rgba(0,230,118,0.3); }
+  .gauge-fill.good::after { box-shadow: 0 0 10px rgba(0,230,118,0.6), 0 0 20px rgba(0,230,118,0.3); }
 
   /* SECTION HEADER */
   .section-header {
@@ -459,11 +524,11 @@
     left: 0;
     top: 50%;
     transform: translateY(-60%);
-    width: 5px;
-    height: 5px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 6px rgba(0,212,170,0.4);
+    background: var(--cyan);
+    box-shadow: 0 0 8px rgba(0,229,255,0.5), 0 0 16px rgba(0,229,255,0.2);
   }
 
   /* DATA ROWS */
@@ -504,7 +569,7 @@
     padding: 16px;
     margin-bottom: 10px;
     backdrop-filter: blur(10px);
-    box-shadow: var(--card-glow), inset 0 0 30px rgba(255,71,87,0.02);
+    box-shadow: var(--card-glow), 0 0 20px rgba(255,71,87,0.06), inset 0 0 30px rgba(255,71,87,0.02);
   }
 
   .fault-card.inactive {
@@ -583,12 +648,12 @@
 
   .ht-value {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 36px;
-    font-weight: 600;
+    font-size: 40px;
+    font-weight: 700;
     color: var(--accent);
     line-height: 1;
     margin-bottom: 6px;
-    text-shadow: 0 0 20px rgba(0,212,170,0.2);
+    text-shadow: 0 0 30px rgba(0,212,170,0.35), 0 0 8px rgba(0,229,255,0.15);
   }
 
   .ht-label { font-size: 11px; color: var(--dim); letter-spacing: 1.5px; font-weight: 500; }
@@ -671,11 +736,12 @@
 
   .no-faults {
     text-align: center;
-    padding: 48px 20px;
+    padding: 60px 20px;
     color: var(--green);
-    font-size: 15px;
-    letter-spacing: 0.5px;
-    font-weight: 500;
+    font-size: 16px;
+    letter-spacing: 1px;
+    font-weight: 600;
+    text-shadow: 0 0 30px rgba(0,230,118,0.25), 0 0 8px rgba(0,230,118,0.1);
   }
 
   .spinner {
@@ -996,15 +1062,16 @@
 
   /* ========== GLASS MORPHISM ========== */
   .gauge-card, .gps-card, .bt-panel, .ecu-header, .ht-card, .trip-card, .fault-card, .note-box, .ecm-upload {
-    backdrop-filter: blur(16px) saturate(1.2);
-    -webkit-backdrop-filter: blur(16px) saturate(1.2);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
     background: var(--card-bg);
     box-shadow: var(--card-glow);
-    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .bt-panel:hover, .ecu-header:hover, .ht-card:hover, .trip-card:hover, .fault-card:hover, .note-box:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+    transform: translateY(-3px) scale(1.005);
+    box-shadow: var(--card-hover-glow);
+    border-color: rgba(0,212,170,0.1);
   }
 
   /* ========== MICRO ANIMATIONS ========== */
@@ -1064,8 +1131,8 @@
     border-radius: 50%;
     flex-shrink: 0;
   }
-  .status-badge.driving { color: var(--green); background: rgba(0,230,118,0.06); box-shadow: 0 0 16px rgba(0,230,118,0.12); }
-  .status-badge.driving .status-dot { background: var(--green); animation: pulse 1.5s infinite; box-shadow: 0 0 8px rgba(0,230,118,0.4); }
+  .status-badge.driving { color: var(--green); background: rgba(0,230,118,0.08); box-shadow: 0 0 20px rgba(0,230,118,0.15), inset 0 0 12px rgba(0,230,118,0.05); }
+  .status-badge.driving .status-dot { background: var(--green); animation: pulse 1.5s infinite; box-shadow: 0 0 12px rgba(0,230,118,0.5), 0 0 4px rgba(0,230,118,0.8); }
   .status-badge.idle { color: var(--yellow); background: rgba(255,165,2,0.06); box-shadow: 0 0 16px rgba(255,165,2,0.1); }
   .status-badge.idle .status-dot { background: var(--yellow); animation: pulse 2.5s infinite; box-shadow: 0 0 8px rgba(255,165,2,0.3); }
   .status-badge.parked { color: var(--dim); }
@@ -1470,107 +1537,266 @@
 
   /* ========== PREMIUM ENHANCEMENTS ========== */
 
-  /* Gauge value "no data" dimming — when showing dash */
-  .gauge-card .gauge-value {
+  .gauge-card .gauge-value { position: relative; }
+  *, *::before, *::after { transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
+  .header-truck::after { transition: color 0.3s ease; }
+  .header-truck:hover::after { color: var(--accent); }
+  .alert-bar { box-shadow: 0 4px 24px rgba(255,71,87,0.08); }
+  .no-faults { text-shadow: 0 0 30px rgba(0,230,118,0.2); }
+
+  .trip-card { position: relative; overflow: hidden; }
+  .trip-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent), var(--cyan), transparent); opacity: 0.4; }
+  .trip-stat-val { font-size: 18px; font-weight: 600; text-shadow: 0 0 15px rgba(255,255,255,0.05); }
+  .ecu-header { position: relative; overflow: hidden; }
+  .ecu-header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent), var(--cyan), var(--accent-blue), transparent); opacity: 0.5; }
+  .bt-panel { position: relative; overflow: hidden; }
+  .bt-panel::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--cyan), var(--accent-blue), transparent); opacity: 0.4; }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  ::selection { background: rgba(0,212,170,0.25); color: var(--text); }
+
+  /* ========== ANIMATED TECH GRID BACKGROUND ========== */
+  @keyframes gridPulse {
+    0%, 100% { opacity: 0.04; }
+    50% { opacity: 0.07; }
+  }
+  @keyframes gridDrift {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(60px, 60px); }
+  }
+
+  .content {
     position: relative;
   }
+  .content::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0;
+    width: calc(100% + 60px);
+    height: calc(100% + 60px);
+    background-image:
+      linear-gradient(rgba(0,229,255,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.035) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: gridPulse 8s ease-in-out infinite, gridDrift 30s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, black 0%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, black 0%, transparent 100%);
+  }
+  .content > * { position: relative; z-index: 1; }
 
-  /* Smooth transitions on everything */
-  *, *::before, *::after {
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  /* ========== HERO RADIAL GAUGES ========== */
+  .hero-gauges {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
   }
 
-  /* Header truck dropdown caret */
-  .header-truck::after {
-    transition: color 0.3s ease;
-  }
-  .header-truck:hover::after {
-    color: var(--accent);
-  }
-
-  /* Alert bar premium */
-  .alert-bar {
-    box-shadow: 0 4px 24px rgba(255,71,87,0.08);
-  }
-
-  /* No-faults premium */
-  .no-faults {
-    text-shadow: 0 0 20px rgba(0,230,118,0.15);
-  }
-
-  /* Trip cards premium */
-  .trip-card {
+  .hero-gauge {
     position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 12px 20px;
+    box-shadow: var(--card-glow);
+    backdrop-filter: blur(16px) saturate(1.2);
+    -webkit-backdrop-filter: blur(16px) saturate(1.2);
     overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .trip-card::before {
+
+  .hero-gauge:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--card-hover-glow);
+    border-color: rgba(0,212,170,0.12);
+  }
+
+  .hero-gauge::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 2px;
-    background: linear-gradient(90deg, var(--accent), transparent);
-    opacity: 0.3;
+    background: linear-gradient(90deg, var(--accent), var(--cyan), var(--accent-blue));
+    opacity: 0.6;
   }
 
-  .trip-stat-val {
-    font-size: 18px;
-    font-weight: 600;
-    text-shadow: 0 0 15px rgba(255,255,255,0.05);
-  }
-
-  /* ECU card premium */
-  .ecu-header {
-    position: relative;
-    overflow: hidden;
-  }
-  .ecu-header::before {
+  .hero-gauge::after {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--accent), var(--accent-blue), transparent);
-    opacity: 0.4;
+    top: -40%;
+    left: -40%;
+    width: 180%;
+    height: 180%;
+    background: radial-gradient(circle at 50% 40%, rgba(0,212,170,0.04) 0%, transparent 55%);
+    pointer-events: none;
   }
 
-  /* BT panel premium */
-  .bt-panel {
+  .hero-gauge-wrap {
     position: relative;
-    overflow: hidden;
+    width: 100%;
+    max-width: 170px;
   }
-  .bt-panel::before {
-    content: '';
+
+  .hero-gauge svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    filter: drop-shadow(0 0 2px rgba(0,212,170,0.2));
+  }
+
+  .hero-arc-track {
+    fill: none;
+    stroke: rgba(255,255,255,0.05);
+    stroke-width: 7;
+    stroke-linecap: round;
+  }
+
+  .hero-arc-glow {
+    fill: none;
+    stroke-width: 12;
+    stroke-linecap: round;
+    opacity: 0.25;
+    transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: blur(4px);
+  }
+
+  .hero-arc-fill {
+    fill: none;
+    stroke-width: 7;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.4s;
+  }
+
+  .hero-arc-fill.good, .hero-arc-glow.good { stroke: var(--green); }
+  .hero-arc-fill.warning, .hero-arc-glow.warning { stroke: var(--yellow); }
+  .hero-arc-fill.critical, .hero-arc-glow.critical { stroke: var(--red); }
+
+  /* Tick marks around the arc */
+  .hero-ticks line {
+    stroke: rgba(255,255,255,0.1);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+  }
+  .hero-ticks line.major {
+    stroke: rgba(255,255,255,0.2);
+    stroke-width: 2;
+  }
+
+  .hero-gauge-inner {
     position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--accent-blue), transparent);
-    opacity: 0.3;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -48%);
+    text-align: center;
+    pointer-events: none;
+    width: 100%;
   }
 
-  /* Scrollbar styling */
-  ::-webkit-scrollbar {
-    width: 4px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.1);
-    border-radius: 4px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255,255,255,0.18);
-  }
-
-  /* Focus-visible for accessibility */
-  :focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
-
-  /* Selection color */
-  ::selection {
-    background: rgba(0,212,170,0.25);
+  .hero-gauge-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 42px;
+    font-weight: 700;
     color: var(--text);
+    line-height: 1;
+    text-shadow: 0 0 40px rgba(0,212,170,0.2), 0 0 12px rgba(255,255,255,0.06);
+    transition: color 0.4s, text-shadow 0.4s;
+  }
+
+  .hero-gauge-value.warning { color: var(--yellow); text-shadow: 0 0 40px rgba(255,165,2,0.3); }
+  .hero-gauge-value.critical { color: var(--red); text-shadow: 0 0 40px rgba(255,71,87,0.35); animation: criticalPulse 1.5s ease-in-out infinite; }
+  .hero-gauge-value.good { color: var(--green); text-shadow: 0 0 40px rgba(0,230,118,0.25); }
+
+  .hero-gauge-unit {
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 2px;
+    margin-top: 4px;
+    font-weight: 500;
+  }
+
+  .hero-gauge-label {
+    font-size: 9px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    margin-top: 10px;
+    font-weight: 600;
+    opacity: 0.6;
+    text-transform: uppercase;
+  }
+
+  /* Breathing glow animation for hero arcs */
+  @keyframes arcBreathe {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 0.35; }
+  }
+  .hero-arc-glow { animation: arcBreathe 3s ease-in-out infinite; }
+
+  /* ========== SECTION HEADER UPGRADE ========== */
+  .section-header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 14px;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(0,212,170,0.2) 0%, transparent 60%);
+  }
+
+  /* ========== ENHANCED HP/TORQUE CARDS ========== */
+  .ht-value {
+    text-shadow: 0 0 30px rgba(0,212,170,0.3), 0 0 8px rgba(0,212,170,0.12);
+  }
+
+  .ht-card {
+    position: relative;
+    overflow: hidden;
+  }
+  .ht-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--cyan));
+    opacity: 0.5;
+  }
+
+  /* ========== ENHANCED ECU ENGINE NAME ========== */
+  .ecu-engine {
+    background: linear-gradient(135deg, var(--text) 0%, rgba(0,212,170,0.6) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ========== GPS CARD UPGRADE ========== */
+  .gps-card {
+    border-color: rgba(0,229,255,0.08);
+  }
+  .gps-card::after {
+    background: linear-gradient(90deg, var(--cyan), var(--accent-blue), var(--accent));
+    opacity: 0.5;
+  }
+
+  /* ========== RESPONSIVE HERO GAUGES ========== */
+  @media (min-width: 768px) {
+    .hero-gauges { gap: 18px; }
+    .hero-gauge { padding: 28px 16px 24px; }
+    .hero-gauge-value { font-size: 48px; }
+    .hero-gauge-wrap { max-width: 200px; }
+  }
+  @media (max-width: 360px) {
+    .hero-gauge-value { font-size: 34px; }
+    .hero-gauge-wrap { max-width: 140px; }
+    .hero-gauge { padding: 18px 8px 16px; }
   }
 </style>
 </head>
@@ -1655,6 +1881,103 @@
     <!-- ENGINE TAB -->
     <div class="tab-panel active" id="tab-engine">
       <div class="alert-bar" id="alert-bar">⚠️ <span id="alert-text">Warning detected</span></div>
+
+      <!-- HERO RADIAL GAUGES -->
+      <div class="hero-gauges">
+        <div class="hero-gauge" id="hero-card-rpm">
+          <div class="hero-gauge-wrap">
+            <svg viewBox="0 0 200 200">
+              <defs>
+                <linearGradient id="hero-grad-rpm" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#00d4aa"/>
+                  <stop offset="50%" stop-color="#00e5ff"/>
+                  <stop offset="100%" stop-color="#3b82f6"/>
+                </linearGradient>
+              </defs>
+              <!-- Tick marks -->
+              <g class="hero-ticks" transform="rotate(135 100 100)">
+                <line x1="100" y1="10" x2="100" y2="18" transform="rotate(0 100 100)" class="major"/>
+                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(27 100 100)"/>
+                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(54 100 100)"/>
+                <line x1="100" y1="10" x2="100" y2="18" transform="rotate(67.5 100 100)" class="major"/>
+                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(81 100 100)"/>
+                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(108 100 100)"/>
+                <line x1="100" y1="10" x2="100" y2="18" transform="rotate(135 100 100)" class="major"/>
+                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(162 100 100)"/>
+                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(189 100 100)"/>
+                <line x1="100" y1="10" x2="100" y2="18" transform="rotate(202.5 100 100)" class="major"/>
+                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(216 100 100)"/>
+                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(243 100 100)"/>
+                <line x1="100" y1="10" x2="100" y2="18" transform="rotate(270 100 100)" class="major"/>
+              </g>
+              <!-- Background arc track -->
+              <circle class="hero-arc-track" cx="100" cy="100" r="85"
+                stroke-dasharray="400.5 600" stroke-dashoffset="0"
+                transform="rotate(135 100 100)"/>
+              <!-- Glow layer (blurred duplicate) -->
+              <circle class="hero-arc-glow" id="hero-glow-rpm" cx="100" cy="100" r="85"
+                stroke="url(#hero-grad-rpm)"
+                stroke-dasharray="400.5 600" stroke-dashoffset="400.5"
+                transform="rotate(135 100 100)"/>
+              <!-- Main arc fill -->
+              <circle class="hero-arc-fill" id="hero-arc-rpm" cx="100" cy="100" r="85"
+                stroke="url(#hero-grad-rpm)"
+                stroke-dasharray="400.5 600" stroke-dashoffset="400.5"
+                transform="rotate(135 100 100)"/>
+            </svg>
+            <div class="hero-gauge-inner">
+              <div class="hero-gauge-value" id="hero-val-rpm">—</div>
+              <div class="hero-gauge-unit">RPM</div>
+              <div class="hero-gauge-label">ENGINE</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-gauge" id="hero-card-speed">
+          <div class="hero-gauge-wrap">
+            <svg viewBox="0 0 200 200">
+              <defs>
+                <linearGradient id="hero-grad-speed" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#00e5ff"/>
+                  <stop offset="50%" stop-color="#3b82f6"/>
+                  <stop offset="100%" stop-color="#8b5cf6"/>
+                </linearGradient>
+              </defs>
+              <g class="hero-ticks" transform="rotate(135 100 100)">
+                <line x1="100" y1="10" x2="100" y2="18" transform="rotate(0 100 100)" class="major"/>
+                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(27 100 100)"/>
+                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(54 100 100)"/>
+                <line x1="100" y1="10" x2="100" y2="18" transform="rotate(67.5 100 100)" class="major"/>
+                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(81 100 100)"/>
+                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(108 100 100)"/>
+                <line x1="100" y1="10" x2="100" y2="18" transform="rotate(135 100 100)" class="major"/>
+                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(162 100 100)"/>
+                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(189 100 100)"/>
+                <line x1="100" y1="10" x2="100" y2="18" transform="rotate(202.5 100 100)" class="major"/>
+                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(216 100 100)"/>
+                <line x1="100" y1="12" x2="100" y2="17" transform="rotate(243 100 100)"/>
+                <line x1="100" y1="10" x2="100" y2="18" transform="rotate(270 100 100)" class="major"/>
+              </g>
+              <circle class="hero-arc-track" cx="100" cy="100" r="85"
+                stroke-dasharray="400.5 600" stroke-dashoffset="0"
+                transform="rotate(135 100 100)"/>
+              <circle class="hero-arc-glow" id="hero-glow-speed" cx="100" cy="100" r="85"
+                stroke="url(#hero-grad-speed)"
+                stroke-dasharray="400.5 600" stroke-dashoffset="400.5"
+                transform="rotate(135 100 100)"/>
+              <circle class="hero-arc-fill" id="hero-arc-speed" cx="100" cy="100" r="85"
+                stroke="url(#hero-grad-speed)"
+                stroke-dasharray="400.5 600" stroke-dashoffset="400.5"
+                transform="rotate(135 100 100)"/>
+            </svg>
+            <div class="hero-gauge-inner">
+              <div class="hero-gauge-value" id="hero-val-speed">—</div>
+              <div class="hero-gauge-unit">KM/H</div>
+              <div class="hero-gauge-label">SPEED</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div class="gauge-grid">
         <div class="gauge-card" id="card-rpm">
@@ -2755,6 +3078,10 @@ function updateDisplay(data) {
   document.getElementById('update-time').textContent = 'UPDATED ' + now;
   lastData = data;
 
+  // Hero radial gauges
+  updateHeroGauge('rpm', data.rpm, 0, 2100, [1600, 1900]);
+  updateHeroGauge('speed', parseFloat(data.speed) || data.gpsSpeed, 0, 140);
+
   // Engine data
   setGauge('rpm', data.rpm, 0, 2100, [1600, 1900]);
   setGauge('coolant', data.coolantTemp, 60, 120, [100, 108]);
@@ -2894,6 +3221,48 @@ function setGauge(id, value, min, max, warnLevels, invertWarn) {
   if (card) {
     card.className = 'gauge-card' + (state !== 'normal' ? ' ' + state : '');
   }
+}
+
+// Hero radial arc gauge update
+const HERO_ARC_LENGTH = 400.5; // 270° arc, r=85
+
+function updateHeroGauge(id, value, min, max, warnLevels, invertWarn) {
+  const valEl = document.getElementById('hero-val-' + id);
+  const arcEl = document.getElementById('hero-arc-' + id);
+  const glowEl = document.getElementById('hero-glow-' + id);
+  if (!valEl) return;
+
+  if (value === undefined || value === null) {
+    valEl.textContent = '—';
+    valEl.className = 'hero-gauge-value';
+    if (arcEl) arcEl.style.strokeDashoffset = HERO_ARC_LENGTH;
+    if (glowEl) glowEl.style.strokeDashoffset = HERO_ARC_LENGTH;
+    return;
+  }
+
+  const pct = Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100));
+  const offset = HERO_ARC_LENGTH * (1 - pct / 100);
+
+  valEl.textContent = Math.round(value);
+  if (arcEl) arcEl.style.strokeDashoffset = offset;
+  if (glowEl) glowEl.style.strokeDashoffset = offset;
+
+  let state = 'normal';
+  if (warnLevels) {
+    if (invertWarn) {
+      if (value <= warnLevels[1]) state = 'critical';
+      else if (value <= warnLevels[0]) state = 'warning';
+      else state = 'good';
+    } else {
+      if (value >= warnLevels[1]) state = 'critical';
+      else if (value >= warnLevels[0]) state = 'warning';
+      else state = 'good';
+    }
+  }
+
+  valEl.className = 'hero-gauge-value' + (state !== 'normal' ? ' ' + state : '');
+  if (arcEl) arcEl.className.baseVal = 'hero-arc-fill' + (state !== 'normal' ? ' ' + state : '');
+  if (glowEl) glowEl.className.baseVal = 'hero-arc-glow' + (state !== 'normal' ? ' ' + state : '');
 }
 
 function setText(id, val) {
